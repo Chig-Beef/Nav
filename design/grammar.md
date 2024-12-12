@@ -1,0 +1,30 @@
+# Grammar for Nav
+program = {enumDef | funcDef | structDef};
+enumDef = 'enum', IDENTIFIER, '{', IDENTIFIER, {',', IDENTIFIER,} [',',] '}';
+funcDef = 'fun', IDENTIFIER, '(', [complexType, IDENTIFIER], {',', complexType, IDENTIFIER,} ')' complexType block;
+structDef = 'struct', IDENTIFIER, '{', complexType, IDENTIFIER, {',' complexType, IDENTIFIER}, [','] '}';
+complexType = IDENTIFIER | (complexType, index | '^');
+block = '{', {statement}, '}';
+index = '[', expression, ']';
+statement = lineCall | variableDeclaration | loneCall | ifBlock | forLoop | retStatement | breakStatement | contStatement | switchStatement;
+expression = (unaryValue | value), {operator, (unaryValue | value)};
+unaryValue = unary, (value | unaryValue);
+value = number | char | string | bracketedValue | makeArray | funcCall | structNew;
+operator = '+' | '-' | '*' | '/' | '&' | '|' | '~';
+bracketedValue = '(', expression, ')';
+loneCall = funcCall, ';';
+makeArray = 'make', '[', expression, {',', expression}, [',',] ']';
+funcCall = 'call', IDENTIFIER, '(', expression, {',', expression,} [',',] ')';
+structNew = 'new', IDENTIFIER, '(', expression, {',', expression,} [',',] ')';
+variableDeclaration -> (assignment | newassignment), ';'
+newassignment -> 'let', complexType, IDENTIFIER, '=', expression ;
+crement -> '++' | '--', IDENTIFIER;
+assignment -> (IDENTIFIER, [index,] '=', expression) | crement;
+ifBlock -> 'if', '(', expression, ')', block, ['elif', '(', expression, ')', block,] ['else', block];
+forLoop -> 'for', [assignment | newassignment,] ';', [expression,] ';', [assignment,] block;
+retStatement -> 'return', [expression], ';';
+breakStatement -> 'break', ';';
+contStatement -> 'continue', ';';
+switchStatement = "switch", "(", expression, ")", "{", {caseBlock}, [defaultBlock], "}";
+caseBlock = "case", expression, ":", { statement, } ;
+defaultBlock = "default", ":", { statement, } ;
