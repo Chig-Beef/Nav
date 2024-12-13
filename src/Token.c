@@ -3,13 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct Token {
-  char *data;
-  TokenCode kind;
-  int line; // The line this token came from
-} Token;
-
-void tokenDestroy(Token *t) { free(t->data); }
+void tokenDestroy(Token *t) {
+  if (t->data) {
+    free(t->data);
+  }
+}
 
 char *tokenCodeString(TokenCode tc) {
   switch (tc) {
@@ -51,6 +49,12 @@ char *tokenCodeString(TokenCode tc) {
     return "T_STRUCT";
   case T_SWITCH:
     return "T_SWITCH";
+  case T_TRUE:
+    return "T_TRUE";
+  case T_FALSE:
+    return "T_FALSE";
+  case T_NIL:
+    return "T_NIL";
 
     // Various symbols
   case T_ACCESS:
@@ -129,8 +133,6 @@ char *tokenCodeString(TokenCode tc) {
     return "T_R_PAREN";
 
     // Values
-  case T_BOOL:
-    return "T_BOOL";
   case T_CHAR:
     return "T_CHAR";
   case T_FLOAT:
@@ -139,8 +141,6 @@ char *tokenCodeString(TokenCode tc) {
     return "T_IDENTIFIER";
   case T_INT:
     return "T_INT";
-  case T_NIL:
-    return "T_NIL";
   case T_STRING:
     return "T_STRING";
 

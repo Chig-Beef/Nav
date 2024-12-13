@@ -60,10 +60,13 @@ enum Days {
 ```
 
 ## Compilation
-Lexing is entirely completed before moving on.
-Parsing is entirely completed before moving on.
-Semantic analysis is entirely completed before moving on.
-Optimizaion is entirely completed before moving on.
+All files are lexed seperately.
+All files are paresed seperately.
+Then everything is connected into a single program.
+Hoisting is then performed on this "mega-program."
+Semantic analysis is performed.
+Optimization is performed.
+Emitting is performed.
 
 ## Ifs
 ```
@@ -78,7 +81,7 @@ if (cond) {
 
 ## Fors
 ```
-for (int x = 2; cond; ++x) {
+for (int x = 2; x < 10; ++x) {
     break;
     continue;
 }
@@ -114,15 +117,17 @@ let int x = call add(2, 3);
 
 ## Arithmatic
 ```
-x = 1 + 2
+x = 1 + 2;
 
-y = 3 * 7
+y = 3 * 7;
 
-z = 2 / 2
+z = 2 / 2;
 
-a = 5 - 1
+a = 5 - 1;
 
-z = 5 | 3
+z = 5 | 3;
 
-z = 1 & 3
+z = 1 & 3;
+
+x += 3;
 ```

@@ -21,6 +21,9 @@ typedef enum TokenCode {
   T_RETURN,
   T_STRUCT,
   T_SWITCH,
+  T_TRUE,
+  T_FALSE,
+  T_NIL,
 
   // Various symbols
   T_ACCESS,
@@ -65,12 +68,10 @@ typedef enum TokenCode {
   T_R_PAREN,   // )
 
   // Values
-  T_BOOL,
   T_CHAR,
   T_FLOAT,
   T_IDENTIFIER,
   T_INT,
-  T_NIL,
   T_STRING,
 } TokenCode;
 
