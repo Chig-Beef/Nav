@@ -1,8 +1,15 @@
 #include "Panic.h"
 #include "Token.h"
 #include "list.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define IS_DIGIT(VAL) ((VAL) >= '0' && (VAL) <= '9')
+#define IS_ALPHA(VAL)                                                          \
+  ((VAL) >= 'a' && (VAL) <= 'z') || ((VAL) >= 'A' && (VAL) <= 'Z')
+#define VALID_IDENT_CHAR(VAL) (IS_ALPHA(VAL) || IS_DIGIT(VAL) || (VAL) == '_')
+#define VALID_NUM_CHAR(VAL) (IS_DIGIT(VAL) || (VAL) == '.')
 
 NEW_LIST_TYPE(Token, Token)
 
@@ -24,10 +31,10 @@ char peekChar(Lexer *l) {
   return l->source[nextIndex];
 }
 
-void throwError(Lexer *l, char caller[], int line, char expected[], char *got) {
-  printf("Error in the Lexer!\nWhen the Lexer was trying to decipher: "
-         "%s\nError found in file: %s\nOn line: %i\nExpected: %s\nGot: %s\n",
-         caller, l->sourceName, line, expected, got);
+void throwError(Lexer *l, int line, char expected[], char got) {
+  printf("Error in the Lexer!\n"
+         "Error found in file: %s\nOn line: %i\nExpected: %s\nGot: %c (%i)\n",
+         l->sourceName, line, expected, got, got);
   exit(1);
 }
 
@@ -40,6 +47,8 @@ TokenList lex(Lexer *l) {
   }
   Token token = {NULL, T_ILLEGAL, 0};
   char p;
+  char *text;
+  int startIndex;
 
   for (l->index = 0; l->index < l->len; ++l->index) {
     switch (l->source[l->index]) {
@@ -175,40 +184,90 @@ TokenList lex(Lexer *l) {
       // Character
     case '\'':
       // Get length of the char
-      int startIndex = l->index;
+      startIndex = l->index;
       ++l->index;
       while (l->source[l->index] != '\'') {
         ++l->index;
       }
       int charLen = l->index - startIndex + 1;
-        
-        // Copy over the text
-      char *text = malloc((charLen + 1) * sizeof(char));
+
+      // Copy over the text
+      text = malloc((charLen + 1) * sizeof(char));
       for (int i = 0; i < charLen; ++i) {
         text[i] = l->source[startIndex + i];
       }
 
-        // Null terminator
+      // Null terminator
       text[charLen] = 0;
+
+      // Save the token
+      token = (Token){text, T_CHAR, l->line};
 
     // String
     case '"':
       // Get length of the string
-      int startIndex = l->index;
+      startIndex = l->index;
       ++l->index;
       while (l->source[l->index] != '\"') {
         ++l->index;
       }
       int strLen = l->index - startIndex + 1;
-        
-        // Copy over the text
-      char *text = malloc((strLen + 1) * sizeof(char));
+
+      // Copy over the text
+      text = malloc((strLen + 1) * sizeof(char));
       for (int i = 0; i < strLen; ++i) {
         text[i] = l->source[startIndex + i];
       }
 
-        // Null terminator
+      // Null terminator
       text[strLen] = 0;
+
+      // Save the token
+      token = (Token){text, T_STRING, l->line};
+
+    default:
+      // Number
+      if (IS_DIGIT(l->source[l->index])) {
+        // Get length of number
+        startIndex = l->index;
+        ++l->index;
+        bool isFloat = false;
+        while (VALID_NUM_CHAR(peekChar(l))) {
+          ++l->index;
+          if (l->source[l->index] == '.') {
+            isFloat = true;
+          }
+        }
+        int numLen = l->index - startIndex + 1;
+
+        // Copy over the text
+        text = malloc((numLen + 1) * sizeof(char));
+        for (int i = 0; i < numLen; ++i) {
+          text[i] = l->source[startIndex + i];
+        }
+
+        // Null terminator
+        text[strLen] = 0;
+        if (text[strLen - 1] == '.') {
+          throwError(l, l->line, "Digits after decimal", '.');
+        }
+
+        // Save the token
+        if (isFloat) {
+          token = (Token){text, T_FLOAT, l->line};
+        } else {
+          token = (Token){text, T_INT, l->line};
+        }
+      }
+
+      // Keywords & Identifier
+      else if (IS_ALPHA(l->source[l->index])) {
+      }
+
+      // Bad char
+      else {
+        throwError(l, l->line, "Any other character", l->source[l->index]);
+      }
     }
 
     // Add that token to the end of the list
