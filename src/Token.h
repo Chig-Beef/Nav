@@ -73,3 +73,16 @@ typedef enum TokenCode {
   T_NIL,
   T_STRING,
 } TokenCode;
+
+typedef struct Token {
+  char *data;
+  TokenCode kind;
+  int line; // The line this token came from
+} Token;
+
+void tokenDestroy(Token *t);
+
+char *tokenCodeString(TokenCode tc);
+
+// Returns a string describing the token. The resulting string must be freed.
+char *tokenString(Token *t);

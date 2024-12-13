@@ -9,6 +9,8 @@ typedef struct Token {
   int line; // The line this token came from
 } Token;
 
+void tokenDestroy(Token *t) { free(t->data); }
+
 char *tokenCodeString(TokenCode tc) {
   switch (tc) {
   case T_ILLEGAL:
