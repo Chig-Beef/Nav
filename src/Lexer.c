@@ -156,12 +156,41 @@ TokenList lex(Lexer *l) {
 
       // Comment, divide
     case '/':
-      if (p == '-') {
-        ++l->index;
-        token = (Token){"--", T_DEC, l->line};
+      if (p == '/') {
+        while (l->source[l->index] != '\n' && l->index < l->len && l->source) {
+          ++l->source;
+        }
+        continue;
+      } else if (p == '*') {
+        ++l->source;
+        while (l->source[l->index] != '/' && l->source[l->index - 1] != '*' &&
+               l->index < l->len && l->source) {
+          ++l->source;
+        }
+        continue;
       } else {
-        token = (Token){NULL, T_SUB, l->line};
+        token = (Token){NULL, T_DIV, l->line};
       }
+
+      // Character
+    case '\'':
+      // Get length of the char
+      int startIndex = l->index;
+      ++l->index;
+      while (l->source[l->index] != '\'') {
+        ++l->index;
+      }
+      int charLen = l->index - startIndex + 1;
+        
+        // Copy over the text
+      char *text = malloc((charLen + 1) * sizeof(char));
+      for (int i = 0; i < charLen; ++i) {
+        text[i] = l->source[startIndex + i];
+      }
+
+        // Null terminator
+      text[charLen] = 0;
+
     }
 
     // Add that token to the end of the list
