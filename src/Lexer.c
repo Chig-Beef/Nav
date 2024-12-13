@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define IS_DIGIT(VAL) ((VAL) >= '0' && (VAL) <= '9')
 #define IS_ALPHA(VAL)                                                          \
@@ -230,7 +231,6 @@ TokenList lex(Lexer *l) {
       if (IS_DIGIT(l->source[l->index])) {
         // Get length of number
         startIndex = l->index;
-        ++l->index;
         bool isFloat = false;
         while (VALID_NUM_CHAR(peekChar(l))) {
           ++l->index;
@@ -247,8 +247,8 @@ TokenList lex(Lexer *l) {
         }
 
         // Null terminator
-        text[strLen] = 0;
-        if (text[strLen - 1] == '.') {
+        text[numLen] = 0;
+        if (text[numLen - 1] == '.') {
           throwError(l, l->line, "Digits after decimal", '.');
         }
 
@@ -262,6 +262,66 @@ TokenList lex(Lexer *l) {
 
       // Keywords & Identifier
       else if (IS_ALPHA(l->source[l->index])) {
+        // Get length of word
+        startIndex = l->index;
+        while (VALID_IDENT_CHAR(peekChar(l))) {
+          ++l->index;
+        }
+        int wordLen = l->index - startIndex + 1;
+
+        // Copy over the text
+        text = malloc((wordLen + 1) * sizeof(char));
+        for (int i = 0; i < wordLen; ++i) {
+          text[i] = l->source[startIndex + i];
+        }
+
+        // Null terminator
+        text[wordLen] = 0;
+
+        // Save the token
+        if (strcmp(text, "break")) {
+          token = (Token){text, T_BREAK, l->line};
+        } else if (strcmp(text, "call")) {
+          token = (Token){text, T_CALL, l->line};
+        } else if (strcmp(text, "case")) {
+          token = (Token){text, T_CASE, l->line};
+        } else if (strcmp(text, "const")) {
+          token = (Token){text, T_CONST, l->line};
+        } else if (strcmp(text, "continue")) {
+          token = (Token){text, T_CONTINUE, l->line};
+        } else if (strcmp(text, "default")) {
+          token = (Token){text, T_DEFAULT, l->line};
+        } else if (strcmp(text, "elif")) {
+          token = (Token){text, T_ELIF, l->line};
+        } else if (strcmp(text, "else")) {
+          token = (Token){text, T_ELSE, l->line};
+        } else if (strcmp(text, "enum")) {
+          token = (Token){text, T_ENUM, l->line};
+        } else if (strcmp(text, "for")) {
+          token = (Token){text, T_FOR, l->line};
+        } else if (strcmp(text, "fun")) {
+          token = (Token){text, T_FUN, l->line};
+        } else if (strcmp(text, "if")) {
+          token = (Token){text, T_IF, l->line};
+        } else if (strcmp(text, "make")) {
+          token = (Token){text, T_MAKE, l->line};
+        } else if (strcmp(text, "new")) {
+          token = (Token){text, T_NEW, l->line};
+        } else if (strcmp(text, "return")) {
+          token = (Token){text, T_RETURN, l->line};
+        } else if (strcmp(text, "struct")) {
+          token = (Token){text, T_STRUCT, l->line};
+        } else if (strcmp(text, "switch")) {
+          token = (Token){text, T_SWITCH, l->line};
+        } else if (strcmp(text, "nil")) {
+          token = (Token){text, T_NIL, l->line};
+        } else if (strcmp(text, "true")) {
+          token = (Token){text, T_TRUE, l->line};
+        } else if (strcmp(text, "false")) {
+          token = (Token){text, T_FALSE, l->line};
+        } else {
+          token = (Token){text, T_IDENTIFIER, l->line};
+        }
       }
 
       // Bad char
