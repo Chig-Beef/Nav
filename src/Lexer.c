@@ -191,6 +191,24 @@ TokenList lex(Lexer *l) {
         // Null terminator
       text[charLen] = 0;
 
+    // String
+    case '"':
+      // Get length of the string
+      int startIndex = l->index;
+      ++l->index;
+      while (l->source[l->index] != '\"') {
+        ++l->index;
+      }
+      int strLen = l->index - startIndex + 1;
+        
+        // Copy over the text
+      char *text = malloc((strLen + 1) * sizeof(char));
+      for (int i = 0; i < strLen; ++i) {
+        text[i] = l->source[startIndex + i];
+      }
+
+        // Null terminator
+      text[strLen] = 0;
     }
 
     // Add that token to the end of the list
