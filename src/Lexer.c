@@ -11,31 +11,39 @@
   ((VAL) >= 'a' && (VAL) <= 'z') || ((VAL) >= 'A' && (VAL) <= 'Z')
 #define VALID_IDENT_CHAR(VAL) (IS_ALPHA(VAL) || IS_DIGIT(VAL) || (VAL) == '_')
 #define VALID_NUM_CHAR(VAL) (IS_DIGIT(VAL) || (VAL) == '.')
+#define STR_BUFF_SIZE 100
 
 NEW_LIST_TYPE(Token, Token)
 
 typedef struct Lexer {
   char *sourceName;
-  char *source;
-  int len;
-  int index;
+  FILE *source;
+  char curChar;
+  char peekChar;
   int line;
 } Lexer;
 
-char peekChar(Lexer *l) {
-  int nextIndex = l->index + 1;
-
-  if (nextIndex >= l->len) {
-    return 0;
+void nextChar(Lexer *l) {
+  l->curChar = l->peekChar;
+  l->peekChar = fgetc(l->source);
+  if (l->curChar == '\n') {
+    ++l->line;
   }
-
-  return l->source[nextIndex];
 }
 
-void throwError(Lexer *l, int line, char expected[], char got) {
+void lexerInit(Lexer *l, char sourceName[], FILE *source) {
+  l->sourceName = sourceName;
+  l->source = source;
+  l->line = 1;
+  l->peekChar = 0;
+  nextChar(l);
+  nextChar(l);
+}
+
+void throwError(Lexer *l, char expected[], char got) {
   printf("Error in the Lexer!\n"
          "Error found in file: %s\nOn line: %i\nExpected: %s\nGot: %c (%i)\n",
-         l->sourceName, line, expected, got, got);
+         l->sourceName, l->line, expected, got, got);
   exit(1);
 }
 
@@ -49,20 +57,23 @@ TokenList lex(Lexer *l) {
   Token token = {NULL, T_ILLEGAL, 0};
   char p;
   char *text;
-  int startIndex;
+  char strBuff[STR_BUFF_SIZE];
+  int dynLen; // Length of variable sized token text
 
-  for (l->index = 0; l->index < l->len; ++l->index) {
-    switch (l->source[l->index]) {
+  // A continue in this loop means skipping the token append
+  while (l->curChar >= 0) {
+    switch (l->curChar) {
       // Skip these
     case ' ':
       continue;
     case '\t':
       continue;
     case '\n':
-      ++l->line;
       continue;
     case '\r':
       continue;
+    case 0:
+      throwError(l, "More source", 0);
 
     // Single character
     case '.':
@@ -80,103 +91,106 @@ TokenList lex(Lexer *l) {
     case '~':
       token = (Token){NULL, T_XOR, l->line};
     case '^':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_DEREF, l->line};
     case '`':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_REF, l->line};
     case '[':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_L_BLOCK, l->line};
     case ']':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_R_BLOCK, l->line};
     case '{':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_L_SQUIRLY, l->line};
     case '}':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_R_SQUIRLY, l->line};
     case '(':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_L_PAREN, l->line};
     case ')':
-      token = (Token){NULL, T_XOR, l->line};
+      token = (Token){NULL, T_R_PAREN, l->line};
 
       // Could be double
     case '=':
-      if (peekChar(l) == '=') {
-        ++l->index;
-        token = (Token){"==", T_EQ, l->line};
+      if (l->peekChar == '=') {
+        nextChar(l);
+        token = (Token){NULL, T_EQ, l->line};
       } else {
         token = (Token){NULL, T_ASSIGN, l->line};
       }
     case '+':
-      if (peekChar(l) == '+') {
-        ++l->index;
-        token = (Token){"++", T_INC, l->line};
+      if (l->peekChar == '+') {
+        nextChar(l);
+        token = (Token){NULL, T_INC, l->line};
       } else {
         token = (Token){NULL, T_ADD, l->line};
       }
     case '&':
-      if (peekChar(l) == '&') {
-        ++l->index;
-        token = (Token){"&&", T_ANDAND, l->line};
+      if (l->peekChar == '&') {
+        nextChar(l);
+        token = (Token){NULL, T_ANDAND, l->line};
       } else {
         token = (Token){NULL, T_AND, l->line};
       }
     case '!':
-      if (peekChar(l) == '=') {
-        ++l->index;
-        token = (Token){"!=", T_NEQ, l->line};
+      if (l->peekChar == '=') {
+        nextChar(l);
+        token = (Token){NULL, T_NEQ, l->line};
       } else {
         token = (Token){NULL, T_NOT, l->line};
       }
     case '|':
-      if (peekChar(l) == '|') {
-        ++l->index;
-        token = (Token){"||", T_OROR, l->line};
+      if (l->peekChar == '|') {
+        nextChar(l);
+        token = (Token){NULL, T_OROR, l->line};
       } else {
         token = (Token){NULL, T_OR, l->line};
       }
     case '-':
-      if (peekChar(l) == '-') {
-        ++l->index;
-        token = (Token){"--", T_DEC, l->line};
+      if (l->peekChar == '-') {
+        nextChar(l);
+        token = (Token){NULL, T_DEC, l->line};
       } else {
         token = (Token){NULL, T_SUB, l->line};
       }
 
       // Slightly larger cases
     case '>':
-      p = peekChar(l);
-      if (p == '>') {
-        ++l->index;
-        token = (Token){">>", T_R_SHIFT, l->line};
-      } else if (p == '=') {
-        ++l->index;
-        token = (Token){">=", T_GTEQ, l->line};
+      if (l->peekChar == '>') {
+        nextChar(l);
+        token = (Token){NULL, T_R_SHIFT, l->line};
+      } else if (l->peekChar == '=') {
+        nextChar(l);
+        token = (Token){NULL, T_GTEQ, l->line};
       } else {
         token = (Token){NULL, T_GT, l->line};
       }
     case '<':
-      p = peekChar(l);
-      if (p == '<') {
-        ++l->index;
-        token = (Token){"<<", T_L_SHIFT, l->line};
-      } else if (p == '=') {
-        ++l->index;
-        token = (Token){"<=", T_LTEQ, l->line};
+      if (l->peekChar == '<') {
+        nextChar(l);
+        token = (Token){NULL, T_L_SHIFT, l->line};
+      } else if (l->peekChar == '=') {
+        nextChar(l);
+        token = (Token){NULL, T_LTEQ, l->line};
       } else {
         token = (Token){NULL, T_LT, l->line};
       }
 
       // Comment, divide
     case '/':
-      if (p == '/') {
-        while (l->source[l->index] != '\n' && l->index < l->len && l->source) {
-          ++l->source;
+      if (l->peekChar == '/') {
+        while (l->curChar != '\n' && l->curChar >= 0) {
+          nextChar(l);
         }
+        nextChar(l); // Now the character for the next loop is the first one of
+                     // the next line
         continue;
-      } else if (p == '*') {
-        ++l->source;
-        while (l->source[l->index] != '/' && l->source[l->index - 1] != '*' &&
-               l->index < l->len && l->source) {
-          ++l->source;
+      } else if (l->peekChar == '*') {
+        nextChar(l);
+        while ((l->peekChar != '/' || l->curChar != '*') && l->peekChar >= 0) {
+          nextChar(l);
         }
+        // Now the character for the next loop is the one right after the
+        // comment
+        nextChar(l);
+        nextChar(l);
         continue;
       } else {
         token = (Token){NULL, T_DIV, l->line};
@@ -185,21 +199,44 @@ TokenList lex(Lexer *l) {
       // Character
     case '\'':
       // Get length of the char
-      startIndex = l->index;
-      ++l->index;
-      while (l->source[l->index] != '\'') {
-        ++l->index;
-      }
-      int charLen = l->index - startIndex + 1;
+      dynLen = 1;
 
-      // Copy over the text
-      text = malloc((charLen + 1) * sizeof(char));
-      for (int i = 0; i < charLen; ++i) {
-        text[i] = l->source[startIndex + i];
+      // Get the buffer ready
+      memset(strBuff, 0, STR_BUFF_SIZE);
+      strBuff[0] = l->curChar;
+      nextChar(l);
+
+      // Copy char text
+      while (l->curChar != '\'' && dynLen < STR_BUFF_SIZE) {
+        // Invalid characters in char
+        switch (l->curChar) {
+        case '\n':
+          throwError(l, "No newline in character", '\n');
+        case '\r':
+          throwError(l, "No return in character", '\r');
+        }
+
+        // Copy in next char
+        strBuff[dynLen] = l->curChar;
+        nextChar(l);
+        ++dynLen;
+
+        // End of source?
+        if (l->curChar < 0) {
+          throwError(l, "More source for character", 0);
+        }
       }
 
-      // Null terminator
-      text[charLen] = 0;
+      // Empty character
+      if (dynLen == 2) {
+        throwError(l, "Char in character definition", '\'');
+      }
+
+      // Copy over to dynamic allocation, freeing up strBuff for next char,
+      // string, etc
+      text = malloc((dynLen + 1) * sizeof(char));
+      strcpy_s(text, dynLen, strBuff);
+      text[dynLen] = 0;
 
       // Save the token
       token = (Token){text, T_CHAR, l->line};
@@ -207,49 +244,73 @@ TokenList lex(Lexer *l) {
     // String
     case '"':
       // Get length of the string
-      startIndex = l->index;
-      ++l->index;
-      while (l->source[l->index] != '\"') {
-        ++l->index;
-      }
-      int strLen = l->index - startIndex + 1;
+      dynLen = 1;
 
-      // Copy over the text
-      text = malloc((strLen + 1) * sizeof(char));
-      for (int i = 0; i < strLen; ++i) {
-        text[i] = l->source[startIndex + i];
+      // Get the buffer ready
+      memset(strBuff, 0, STR_BUFF_SIZE);
+      strBuff[0] = l->curChar;
+      nextChar(l);
+
+      // Copy string text
+      while (l->curChar != '\"') {
+        // Invalid characters in string
+        switch (l->curChar) {
+        case '\n':
+          throwError(l, "No newline in string", '\n');
+        case '\r':
+          throwError(l, "No return in string", '\r');
+        }
+
+        // Copy in next char
+        strBuff[dynLen] = l->curChar;
+        nextChar(l);
+        ++dynLen;
+
+        // End of source?
+        if (l->curChar < 0) {
+          throwError(l, "More source for string", 0);
+        }
       }
 
-      // Null terminator
-      text[strLen] = 0;
+      // Copy over to dynamic allocation, freeing up strBuff for next char,
+      // string, etc
+      text = malloc((dynLen + 1) * sizeof(char));
+      strcpy_s(text, dynLen, strBuff);
+      text[dynLen] = 0;
 
       // Save the token
       token = (Token){text, T_STRING, l->line};
 
     default:
       // Number
-      if (IS_DIGIT(l->source[l->index])) {
+      if (IS_DIGIT(l->curChar)) {
+        // Get length of the number
+        dynLen = 0;
+
+        // Get the buffer ready
+        memset(strBuff, 0, STR_BUFF_SIZE);
+        strBuff[0] = l->curChar;
+
         // Get length of number
-        startIndex = l->index;
         bool isFloat = false;
-        while (VALID_NUM_CHAR(peekChar(l))) {
-          ++l->index;
-          if (l->source[l->index] == '.') {
+        while (VALID_NUM_CHAR(l->peekChar)) {
+          nextChar(l);
+          if (l->curChar == '.') {
+            if (isFloat) {
+              throwError(l, "Only one decimal in float", '.');
+            }
             isFloat = true;
           }
         }
-        int numLen = l->index - startIndex + 1;
 
-        // Copy over the text
-        text = malloc((numLen + 1) * sizeof(char));
-        for (int i = 0; i < numLen; ++i) {
-          text[i] = l->source[startIndex + i];
-        }
+        // Copy over to dynamic allocation, freeing up strBuff for next char,
+        // string, etc
+        text = malloc((dynLen + 1) * sizeof(char));
+        strcpy_s(text, dynLen, strBuff);
+        text[dynLen] = 0;
 
-        // Null terminator
-        text[numLen] = 0;
-        if (text[numLen - 1] == '.') {
-          throwError(l, l->line, "Digits after decimal", '.');
+        if (text[dynLen - 1] == '.') {
+          throwError(l, "Digits after decimal", '.');
         }
 
         // Save the token
@@ -261,72 +322,76 @@ TokenList lex(Lexer *l) {
       }
 
       // Keywords & Identifier
-      else if (IS_ALPHA(l->source[l->index])) {
+      else if (IS_ALPHA(l->curChar)) {
+        // Get length of the identifier
+        dynLen = 0;
+
+        // Get the buffer ready
+        memset(strBuff, 0, STR_BUFF_SIZE);
+        strBuff[0] = l->curChar;
+
         // Get length of word
-        startIndex = l->index;
-        while (VALID_IDENT_CHAR(peekChar(l))) {
-          ++l->index;
+        while (VALID_IDENT_CHAR(l->peekChar)) {
+          nextChar(l);
         }
-        int wordLen = l->index - startIndex + 1;
-
-        // Copy over the text
-        text = malloc((wordLen + 1) * sizeof(char));
-        for (int i = 0; i < wordLen; ++i) {
-          text[i] = l->source[startIndex + i];
-        }
-
-        // Null terminator
-        text[wordLen] = 0;
 
         // Save the token
+        // NOTE: All of these keywords are known ahead of time, therefore no
+        // dynamic allocation is needed
         if (strcmp(text, "break")) {
-          token = (Token){text, T_BREAK, l->line};
-        } else if (strcmp(text, "call")) {
-          token = (Token){text, T_CALL, l->line};
-        } else if (strcmp(text, "case")) {
-          token = (Token){text, T_CASE, l->line};
-        } else if (strcmp(text, "const")) {
-          token = (Token){text, T_CONST, l->line};
-        } else if (strcmp(text, "continue")) {
-          token = (Token){text, T_CONTINUE, l->line};
-        } else if (strcmp(text, "default")) {
-          token = (Token){text, T_DEFAULT, l->line};
-        } else if (strcmp(text, "elif")) {
-          token = (Token){text, T_ELIF, l->line};
-        } else if (strcmp(text, "else")) {
-          token = (Token){text, T_ELSE, l->line};
-        } else if (strcmp(text, "enum")) {
-          token = (Token){text, T_ENUM, l->line};
-        } else if (strcmp(text, "for")) {
-          token = (Token){text, T_FOR, l->line};
-        } else if (strcmp(text, "fun")) {
-          token = (Token){text, T_FUN, l->line};
-        } else if (strcmp(text, "if")) {
-          token = (Token){text, T_IF, l->line};
-        } else if (strcmp(text, "make")) {
-          token = (Token){text, T_MAKE, l->line};
-        } else if (strcmp(text, "new")) {
-          token = (Token){text, T_NEW, l->line};
-        } else if (strcmp(text, "return")) {
-          token = (Token){text, T_RETURN, l->line};
-        } else if (strcmp(text, "struct")) {
-          token = (Token){text, T_STRUCT, l->line};
-        } else if (strcmp(text, "switch")) {
-          token = (Token){text, T_SWITCH, l->line};
-        } else if (strcmp(text, "nil")) {
-          token = (Token){text, T_NIL, l->line};
-        } else if (strcmp(text, "true")) {
-          token = (Token){text, T_TRUE, l->line};
-        } else if (strcmp(text, "false")) {
-          token = (Token){text, T_FALSE, l->line};
+          token = (Token){NULL, T_BREAK, l->line};
+        } else if (strcmp(NULL, "call")) {
+          token = (Token){NULL, T_CALL, l->line};
+        } else if (strcmp(NULL, "case")) {
+          token = (Token){NULL, T_CASE, l->line};
+        } else if (strcmp(NULL, "const")) {
+          token = (Token){NULL, T_CONST, l->line};
+        } else if (strcmp(NULL, "continue")) {
+          token = (Token){NULL, T_CONTINUE, l->line};
+        } else if (strcmp(NULL, "default")) {
+          token = (Token){NULL, T_DEFAULT, l->line};
+        } else if (strcmp(NULL, "elif")) {
+          token = (Token){NULL, T_ELIF, l->line};
+        } else if (strcmp(NULL, "else")) {
+          token = (Token){NULL, T_ELSE, l->line};
+        } else if (strcmp(NULL, "enum")) {
+          token = (Token){NULL, T_ENUM, l->line};
+        } else if (strcmp(NULL, "for")) {
+          token = (Token){NULL, T_FOR, l->line};
+        } else if (strcmp(NULL, "fun")) {
+          token = (Token){NULL, T_FUN, l->line};
+        } else if (strcmp(NULL, "if")) {
+          token = (Token){NULL, T_IF, l->line};
+        } else if (strcmp(NULL, "make")) {
+          token = (Token){NULL, T_MAKE, l->line};
+        } else if (strcmp(NULL, "new")) {
+          token = (Token){NULL, T_NEW, l->line};
+        } else if (strcmp(NULL, "return")) {
+          token = (Token){NULL, T_RETURN, l->line};
+        } else if (strcmp(NULL, "struct")) {
+          token = (Token){NULL, T_STRUCT, l->line};
+        } else if (strcmp(NULL, "switch")) {
+          token = (Token){NULL, T_SWITCH, l->line};
+        } else if (strcmp(NULL, "nil")) {
+          token = (Token){NULL, T_NIL, l->line};
+        } else if (strcmp(NULL, "true")) {
+          token = (Token){NULL, T_TRUE, l->line};
+        } else if (strcmp(NULL, "false")) {
+          token = (Token){NULL, T_FALSE, l->line};
         } else {
+          // Copy over to dynamic allocation, freeing up strBuff for next char,
+          // string, etc
+          text = malloc((dynLen + 1) * sizeof(char));
+          strcpy_s(text, dynLen, strBuff);
+          text[dynLen] = 0;
+
           token = (Token){text, T_IDENTIFIER, l->line};
         }
       }
 
       // Bad char
       else {
-        throwError(l, l->line, "Any other character", l->source[l->index]);
+        throwError(l, "Any other character", l->curChar);
       }
     }
 

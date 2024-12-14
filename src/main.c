@@ -47,7 +47,22 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Load all file pointers
+  FILE *files[argc - 1];
+  errno_t err;
+  for (int i = 1; i < argc; ++i) {
+    // Open the file
+    err = fopen_s(&files[i - 1], argv[i], "r");
+    if (err) {
+      printf("Couldn't open file %s\n", argv[i]);
+      _fcloseall();
+    }
+  }
+
   // Lex every file
+
+  // Close all the files before moving on
+  _fcloseall();
 
   // Parse every file
 
