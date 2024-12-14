@@ -21,6 +21,7 @@ typedef struct Lexer {
   char curChar;
   char peekChar;
   int line;
+  TokenList out;
 } Lexer;
 
 void nextChar(Lexer *l) {
@@ -38,6 +39,9 @@ void lexerInit(Lexer *l, char sourceName[], FILE *source) {
   l->peekChar = 0;
   nextChar(l);
   nextChar(l);
+  if (TokenListInit(&l->out, 8)) {
+    panic("Couldn't initialise token list.");
+  }
 }
 
 void throwError(Lexer *l, char expected[], char got) {
@@ -49,11 +53,7 @@ void throwError(Lexer *l, char expected[], char got) {
 
 // Returns the tokens of the source in the lexer, the resulting list must be
 // destroyed
-TokenList lex(Lexer *l) {
-  TokenList tokens;
-  if (TokenListInit(&tokens, 8)) {
-    panic("Couldn't initialise token list.");
-  }
+void lex(Lexer *l) {
   Token token = {NULL, T_ILLEGAL, 0};
   char p;
   char *text;
@@ -396,13 +396,11 @@ TokenList lex(Lexer *l) {
     }
 
     // Add that token to the end of the list
-    if (TokenListAppend(&tokens, token)) {
+    if (TokenListAppend(&l->out, token)) {
       panic("Couldn't append to token list.");
     }
 
     // Clear the token
     token = (Token){NULL, T_ILLEGAL, 0};
   }
-
-  return tokens;
 }

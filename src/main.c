@@ -1,3 +1,4 @@
+#include "Lexer.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -60,11 +61,24 @@ int main(int argc, char *argv[]) {
   }
 
   // Lex every file
+  Lexer *lexers[argc - 1];
+  for (int i = 1; i < argc; ++i) {
+    lexerInit(lexers[i - 1], argv[i], files[argc - 1]);
+    lex(lexers[i - 1]);
+  }
 
   // Close all the files before moving on
   _fcloseall();
 
   // Parse every file
+
+  // Destroy the tokens
+  for (int i = 1; i < argc; ++i) {
+    for (int j = 0; j < lexers[i - 1]->out.len; ++j) {
+      tokenDestroy(&lexers[i - 1]->out.p[j]);
+    }
+    TokenListDestroy(&lexers[i - 1]->out);
+  }
 
   // Hoist from each file into one place
 
