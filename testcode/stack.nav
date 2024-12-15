@@ -1,0 +1,50 @@
+struct Node {
+	value any,
+	prev Node^m
+}
+
+struct Stack {
+	tail Node^
+	length int
+}
+
+fun (s Stack^) push(value any) {
+	n Node^ = `new Node(value, nil);
+
+	++s.length;
+
+	if s.length == 1 {
+		s.tail = n;
+		return;
+	}
+
+	n.prev = s.tail;
+	s.tail = n;
+}
+
+fun (s Stack^) pop() any {
+	if s.length == 0 {
+		return nil;
+	}
+
+	--s.length;
+
+	if s.length == 0 {
+		tail Node^ = s.tail;
+		s.tail = nil;
+		return tail.value;
+	}
+
+	tail Node^ = s.tail;
+	s.tail = s.tail.prev;
+	return tail.value;
+}
+
+fun (s Stack^) peek() any {
+	// Length == 0
+	if s.tail == nil {
+		return nil;
+	}
+
+	return s.tail.value;
+}
