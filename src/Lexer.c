@@ -10,7 +10,7 @@
 #define IS_ALPHA(VAL)                                                          \
   ((VAL) >= 'a' && (VAL) <= 'z') || ((VAL) >= 'A' && (VAL) <= 'Z')
 #define VALID_IDENT_CHAR(VAL) (IS_ALPHA(VAL) || IS_DIGIT(VAL) || (VAL) == '_')
-#define VALID_NUM_CHAR(VAL) (IS_DIGIT(VAL) || (VAL) == '.')
+#define VALID_NUM_CHAR(VAL) (IS_DIGIT(VAL) || (VAL) == '.' || (VAL) == '_')
 #define STR_BUFF_SIZE 100
 
 NEW_LIST_TYPE(Token, Token)
@@ -62,6 +62,7 @@ void lex(Lexer *l) {
   char *text;
   char strBuff[STR_BUFF_SIZE];
   int dynLen; // Length of variable sized token text
+  bool escaped;
 
   // A NO_TOKEN in this loop means skipping the token append
   while (l->curChar >= 0) {
@@ -81,49 +82,49 @@ void lex(Lexer *l) {
     // Single character
     case '.':
       token = (Token){NULL, T_ACCESS, l->line};
-        break;
+      break;
     case ':':
       token = (Token){NULL, T_COLON, l->line};
-        break;
+      break;
     case ';':
       token = (Token){NULL, T_SEMICOLON, l->line};
-        break;
+      break;
     case ',':
       token = (Token){NULL, T_SEP, l->line};
-        break;
+      break;
     case '%':
       token = (Token){NULL, T_MOD, l->line};
-        break;
+      break;
     case '*':
       token = (Token){NULL, T_MUL, l->line};
-        break;
+      break;
     case '~':
       token = (Token){NULL, T_XOR, l->line};
-        break;
+      break;
     case '^':
       token = (Token){NULL, T_DEREF, l->line};
-        break;
+      break;
     case '`':
       token = (Token){NULL, T_REF, l->line};
-        break;
+      break;
     case '[':
       token = (Token){NULL, T_L_BLOCK, l->line};
-        break;
+      break;
     case ']':
       token = (Token){NULL, T_R_BLOCK, l->line};
-        break;
+      break;
     case '{':
       token = (Token){NULL, T_L_SQUIRLY, l->line};
-        break;
+      break;
     case '}':
       token = (Token){NULL, T_R_SQUIRLY, l->line};
-        break;
+      break;
     case '(':
       token = (Token){NULL, T_L_PAREN, l->line};
-        break;
+      break;
     case ')':
       token = (Token){NULL, T_R_PAREN, l->line};
-        break;
+      break;
 
       // Could be double
     case '=':
@@ -133,7 +134,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_ASSIGN, l->line};
       }
-        break;
+      break;
     case '+':
       if (l->peekChar == '+') {
         nextChar(l);
@@ -141,7 +142,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_ADD, l->line};
       }
-        break;
+      break;
     case '&':
       if (l->peekChar == '&') {
         nextChar(l);
@@ -149,7 +150,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_AND, l->line};
       }
-        break;
+      break;
     case '!':
       if (l->peekChar == '=') {
         nextChar(l);
@@ -157,7 +158,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_NOT, l->line};
       }
-        break;
+      break;
     case '|':
       if (l->peekChar == '|') {
         nextChar(l);
@@ -165,7 +166,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_OR, l->line};
       }
-        break;
+      break;
     case '-':
       if (l->peekChar == '-') {
         nextChar(l);
@@ -173,7 +174,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_SUB, l->line};
       }
-        break;
+      break;
 
       // Slightly larger cases
     case '>':
@@ -186,7 +187,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_GT, l->line};
       }
-        break;
+      break;
     case '<':
       if (l->peekChar == '<') {
         nextChar(l);
@@ -197,7 +198,7 @@ void lex(Lexer *l) {
       } else {
         token = (Token){NULL, T_LT, l->line};
       }
-        break;
+      break;
 
       // Comment, divide
     case '/':
@@ -207,7 +208,7 @@ void lex(Lexer *l) {
         }
         nextChar(l); // Now the character for the next loop is the first one of
                      // the next line
-          goto NO_TOKEN;
+        goto NO_TOKEN;
       } else if (l->peekChar == '*') {
         nextChar(l);
         while ((l->peekChar != '/' || l->curChar != '*') && l->peekChar >= 0) {
@@ -217,7 +218,7 @@ void lex(Lexer *l) {
         // comment
         nextChar(l);
         nextChar(l);
-          goto NO_TOKEN;
+        goto NO_TOKEN;
       } else {
         token = (Token){NULL, T_DIV, l->line};
         break;
@@ -233,14 +234,21 @@ void lex(Lexer *l) {
       strBuff[0] = l->curChar;
       nextChar(l);
 
+      // Backslash?
+      escaped = false;
+
       // Copy char text
-      while (l->curChar!= '\'' && dynLen < STR_BUFF_SIZE) {
+      while (!(l->curChar == '\'' && !escaped) && dynLen < STR_BUFF_SIZE) {
+        escaped = false;
+
         // Invalid characters in char
         switch (l->curChar) {
         case '\n':
           throwError(l, "No newline in character", '\n');
         case '\r':
           throwError(l, "No return in character", '\r');
+        case '\\':
+          escaped = true;
         }
 
         // Copy in next char
@@ -254,8 +262,8 @@ void lex(Lexer *l) {
         }
       }
 
-        strBuff[dynLen] = l->curChar;
-        ++dynLen;
+      strBuff[dynLen] = l->curChar;
+      ++dynLen;
 
       // Empty character
       if (dynLen == 2) {
@@ -265,9 +273,9 @@ void lex(Lexer *l) {
       // Copy over to dynamic allocation, freeing up strBuff for next char,
       // string, etc
       text = malloc((dynLen + 1) * sizeof(char));
-        if (!text) {
-      panic("OOM\n");
-        }
+      if (!text) {
+        panic("OOM\n");
+      }
       if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
         panic("Couldn't copy string\n");
       }
@@ -275,7 +283,7 @@ void lex(Lexer *l) {
 
       // Save the token
       token = (Token){text, T_CHAR, l->line};
-        break;
+      break;
 
     // String
     case '"':
@@ -287,14 +295,21 @@ void lex(Lexer *l) {
       strBuff[0] = l->curChar;
       nextChar(l);
 
+      // Backslash?
+      escaped = false;
+
       // Copy string text
-      while (l->curChar != '\"' && dynLen < STR_BUFF_SIZE) {
+      while (!(l->curChar == '\"' && !escaped) && dynLen < STR_BUFF_SIZE) {
+        escaped = false;
+
         // Invalid characters in string
         switch (l->curChar) {
         case '\n':
           throwError(l, "No newline in string", '\n');
         case '\r':
           throwError(l, "No return in string", '\r');
+        case '\\':
+          escaped = true;
         }
 
         // Copy in next char
@@ -311,17 +326,17 @@ void lex(Lexer *l) {
       // Copy over to dynamic allocation, freeing up strBuff for next char,
       // string, etc
       text = malloc((dynLen + 1) * sizeof(char));
-        if (!text) {
-      panic("OOM\n");
-        }
-      if (strcpy_s(text, (unsigned long long)(d
-      nic("Couldn't copy string\n");
+      if (!text) {
+        panic("OOM\n");
+      }
+      if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
+        panic("Couldn't copy string\n");
       }
       text[dynLen] = 0;
 
       // Save the token
       token = (Token){text, T_STRING, l->line};
-        break;
+      break;
 
     default:
       // Number
@@ -336,6 +351,11 @@ void lex(Lexer *l) {
         // Get length of number
         bool isFloat = false;
         while (VALID_NUM_CHAR(l->peekChar) && dynLen < STR_BUFF_SIZE) {
+          // Don't add underscores to final string
+          if (l->curChar == '_') {
+            nextChar(l);
+            continue;
+          }
           // Copy in next char
           nextChar(l);
           strBuff[dynLen] = l->curChar;
@@ -353,7 +373,7 @@ void lex(Lexer *l) {
         // string, etc
         text = malloc((dynLen + 1) * sizeof(char));
         if (!text) {
-      panic("OOM\n");
+          panic("OOM\n");
         }
         if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
           panic("Couldn't copy string\n");

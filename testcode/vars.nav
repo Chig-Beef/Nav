@@ -8,4 +8,5 @@ fun main() {
 	let int g = 21 % 3;
 	let bool h = !c;
 	let wah i = (8 + 7) / 5;
+	let char j = '\n';
 }
