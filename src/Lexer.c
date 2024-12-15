@@ -231,44 +231,45 @@ void lex(Lexer *l) {
 
       // Get the buffer ready
       memset(strBuff, 0, STR_BUFF_SIZE);
-      strBuff[0] = l->curChar;
+      strBuff[0] = '\'';
       nextChar(l);
 
-      // Backslash?
-      escaped = false;
+      switch (l->curChar) {
+      case '\'':
+        throwError(l, "Char in character definition", '\'');
+      case '\n':
+        throwError(l, "No newline in character", '\n');
+      case '\r':
+        throwError(l, "No return in character", '\r');
+      case '\\':
+        strBuff[dynLen] = l->curChar;
+        nextChar(l);
+        ++dynLen;
 
-      // Copy char text
-      while (!(l->curChar == '\'' && !escaped) && dynLen < STR_BUFF_SIZE) {
-        escaped = false;
-
-        // Invalid characters in char
         switch (l->curChar) {
         case '\n':
           throwError(l, "No newline in character", '\n');
         case '\r':
           throwError(l, "No return in character", '\r');
-        case '\\':
-          escaped = true;
+        default:
+          strBuff[dynLen] = l->curChar;
+          nextChar(l);
+          ++dynLen;
         }
+        break;
 
-        // Copy in next char
+      default:
         strBuff[dynLen] = l->curChar;
         nextChar(l);
         ++dynLen;
-
-        // End of source?
-        if (l->curChar < 0) {
-          throwError(l, "More source for character", 0);
-        }
       }
 
-      strBuff[dynLen] = l->curChar;
+      if (l->curChar != '\'') {
+        throwError(l, "End of character literal", l->curChar);
+      }
+
+      strBuff[dynLen] = '\'';
       ++dynLen;
-
-      // Empty character
-      if (dynLen == 2) {
-        throwError(l, "Char in character definition", '\'');
-      }
 
       // Copy over to dynamic allocation, freeing up strBuff for next char,
       // string, etc
@@ -279,7 +280,6 @@ void lex(Lexer *l) {
       if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
         panic("Couldn't copy string\n");
       }
-      text[dynLen] = 0;
 
       // Save the token
       token = (Token){text, T_CHAR, l->line};

@@ -6,7 +6,7 @@ Lexer
 - [x] Backslash in characters
 - [x] Backslash in strings
 - [x] Underscores in numbers
-- [ ] Replace character loop with static code
+- [x] Replace character loop with static code
 
 Parser
 
