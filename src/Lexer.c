@@ -63,8 +63,6 @@ void lex(Lexer *l) {
   char strBuff[STR_BUFF_SIZE];
   int dynLen; // Length of variable sized token text
 
-  printf("Enter Lexer\n");
-
   // A NO_TOKEN in this loop means skipping the token append
   while (l->curChar >= 0) {
     switch (l->curChar) {
@@ -267,6 +265,9 @@ void lex(Lexer *l) {
       // Copy over to dynamic allocation, freeing up strBuff for next char,
       // string, etc
       text = malloc((dynLen + 1) * sizeof(char));
+        if (!text) {
+      panic("OOM\n");
+        }
       if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
         panic("Couldn't copy string\n");
       }
@@ -287,7 +288,7 @@ void lex(Lexer *l) {
       nextChar(l);
 
       // Copy string text
-      while (l->curChar != '\"') {
+      while (l->curChar != '\"' && dynLen < STR_BUFF_SIZE) {
         // Invalid characters in string
         switch (l->curChar) {
         case '\n':
@@ -310,8 +311,11 @@ void lex(Lexer *l) {
       // Copy over to dynamic allocation, freeing up strBuff for next char,
       // string, etc
       text = malloc((dynLen + 1) * sizeof(char));
-      if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
-        panic("Couldn't copy string\n");
+        if (!text) {
+      panic("OOM\n");
+        }
+      if (strcpy_s(text, (unsigned long long)(d
+      nic("Couldn't copy string\n");
       }
       text[dynLen] = 0;
 
@@ -331,7 +335,7 @@ void lex(Lexer *l) {
 
         // Get length of number
         bool isFloat = false;
-        while (VALID_NUM_CHAR(l->peekChar)) {
+        while (VALID_NUM_CHAR(l->peekChar) && dynLen < STR_BUFF_SIZE) {
           // Copy in next char
           nextChar(l);
           strBuff[dynLen] = l->curChar;
@@ -348,6 +352,9 @@ void lex(Lexer *l) {
         // Copy over to dynamic allocation, freeing up strBuff for next char,
         // string, etc
         text = malloc((dynLen + 1) * sizeof(char));
+        if (!text) {
+      panic("OOM\n");
+        }
         if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
           panic("Couldn't copy string\n");
         }
@@ -375,7 +382,7 @@ void lex(Lexer *l) {
         strBuff[0] = l->curChar;
 
         // Get length of word
-        while (VALID_IDENT_CHAR(l->peekChar)) {
+        while (VALID_IDENT_CHAR(l->peekChar) && dynLen < STR_BUFF_SIZE) {
           // Copy in next char
           nextChar(l);
           strBuff[dynLen] = l->curChar;
