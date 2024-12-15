@@ -1,0 +1,17 @@
+/*
+Structs hold ordered data of varying types
+*/
+
+struct Point {
+	int x,
+	int y,
+	char *id,
+}
+
+// Problem with this is that now the
+// identifier Point is handled as a
+// type, which requires extra logic to
+// figure out?
+let Point p = new Point(0, 0, "origin");
+
+p.x = 3;

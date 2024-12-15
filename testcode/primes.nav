@@ -1,0 +1,11 @@
+for (let int i = 2; i < 100; ++i) { 
+	let bool prime = true;
+	for (let int j = 2; j < i; ++j) {
+		if (i%j == 0) {
+			prime = false;
+		}
+	}
+	if (prime) {
+		call print("%i\n", i);
+	}
+}

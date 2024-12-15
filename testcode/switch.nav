@@ -1,0 +1,18 @@
+let int a = 3;
+
+switch (a) {
+case 0:
+	call print("Nothing\n");
+	break;
+case 1:
+	call print("Singular\n");
+	break;
+case 2:
+	call print("Duo\n");
+	break;
+case 3:
+	call print("Triangle\n");
+	break;
+default:
+	call print("No idea\n");
+}

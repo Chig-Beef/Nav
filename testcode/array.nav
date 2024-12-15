@@ -1,0 +1,7 @@
+let char[3] x = make [1, 2, 3+4];
+let string[3] y = make ["a", "b", "c"];
+let float^[2] z = make [`1.1, `2.2];
+
+// Prefixing with the index makes it easier to differentiate between other
+// cases, however, this might be changed in future
+x[0] = 7;

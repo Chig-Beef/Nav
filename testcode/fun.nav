@@ -1,0 +1,4 @@
+// Returns the sum of a and b
+fun sum(int a, int b) int {
+    return a + b;
+}

@@ -1,0 +1,12 @@
+// Sort an array the worst way possible
+fun bubbleSort(arr int^, len int) {
+	for (let int i = 0; i < len; ++i) {
+		for (let int j = 0; j < len-1-i; ++j) {
+			if ([j]arr > [j+1]arr) {
+				let int tmp = [j]arr;
+				arr[j] = [j+1]arr;
+				arr[j+1] = tmp;
+			}
+		}
+	}
+}
