@@ -16,6 +16,7 @@ typedef enum TokenCode {
   T_FOR,
   T_FUN,
   T_IF,
+  T_LET,
   T_MAKE,
   T_NEW,
   T_RETURN,

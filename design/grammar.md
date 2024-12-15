@@ -1,7 +1,7 @@
 # Grammar for Nav
 program = {enumDef | funcDef | structDef};
 enumDef = 'enum', IDENTIFIER, '{', IDENTIFIER, {',', IDENTIFIER,} [',',] '}';
-funcDef = 'fun', IDENTIFIER, '(', [complexType, IDENTIFIER], {',', complexType, IDENTIFIER,} ')' complexType block;
+funcDef = 'fun', IDENTIFIER, '(', [complexType, IDENTIFIER], {',', complexType, IDENTIFIER,} ')' [complexType] block;
 structDef = 'struct', IDENTIFIER, '{', complexType, IDENTIFIER, {',' complexType, IDENTIFIER}, [','] '}';
 complexType = IDENTIFIER | (complexType, index | '^');
 block = '{', {statement}, '}';

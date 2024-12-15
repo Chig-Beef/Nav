@@ -1,0 +1,42 @@
+let int x = 7;
+let int y= 0;
+if (x == 7) {
+	y = 3;
+} elif (x == 3) {
+	y = 7;
+} else {
+	y = 0;
+}
+
+for (let int i = 0; i < 7; ++i) {
+	x = 7;
+	if (x == 7) {
+		y = 3;
+	} elif (x == 3) {
+		y = 7;
+	} else {
+		y = 0;
+		continue;
+	}
+}
+
+
+for (;;) {
+	x = 7;
+	if (x == 7) {
+		y = 3;
+	} elif (x == 3) {
+		y = 7;
+	} else {
+		y = 0;
+	}
+	break;
+}
+
+for (x = 0; x < 10; ++x) {
+
+}
+
+for (;x < 10;) {
+	++x;
+}

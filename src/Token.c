@@ -39,6 +39,8 @@ char *tokenCodeString(TokenCode tc) {
     return "T_FUN";
   case T_IF:
     return "T_IF";
+    case T_LET:
+    return "T_LET";
   case T_MAKE:
     return "T_MAKE";
   case T_NEW:

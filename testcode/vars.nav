@@ -1,0 +1,11 @@
+fun main() {
+	let int a = 0;
+	let char b^ = "hello";
+	let bool c = true;
+	let float d = 3.14;
+	let char e = 'e';
+	let int f = a + 7;
+	let int g = 21 % 3;
+	let bool h = !c;
+	let wah i = (8 + 7) / 5;
+}
