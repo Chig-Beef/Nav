@@ -126,3 +126,5 @@ char *nodeCodeString(NodeCode tc);
 
 // Returns a string describing the token. The resulting string must be freed.
 char *nodeString(Node *t);
+
+Node newNode(NodeCode kind, char *data, int line);

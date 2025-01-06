@@ -4,6 +4,18 @@
 
 NEW_LIST_TYPE(char, Char)
 
+#define ZERO_NODE (Node){N_ILLEGAL, ZERO_LIST, NULL, 0}
+
+Node newNode(NodeCode kind, char *data, int line) {
+  NodeList children;
+
+  if (NodeListInit(&children, 1)) {
+    return ZERO_NODE;
+  }
+
+  return (Node){kind, children, data, line};
+}
+
 errno_t NodeListInit(NodeList *l, int initialSize) {
   if (initialSize < 0) {
     return 1;

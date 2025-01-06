@@ -3,6 +3,8 @@
 #include <corecrt.h>
 #include <stdlib.h>
 
+#define ZERO_LIST (NodeList){NULL, 0, 0}
+
 // TODO:
 // pop, insert, clear, slice, sliceEnd, join, splice?
 
