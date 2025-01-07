@@ -457,3 +457,20 @@ Node parseRetState(Parser *p) {
 
   return out;
 }
+
+Node parseBreakState(Parser *p) {
+  Node out = newNode(N_BREAK_STATE, "Break State", p->tok.line);
+
+  CHECK_TOK(T_BREAK, "break")
+  if (NodeListAppend(&out.children, newNode(N_BREAK, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseBreakState");
+  }
+  nextToken(p);
+
+  CHECK_TOK(T_SEMICOLON, ";")
+  if (NodeListAppend(&out.children, newNode(N_SEMICOLON, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseBreakState");
+  }
+
+  return out;
+}
