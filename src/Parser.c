@@ -404,3 +404,35 @@ Node parseIfBlock(Parser *p) {
 
   return out;
 }
+
+Node parseForLoop(Parser *p) {
+  Node out = newNode(N_FOR_LOOP, "For Loop", p->tok.line);
+
+  CHECK_TOK(T_FOR, "for")
+  if (NodeListAppend(&out.children, newNode(N_IF, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseIfBlock");
+  }
+  nextToken(p);
+
+  // TODO: possible Assignment or newassignment
+
+  CHECK_TOK(T_SEMICOLON, ";")
+  if (NodeListAppend(&out.children, newNode(N_SEMICOLON, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseIfBlock");
+  }
+  nextToken(p);
+
+  // TODO: possible Expression
+
+  CHECK_TOK(T_SEMICOLON, ";")
+  if (NodeListAppend(&out.children, newNode(N_SEMICOLON, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseIfBlock");
+  }
+  nextToken(p);
+
+  // TODO: Possible assignment
+
+  // TODO: Block
+
+  return out;
+}
