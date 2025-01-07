@@ -520,3 +520,17 @@ Node parseMakeArray(Parser *p) {
 
   return out;
 }
+
+Node parseLoneCall(Parser *p) {
+  Node out = newNode(N_LONE_CALL, "Lone Call", p->tok.line);
+
+  if (NodeListAppend(&out.children, parseFuncCall(p))) {
+    panic("Couldn't append to Node list in parseLoneCall");
+  }
+  nextToken(p);
+
+  CHECK_TOK(T_SEMICOLON, ";")
+  APPEND_NODE(N_SEMICOLON, NULL, "parseLoneCall")
+
+  return out;
+}
