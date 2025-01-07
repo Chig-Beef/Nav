@@ -4,8 +4,6 @@
 
 NEW_LIST_TYPE(char, Char)
 
-#define ZERO_NODE (Node){N_ILLEGAL, ZERO_LIST, NULL, 0}
-
 Node newNode(NodeCode kind, char *data, int line) {
   NodeList children;
 
@@ -67,9 +65,15 @@ errno_t NodeListRemoveAt(NodeList *l, int index) {
   return 0;
 }
 
+// Recursively frees all children
 void nodeDestroy(Node *n) {
   if (n->data) {
     free(n->data);
+  }
+
+  for (int i = 0; i < n->children.len; ++i) {
+    nodeDestroy(n->children.p + i);
+    free(n->children.p + i);
   }
 }
 

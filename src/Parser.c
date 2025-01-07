@@ -32,10 +32,10 @@ Token peekToken(Parser *p) {
   return (Token){NULL, T_ILLEGAL, 0};
 }
 
-void throwError(Parser *p, int line, char expected[], Token got) {
+void throwError(Parser *p, char expected[]) {
   printf("Error in the Parser!\n"
          "Error found in file: %s\nOn line: %i\nExpected: %s\nGot: %s\n",
-         p->sourceName, line, expected, tokenString(&got));
+         p->sourceName, p->tok.line, expected, tokenString(&p->tok));
   exit(1);
 }
 
@@ -44,7 +44,7 @@ Node parse(Parser *p) {
   const char FUNC_NAME[] = "program";
 
   Node program = newNode(N_PROGRAM, NULL, 0);
-  Node *n;
+  Node n;
 
   nextToken(p);
 
@@ -77,11 +77,86 @@ Node parse(Parser *p) {
     case T_SWITCH:
       break;
     default:
-      throwError(p, p->tok.line, "Valid start to line", p->tok);
+      throwError(p, "Valid start to line");
     }
 
     nextToken(p);
   }
 
   return program;
+}
+
+Node parseStruct(Parser *p) {
+  Node out = newNode(N_STRUCT_DEF, "Struct Def", p->tok.line);
+
+  if (p->tok.kind != T_STRUCT) {
+    throwError(p, "struct");
+  }
+  if (NodeListAppend(&out.children, newNode(N_STRUCT, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStruct");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != T_IDENTIFIER) {
+    throwError(p, "identifier");
+  }
+  if (NodeListAppend(&out.children,
+                     newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStruct");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != T_L_SQUIRLY) {
+    throwError(p, "{");
+  }
+  if (NodeListAppend(&out.children, newNode(N_L_SQUIRLY, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStruct");
+  }
+  nextToken(p);
+
+  // ComplexType
+
+  if (p->tok.kind != T_IDENTIFIER) {
+    throwError(p, "identifier");
+  }
+  if (NodeListAppend(&out.children,
+                     newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStruct");
+  }
+  nextToken(p);
+
+  while (p->tok.kind == T_SEP) {
+    if (NodeListAppend(&out.children, newNode(N_SEP, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseStruct");
+    }
+    nextToken(p);
+
+    // ComplexType
+
+    if (p->tok.kind != T_IDENTIFIER) {
+      throwError(p, "identifier");
+    }
+    if (NodeListAppend(&out.children,
+                       newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+      panic("Couldn't append to Node list in parseStruct");
+    }
+    nextToken(p);
+  }
+
+  if (p->tok.kind == T_SEP) {
+    if (NodeListAppend(&out.children, newNode(N_SEP, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseStruct");
+    }
+    nextToken(p);
+  }
+
+  if (p->tok.kind != T_R_SQUIRLY) {
+    throwError(p, "}");
+  }
+  if (NodeListAppend(&out.children, newNode(N_R_SQUIRLY, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStruct");
+  }
+  nextToken(p);
+
+  return out;
 }

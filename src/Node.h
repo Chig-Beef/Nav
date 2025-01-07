@@ -1,5 +1,7 @@
 #pragma once
 
+#define ZERO_NODE (Node){N_ILLEGAL, ZERO_LIST, NULL, 0}
+
 #include "list.h"
 
 typedef enum NodeCode {
