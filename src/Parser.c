@@ -410,7 +410,7 @@ Node parseForLoop(Parser *p) {
 
   CHECK_TOK(T_FOR, "for")
   if (NodeListAppend(&out.children, newNode(N_IF, NULL, p->tok.line))) {
-    panic("Couldn't append to Node list in parseIfBlock");
+    panic("Couldn't append to Node list in parseForLoop");
   }
   nextToken(p);
 
@@ -418,7 +418,7 @@ Node parseForLoop(Parser *p) {
 
   CHECK_TOK(T_SEMICOLON, ";")
   if (NodeListAppend(&out.children, newNode(N_SEMICOLON, NULL, p->tok.line))) {
-    panic("Couldn't append to Node list in parseIfBlock");
+    panic("Couldn't append to Node list in parseForLoop");
   }
   nextToken(p);
 
@@ -426,13 +426,34 @@ Node parseForLoop(Parser *p) {
 
   CHECK_TOK(T_SEMICOLON, ";")
   if (NodeListAppend(&out.children, newNode(N_SEMICOLON, NULL, p->tok.line))) {
-    panic("Couldn't append to Node list in parseIfBlock");
+    panic("Couldn't append to Node list in parseForLoop");
   }
   nextToken(p);
 
   // TODO: Possible assignment
 
   // TODO: Block
+
+  return out;
+}
+
+Node parseRetState(Parser *p) {
+  Node out = newNode(N_RET_STATE, "Ret State", p->tok.line);
+
+  CHECK_TOK(T_RETURN, "return")
+  if (NodeListAppend(&out.children, newNode(N_RETURN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseRetState");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != ';') {
+    // TODO: Expression
+  }
+
+  CHECK_TOK(T_SEMICOLON, ";")
+  if (NodeListAppend(&out.children, newNode(N_SEMICOLON, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseRetState");
+  }
 
   return out;
 }
