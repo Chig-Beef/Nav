@@ -160,3 +160,76 @@ Node parseStruct(Parser *p) {
 
   return out;
 }
+
+Node parseEnum(Parser *p) {
+  Node out = newNode(N_ENUM_DEF, "Enum Def", p->tok.line);
+
+  if (p->tok.kind != T_ENUM) {
+    throwError(p, "enum");
+  }
+  if (NodeListAppend(&out.children, newNode(N_ENUM, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseEnum");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != T_IDENTIFIER) {
+    throwError(p, "identifier");
+  }
+  if (NodeListAppend(&out.children,
+                     newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+    panic("Couldn't append to Node list in parseEnum");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != T_L_SQUIRLY) {
+    throwError(p, "{");
+  }
+  if (NodeListAppend(&out.children, newNode(N_L_SQUIRLY, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseEnum");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != T_IDENTIFIER) {
+    throwError(p, "identifier");
+  }
+  if (NodeListAppend(&out.children,
+                     newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+    panic("Couldn't append to Node list in parseEnum");
+  }
+  nextToken(p);
+
+  while (p->tok.kind == T_SEP) {
+    if (NodeListAppend(&out.children, newNode(N_SEP, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseEnum");
+    }
+    nextToken(p);
+
+    // ComplexType
+
+    if (p->tok.kind != T_IDENTIFIER) {
+      throwError(p, "identifier");
+    }
+    if (NodeListAppend(&out.children,
+                       newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+      panic("Couldn't append to Node list in parseEnum");
+    }
+    nextToken(p);
+  }
+
+  if (p->tok.kind == T_SEP) {
+    if (NodeListAppend(&out.children, newNode(N_SEP, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseEnum");
+    }
+    nextToken(p);
+  }
+
+  if (p->tok.kind != T_R_SQUIRLY) {
+    throwError(p, "}");
+  }
+  if (NodeListAppend(&out.children, newNode(N_R_SQUIRLY, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseEnum");
+  }
+  nextToken(p);
+
+  return out;
+}
