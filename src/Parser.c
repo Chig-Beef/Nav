@@ -343,3 +343,64 @@ Node parseIndex(Parser *p) {
 
   return out;
 }
+
+Node parseIfBlock(Parser *p) {
+  Node out = newNode(N_IF_BLOCK, "If Block", p->tok.line);
+
+  CHECK_TOK(T_IF, "if")
+  if (NodeListAppend(&out.children, newNode(N_IF, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseIfBlock");
+  }
+  nextToken(p);
+
+  CHECK_TOK(T_L_PAREN, "(")
+  if (NodeListAppend(&out.children, newNode(N_L_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseIfBlock");
+  }
+  nextToken(p);
+
+  // TODO: Expression
+
+  CHECK_TOK(T_R_PAREN, ")")
+  if (NodeListAppend(&out.children, newNode(N_R_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseIfBlock");
+  }
+  nextToken(p);
+
+  // TODO: Block
+
+  if (peekToken(p).kind == T_ELIF) {
+    nextToken(p);
+
+    if (NodeListAppend(&out.children, newNode(N_ELIF, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseIfBlock");
+    }
+    nextToken(p);
+
+    CHECK_TOK(T_L_PAREN, "(")
+    if (NodeListAppend(&out.children, newNode(N_L_PAREN, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseIfBlock");
+    }
+    nextToken(p);
+
+    // TODO: Expression
+
+    CHECK_TOK(T_R_PAREN, ")")
+    if (NodeListAppend(&out.children, newNode(N_R_PAREN, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseIfBlock");
+    }
+    nextToken(p);
+
+    // TODO: Block
+  }
+
+  if (peekToken(p).kind == T_ELSE) {
+    if (NodeListAppend(&out.children, newNode(N_ELSE, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseIfBlock");
+    }
+
+    // TODO: Block
+  }
+
+  return out;
+}

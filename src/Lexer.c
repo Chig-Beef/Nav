@@ -18,8 +18,7 @@ NEW_LIST_TYPE(Token, Token)
 typedef struct Lexer {
   char *sourceName;
   FILE *source;
-  char curChar;
-  char peekChar;
+  char curChar, peekChar;
   int line;
   TokenList out;
 } Lexer;
