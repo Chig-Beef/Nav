@@ -1,5 +1,6 @@
 #pragma once
 
+#include "list.h"
 typedef enum TokenCode {
   T_ILLEGAL,
 
@@ -89,3 +90,5 @@ char *tokenCodeString(TokenCode tc);
 
 // Returns a string describing the token. The resulting string must be freed.
 char *tokenString(Token *t);
+
+NEW_LIST_TYPE_HEADER(Token, Token)

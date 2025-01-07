@@ -1,8 +1,8 @@
+#pragma once
+
 #include "Token.h"
 #include "list.h"
 #include <stdio.h>
-
-NEW_LIST_TYPE_HEADER(Token, Token)
 
 typedef struct Lexer {
   char *sourceName;

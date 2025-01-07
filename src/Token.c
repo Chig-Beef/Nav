@@ -39,7 +39,7 @@ char *tokenCodeString(TokenCode tc) {
     return "T_FUN";
   case T_IF:
     return "T_IF";
-    case T_LET:
+  case T_LET:
     return "T_LET";
   case T_MAKE:
     return "T_MAKE";
@@ -163,4 +163,55 @@ char *tokenString(Token *t) {
   sprintf(out, "(%s %s)", t->data, kind);
 
   return out;
+}
+
+errno_t TokenListInit(TokenList *l, int initialSize) {
+  if (initialSize < 0) {
+    return 1;
+  }
+  l->len = 0;
+  l->cap = initialSize;
+  l->p = (Token *)calloc(initialSize, sizeof(Token));
+  if (l->p == ((void *)0)) {
+    return 1;
+  }
+  return 0;
+}
+void TokenListDestroy(TokenList *l) { free(l->p); }
+errno_t TokenListAppend(TokenList *l, Token item) {
+  if (l->len == l->cap) {
+    l->cap *= 2;
+    Token *newP = (Token *)calloc(l->cap, sizeof(Token));
+    if (newP == ((void *)0)) {
+      return 1;
+    }
+    for (int i = 0; i < l->len; ++i) {
+      newP[i] = l->p[i];
+    }
+    free(l->p);
+    l->p = newP;
+  }
+  l->p[l->len] = item;
+  ++l->len;
+  return 0;
+}
+TokenList TokenListCopy(TokenList *src) {
+  TokenList dest;
+  dest.len = src->len;
+  dest.cap = src->len;
+  dest.p = (Token *)calloc(dest.cap, sizeof(Token));
+  for (int i = 0; i < src->len; ++i) {
+    dest.p[i] = src->p[i];
+  }
+  return dest;
+}
+errno_t TokenListRemoveAt(TokenList *l, int index) {
+  if (index < 0 || index >= l->len) {
+    return 1;
+  }
+  --l->len;
+  for (int i = index; i < l->len; ++i) {
+    l->p[i] = l->p[i + 1];
+  }
+  return 0;
 }

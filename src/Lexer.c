@@ -1,6 +1,5 @@
 #include "Panic.h"
 #include "Token.h"
-#include "list.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +11,6 @@
 #define VALID_IDENT_CHAR(VAL) (IS_ALPHA(VAL) || IS_DIGIT(VAL) || (VAL) == '_')
 #define VALID_NUM_CHAR(VAL) (IS_DIGIT(VAL) || (VAL) == '.' || (VAL) == '_')
 #define STR_BUFF_SIZE 100
-
-NEW_LIST_TYPE(Token, Token)
 
 typedef struct Lexer {
   char *sourceName;
@@ -46,7 +43,7 @@ void lexerInit(Lexer *l, char sourceName[], FILE *source) {
   }
 }
 
-void throwError(Lexer *l, char expected[], char got) {
+void throwLexerError(Lexer *l, char expected[], char got) {
   printf("Error in the Lexer!\n"
          "Error found in file: %s\nOn line: %i\nExpected: %s\nGot: %c (%i)\n",
          l->sourceName, l->line, expected, got, got);
@@ -76,7 +73,7 @@ void lex(Lexer *l) {
     case '\r':
       goto NO_TOKEN;
     case 0:
-      throwError(l, "More source", 0);
+      throwLexerError(l, "More source", 0);
 
     // Single character
     case '.':
@@ -235,11 +232,11 @@ void lex(Lexer *l) {
 
       switch (l->curChar) {
       case '\'':
-        throwError(l, "Char in character definition", '\'');
+        throwLexerError(l, "Char in character definition", '\'');
       case '\n':
-        throwError(l, "No newline in character", '\n');
+        throwLexerError(l, "No newline in character", '\n');
       case '\r':
-        throwError(l, "No return in character", '\r');
+        throwLexerError(l, "No return in character", '\r');
       case '\\':
         strBuff[dynLen] = l->curChar;
         nextChar(l);
@@ -247,9 +244,9 @@ void lex(Lexer *l) {
 
         switch (l->curChar) {
         case '\n':
-          throwError(l, "No newline in character", '\n');
+          throwLexerError(l, "No newline in character", '\n');
         case '\r':
-          throwError(l, "No return in character", '\r');
+          throwLexerError(l, "No return in character", '\r');
         default:
           strBuff[dynLen] = l->curChar;
           nextChar(l);
@@ -264,7 +261,7 @@ void lex(Lexer *l) {
       }
 
       if (l->curChar != '\'') {
-        throwError(l, "End of character literal", l->curChar);
+        throwLexerError(l, "End of character literal", l->curChar);
       }
 
       strBuff[dynLen] = '\'';
@@ -304,9 +301,9 @@ void lex(Lexer *l) {
         // Invalid characters in string
         switch (l->curChar) {
         case '\n':
-          throwError(l, "No newline in string", '\n');
+          throwLexerError(l, "No newline in string", '\n');
         case '\r':
-          throwError(l, "No return in string", '\r');
+          throwLexerError(l, "No return in string", '\r');
         case '\\':
           escaped = true;
         }
@@ -318,7 +315,7 @@ void lex(Lexer *l) {
 
         // End of source?
         if (l->curChar < 0) {
-          throwError(l, "More source for string", 0);
+          throwLexerError(l, "More source for string", 0);
         }
       }
 
@@ -362,7 +359,7 @@ void lex(Lexer *l) {
 
           if (l->curChar == '.') {
             if (isFloat) {
-              throwError(l, "Only one decimal in float", '.');
+              throwLexerError(l, "Only one decimal in float", '.');
             }
             isFloat = true;
           }
@@ -380,7 +377,7 @@ void lex(Lexer *l) {
         text[dynLen] = 0;
 
         if (text[dynLen - 1] == '.') {
-          throwError(l, "Digits after decimal", '.');
+          throwLexerError(l, "Digits after decimal", '.');
         }
 
         // Save the token
@@ -471,7 +468,7 @@ void lex(Lexer *l) {
 
       // Bad char
       else {
-        throwError(l, "Any other character", l->curChar);
+        throwLexerError(l, "Any other character", l->curChar);
       }
     }
 

@@ -305,7 +305,7 @@ errno_t stringRec(Node *n, CharList *out, int indent) {
   // Data
   for (int i = 0; n->data[i]; ++i) {
     if (CharListAppend(out, n->data[i])) {
-      return NULL;
+      return 1;
     }
   }
 

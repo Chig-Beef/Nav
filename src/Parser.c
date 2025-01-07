@@ -1,14 +1,17 @@
 #include "Node.h"
 #include "Panic.h"
 #include "Token.h"
-#include "list.h"
 #include <stdio.h>
-
-NEW_LIST_TYPE(Token, Token)
 
 #define CHECK_TOK(tokenCode, expected)                                         \
   if (p->tok.kind != (tokenCode)) {                                            \
-    throwError(p, (expected));                                                 \
+    throwParserError(p, (expected));                                           \
+  }
+
+#define APPEND_NODE(tokenCode, tokenData, funcName)                            \
+  if (NodeListAppend(&out.children,                                            \
+                     newNode((tokenCode), (tokenData), p->tok.line))) {        \
+    panic("Couldn't append to Node list in " funcName);                        \
   }
 
 typedef struct Parser {
@@ -37,7 +40,7 @@ Token peekToken(Parser *p) {
   return (Token){NULL, T_ILLEGAL, 0};
 }
 
-void throwError(Parser *p, char expected[]) {
+void throwParserError(Parser *p, char expected[]) {
   printf("Error in the Parser!\n"
          "Error found in file: %s\nOn line: %i\nExpected: %s\nGot: %s\n",
          p->sourceName, p->tok.line, expected, tokenString(&p->tok));
@@ -82,7 +85,7 @@ Node parse(Parser *p) {
     case T_SWITCH:
       break;
     default:
-      throwError(p, "Valid start to line");
+      throwParserError(p, "Valid start to line");
     }
 
     nextToken(p);
@@ -318,7 +321,7 @@ Node parseOperator(Parser *p) {
     return newNode(N_R_SHIFT, NULL, p->tok.line);
 
   default:
-    throwError(p, "operator");
+    throwParserError(p, "operator");
 
     // This return never occurs
     return ZERO_NODE;
