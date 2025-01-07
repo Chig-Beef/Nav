@@ -491,3 +491,22 @@ Node parseContinueState(Parser *p) {
 
   return out;
 }
+
+Node parseBracketedValue(Parser *p) {
+  Node out = newNode(N_BRACKETED_VALUE, "Bracketed Value", p->tok.line);
+
+  CHECK_TOK(T_L_PAREN, "(")
+  if (NodeListAppend(&out.children, newNode(N_L_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseBracketedValue");
+  }
+  nextToken(p);
+
+  // TODO: Expression
+
+  CHECK_TOK(T_R_PAREN, ")")
+  if (NodeListAppend(&out.children, newNode(N_R_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseBracketedValue");
+  }
+
+  return out;
+}
