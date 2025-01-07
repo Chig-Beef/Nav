@@ -474,3 +474,20 @@ Node parseBreakState(Parser *p) {
 
   return out;
 }
+
+Node parseContinueState(Parser *p) {
+  Node out = newNode(N_CONTINUE_STATE, "Continue State", p->tok.line);
+
+  CHECK_TOK(T_CONTINUE, "continue")
+  if (NodeListAppend(&out.children, newNode(N_CONTINUE, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseContinueState");
+  }
+  nextToken(p);
+
+  CHECK_TOK(T_SEMICOLON, ";")
+  if (NodeListAppend(&out.children, newNode(N_SEMICOLON, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseContinueState");
+  }
+
+  return out;
+}
