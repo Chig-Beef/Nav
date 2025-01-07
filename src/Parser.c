@@ -355,3 +355,26 @@ Node parseOperator(Parser *p) {
     return ZERO_NODE;
   }
 }
+
+Node parseIndex(Parser *p) {
+  Node out = newNode(N_INDEX, "Index", p->tok.line);
+
+  if (p->tok.kind != T_L_BLOCK) {
+    throwError(p, "[");
+  }
+  if (NodeListAppend(&out.children, newNode(N_L_BLOCK, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseFunc");
+  }
+  nextToken(p);
+
+  // TODO: Expression
+
+  if (p->tok.kind != T_R_BLOCK) {
+    throwError(p, "]");
+  }
+  if (NodeListAppend(&out.children, newNode(N_R_BLOCK, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseFunc");
+  }
+
+  return out;
+}
