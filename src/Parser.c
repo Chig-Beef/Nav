@@ -114,7 +114,7 @@ Node parseStruct(Parser *p) {
   }
   nextToken(p);
 
-  // ComplexType
+  // TODO: ComplexType
 
   if (p->tok.kind != T_IDENTIFIER) {
     throwError(p, "identifier");
@@ -131,7 +131,7 @@ Node parseStruct(Parser *p) {
     }
     nextToken(p);
 
-    // ComplexType
+    // TODO: ComplexType
 
     if (p->tok.kind != T_IDENTIFIER) {
       throwError(p, "identifier");
@@ -204,7 +204,7 @@ Node parseEnum(Parser *p) {
     }
     nextToken(p);
 
-    // ComplexType
+    // TODO: ComplexType
 
     if (p->tok.kind != T_IDENTIFIER) {
       throwError(p, "identifier");
@@ -230,6 +230,81 @@ Node parseEnum(Parser *p) {
     panic("Couldn't append to Node list in parseEnum");
   }
   nextToken(p);
+
+  return out;
+}
+
+Node parseFunc(Parser *p) {
+  Node out = newNode(N_FUNC_DEF, "Func Def", p->tok.line);
+
+  if (p->tok.kind != T_FUN) {
+    throwError(p, "fun");
+  }
+  if (NodeListAppend(&out.children, newNode(N_FUN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseFunc");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != T_IDENTIFIER) {
+    throwError(p, "identifier");
+  }
+  if (NodeListAppend(&out.children,
+                     newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+    panic("Couldn't append to Node list in parseFunc");
+  }
+  nextToken(p);
+
+  if (p->tok.kind != T_L_PAREN) {
+    throwError(p, "(");
+  }
+  if (NodeListAppend(&out.children, newNode(N_L_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseFunc");
+  }
+  nextToken(p);
+
+  // First param
+  if (p->tok.kind != T_SEP && p->tok.kind != T_R_PAREN) {
+    // TODO: Complex type
+
+    if (p->tok.kind != T_IDENTIFIER) {
+      throwError(p, "identifier");
+    }
+    if (NodeListAppend(&out.children,
+                       newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+      panic("Couldn't append to Node list in parseFunc");
+    }
+    nextToken(p);
+  }
+
+  while (p->tok.kind == T_SEP) {
+    if (NodeListAppend(&out.children, newNode(N_SEP, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseFunc");
+    }
+    nextToken(p);
+
+    // TODO: Complex type
+
+    if (p->tok.kind != T_IDENTIFIER) {
+      throwError(p, "identifier");
+    }
+    if (NodeListAppend(&out.children,
+                       newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+      panic("Couldn't append to Node list in parseFunc");
+    }
+    nextToken(p);
+  }
+
+  if (p->tok.kind != T_R_PAREN) {
+    throwError(p, ")");
+  }
+  if (NodeListAppend(&out.children, newNode(N_R_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseFunc");
+  }
+  nextToken(p);
+
+  // TODO: Maybe complex type
+
+  // TODO: Block
 
   return out;
 }
