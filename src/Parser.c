@@ -308,3 +308,50 @@ Node parseFunc(Parser *p) {
 
   return out;
 }
+
+Node parseOperator(Parser *p) {
+  switch (p->tok.kind) {
+  case T_ADD:
+    return newNode(N_ADD, NULL, p->tok.line);
+  case T_AND:
+    return newNode(N_AND, NULL, p->tok.line);
+  case T_ANDAND:
+    return newNode(N_ANDAND, NULL, p->tok.line);
+  case T_DIV:
+    return newNode(N_DIV, NULL, p->tok.line);
+  case T_EQ:
+    return newNode(N_EQ, NULL, p->tok.line);
+  case T_GT:
+    return newNode(N_GT, NULL, p->tok.line);
+  case T_GTEQ:
+    return newNode(N_GTEQ, NULL, p->tok.line);
+  case T_LT:
+    return newNode(N_LT, NULL, p->tok.line);
+  case T_LTEQ:
+    return newNode(N_LTEQ, NULL, p->tok.line);
+  case T_MOD:
+    return newNode(N_MOD, NULL, p->tok.line);
+  case T_MUL:
+    return newNode(N_MUL, NULL, p->tok.line);
+  case T_NEQ:
+    return newNode(N_NEQ, NULL, p->tok.line);
+  case T_OR:
+    return newNode(N_OR, NULL, p->tok.line);
+  case T_OROR:
+    return newNode(N_OROR, NULL, p->tok.line);
+  case T_SUB:
+    return newNode(N_SUB, NULL, p->tok.line);
+  case T_XOR:
+    return newNode(N_XOR, NULL, p->tok.line);
+  case T_L_SHIFT:
+    return newNode(N_L_SHIFT, NULL, p->tok.line);
+  case T_R_SHIFT:
+    return newNode(N_R_SHIFT, NULL, p->tok.line);
+
+  default:
+    throwError(p, "operator");
+
+    // This return never occurs
+    return ZERO_NODE;
+  }
+}
