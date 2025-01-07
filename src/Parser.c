@@ -266,9 +266,7 @@ Node parseOperator(Parser *p) {
     return newNode(N_R_SHIFT, NULL, p->tok.line);
 
   default:
-    throwParserError(p, "operator");
-
-    // This return never occurs
+    // Don't error, let caller handle it
     return ZERO_NODE;
   }
 }
@@ -531,6 +529,26 @@ Node parseLoneCall(Parser *p) {
 
   CHECK_TOK(T_SEMICOLON, ";")
   APPEND_NODE(N_SEMICOLON, NULL, "parseLoneCall")
+
+  return out;
+}
+
+Node parseExpression(Parser *p) {
+  Node out = newNode(N_EXPRESSION, "Expression", p->tok.line);
+
+  // TODO: unaryValue | value
+
+  Node n = parseOperator(p);
+  while (n.kind != N_ILLEGAL) {
+    if (NodeListAppend(&out.children, n)) {
+      panic("Couldn't append to Node list in parseExpression");
+    }
+    nextToken(p);
+
+    // TODO: unaryValue | value
+
+    n = parseOperator(p);
+  }
 
   return out;
 }
