@@ -13,7 +13,7 @@ value = number | char | string | bracketedValue | makeArray | funcCall | structN
 operator = '+' | '-' | '*' | '/' | '&' | '|' | '~';
 bracketedValue = '(', expression, ')';
 loneCall = funcCall, ';';
-makeArray = 'make', '[', expression, {',', expression}, [',',] ']';
+makeArray = 'make', '[', [expression, {',', expression}, [',',]] ']';
 funcCall = 'call', IDENTIFIER, '(', [expression, {',', expression,} [',',]] ')';
 structNew = 'new', IDENTIFIER, '(', [expression, {',', expression,} [',',]] ')';
 variableDeclaration -> (assignment | newassignment), ';'

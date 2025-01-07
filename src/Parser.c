@@ -488,3 +488,35 @@ Node parseFuncCall(Parser *p) {
 
   return out;
 }
+
+Node parseMakeArray(Parser *p) {
+  Node out = newNode(N_MAKE_ARRAY, "Make Array", p->tok.line);
+
+  CHECK_TOK(T_MAKE, "make")
+  APPEND_NODE(N_MAKE, NULL, "parseMakeArray")
+  nextToken(p);
+
+  CHECK_TOK(T_L_BLOCK, "[")
+  APPEND_NODE(N_L_BLOCK, NULL, "parseMakeArray")
+  nextToken(p);
+
+  // TODO: expression
+
+  while (p->tok.kind == T_SEP) {
+    APPEND_NODE(N_SEP, NULL, "parseMakeArray")
+    nextToken(p);
+
+    // TODO: expression
+  }
+
+  if (p->tok.kind == T_SEP) {
+    APPEND_NODE(N_SEP, NULL, "parseMakeArray")
+    nextToken(p);
+  }
+
+  CHECK_TOK(T_R_BLOCK, "]")
+  APPEND_NODE(N_R_BLOCK, NULL, "parseMakeArray")
+  nextToken(p);
+
+  return out;
+}
