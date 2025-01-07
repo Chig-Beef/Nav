@@ -6,6 +6,11 @@
 
 NEW_LIST_TYPE(Token, Token)
 
+#define CHECK_TOK(tokenCode, expected)                                         \
+  if (p->tok.kind != (tokenCode)) {                                            \
+    throwError(p, (expected));                                                 \
+  }
+
 typedef struct Parser {
   char *sourceName;
   TokenList source;
@@ -89,26 +94,20 @@ Node parse(Parser *p) {
 Node parseStruct(Parser *p) {
   Node out = newNode(N_STRUCT_DEF, "Struct Def", p->tok.line);
 
-  if (p->tok.kind != T_STRUCT) {
-    throwError(p, "struct");
-  }
+  CHECK_TOK(T_STRUCT, "struct")
   if (NodeListAppend(&out.children, newNode(N_STRUCT, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseStruct");
   }
   nextToken(p);
 
-  if (p->tok.kind != T_IDENTIFIER) {
-    throwError(p, "identifier");
-  }
+  CHECK_TOK(T_IDENTIFIER, "identifier")
   if (NodeListAppend(&out.children,
                      newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
     panic("Couldn't append to Node list in parseStruct");
   }
   nextToken(p);
 
-  if (p->tok.kind != T_L_SQUIRLY) {
-    throwError(p, "{");
-  }
+  CHECK_TOK(T_L_SQUIRLY, "{")
   if (NodeListAppend(&out.children, newNode(N_L_SQUIRLY, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseStruct");
   }
@@ -116,9 +115,7 @@ Node parseStruct(Parser *p) {
 
   // TODO: ComplexType
 
-  if (p->tok.kind != T_IDENTIFIER) {
-    throwError(p, "identifier");
-  }
+  CHECK_TOK(T_IDENTIFIER, "identifier")
   if (NodeListAppend(&out.children,
                      newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
     panic("Couldn't append to Node list in parseStruct");
@@ -133,9 +130,7 @@ Node parseStruct(Parser *p) {
 
     // TODO: ComplexType
 
-    if (p->tok.kind != T_IDENTIFIER) {
-      throwError(p, "identifier");
-    }
+    CHECK_TOK(T_IDENTIFIER, "identifier")
     if (NodeListAppend(&out.children,
                        newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
       panic("Couldn't append to Node list in parseStruct");
@@ -150,9 +145,7 @@ Node parseStruct(Parser *p) {
     nextToken(p);
   }
 
-  if (p->tok.kind != T_R_SQUIRLY) {
-    throwError(p, "}");
-  }
+  CHECK_TOK(T_R_SQUIRLY, "}")
   if (NodeListAppend(&out.children, newNode(N_R_SQUIRLY, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseStruct");
   }
@@ -164,34 +157,26 @@ Node parseStruct(Parser *p) {
 Node parseEnum(Parser *p) {
   Node out = newNode(N_ENUM_DEF, "Enum Def", p->tok.line);
 
-  if (p->tok.kind != T_ENUM) {
-    throwError(p, "enum");
-  }
+  CHECK_TOK(T_ENUM, "enum")
   if (NodeListAppend(&out.children, newNode(N_ENUM, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseEnum");
   }
   nextToken(p);
 
-  if (p->tok.kind != T_IDENTIFIER) {
-    throwError(p, "identifier");
-  }
+  CHECK_TOK(T_IDENTIFIER, "identifier")
   if (NodeListAppend(&out.children,
                      newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
     panic("Couldn't append to Node list in parseEnum");
   }
   nextToken(p);
 
-  if (p->tok.kind != T_L_SQUIRLY) {
-    throwError(p, "{");
-  }
+  CHECK_TOK(T_L_SQUIRLY, "{")
   if (NodeListAppend(&out.children, newNode(N_L_SQUIRLY, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseEnum");
   }
   nextToken(p);
 
-  if (p->tok.kind != T_IDENTIFIER) {
-    throwError(p, "identifier");
-  }
+  CHECK_TOK(T_IDENTIFIER, "identifier")
   if (NodeListAppend(&out.children,
                      newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
     panic("Couldn't append to Node list in parseEnum");
@@ -206,9 +191,7 @@ Node parseEnum(Parser *p) {
 
     // TODO: ComplexType
 
-    if (p->tok.kind != T_IDENTIFIER) {
-      throwError(p, "identifier");
-    }
+    CHECK_TOK(T_IDENTIFIER, "identifier")
     if (NodeListAppend(&out.children,
                        newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
       panic("Couldn't append to Node list in parseEnum");
@@ -223,9 +206,7 @@ Node parseEnum(Parser *p) {
     nextToken(p);
   }
 
-  if (p->tok.kind != T_R_SQUIRLY) {
-    throwError(p, "}");
-  }
+  CHECK_TOK(T_R_SQUIRLY, "}")
   if (NodeListAppend(&out.children, newNode(N_R_SQUIRLY, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseEnum");
   }
@@ -237,26 +218,20 @@ Node parseEnum(Parser *p) {
 Node parseFunc(Parser *p) {
   Node out = newNode(N_FUNC_DEF, "Func Def", p->tok.line);
 
-  if (p->tok.kind != T_FUN) {
-    throwError(p, "fun");
-  }
+  CHECK_TOK(T_FUN, "fun")
   if (NodeListAppend(&out.children, newNode(N_FUN, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseFunc");
   }
   nextToken(p);
 
-  if (p->tok.kind != T_IDENTIFIER) {
-    throwError(p, "identifier");
-  }
+  CHECK_TOK(T_IDENTIFIER, "identifier")
   if (NodeListAppend(&out.children,
                      newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
     panic("Couldn't append to Node list in parseFunc");
   }
   nextToken(p);
 
-  if (p->tok.kind != T_L_PAREN) {
-    throwError(p, "(");
-  }
+  CHECK_TOK(T_L_PAREN, "(")
   if (NodeListAppend(&out.children, newNode(N_L_PAREN, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseFunc");
   }
@@ -266,9 +241,7 @@ Node parseFunc(Parser *p) {
   if (p->tok.kind != T_SEP && p->tok.kind != T_R_PAREN) {
     // TODO: Complex type
 
-    if (p->tok.kind != T_IDENTIFIER) {
-      throwError(p, "identifier");
-    }
+    CHECK_TOK(T_IDENTIFIER, "identifier")
     if (NodeListAppend(&out.children,
                        newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
       panic("Couldn't append to Node list in parseFunc");
@@ -284,9 +257,7 @@ Node parseFunc(Parser *p) {
 
     // TODO: Complex type
 
-    if (p->tok.kind != T_IDENTIFIER) {
-      throwError(p, "identifier");
-    }
+    CHECK_TOK(T_IDENTIFIER, "identifier")
     if (NodeListAppend(&out.children,
                        newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
       panic("Couldn't append to Node list in parseFunc");
@@ -294,9 +265,7 @@ Node parseFunc(Parser *p) {
     nextToken(p);
   }
 
-  if (p->tok.kind != T_R_PAREN) {
-    throwError(p, ")");
-  }
+  CHECK_TOK(T_R_PAREN, ")")
   if (NodeListAppend(&out.children, newNode(N_R_PAREN, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseFunc");
   }
@@ -359,9 +328,7 @@ Node parseOperator(Parser *p) {
 Node parseIndex(Parser *p) {
   Node out = newNode(N_INDEX, "Index", p->tok.line);
 
-  if (p->tok.kind != T_L_BLOCK) {
-    throwError(p, "[");
-  }
+  CHECK_TOK(T_L_BLOCK, "[")
   if (NodeListAppend(&out.children, newNode(N_L_BLOCK, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseFunc");
   }
@@ -369,9 +336,7 @@ Node parseIndex(Parser *p) {
 
   // TODO: Expression
 
-  if (p->tok.kind != T_R_BLOCK) {
-    throwError(p, "]");
-  }
+  CHECK_TOK(T_R_BLOCK, "]")
   if (NodeListAppend(&out.children, newNode(N_R_BLOCK, NULL, p->tok.line))) {
     panic("Couldn't append to Node list in parseFunc");
   }
