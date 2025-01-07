@@ -510,3 +510,51 @@ Node parseBracketedValue(Parser *p) {
 
   return out;
 }
+
+Node parseStructNew(Parser *p) {
+  Node out = newNode(N_STRUCT_NEW, "Struct New", p->tok.line);
+
+  CHECK_TOK(T_STRUCT, "struct")
+  if (NodeListAppend(&out.children, newNode(N_STRUCT, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStructNew");
+  }
+  nextToken(p);
+
+  CHECK_TOK(T_IDENTIFIER, "identifier")
+  if (NodeListAppend(&out.children,
+                     newNode(N_IDENTIFIER, p->tok.data, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStructNew");
+  }
+  nextToken(p);
+
+  CHECK_TOK(T_L_PAREN, "(")
+  if (NodeListAppend(&out.children, newNode(N_L_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStructNew");
+  }
+  nextToken(p);
+
+  // TODO: expression
+
+  while (p->tok.kind == T_SEP) {
+    if (NodeListAppend(&out.children, newNode(N_SEP, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseStructNew");
+    }
+    nextToken(p);
+
+    // TODO: expression
+  }
+
+  if (p->tok.kind == T_SEP) {
+    if (NodeListAppend(&out.children, newNode(N_SEP, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in parseStructNew");
+    }
+    nextToken(p);
+  }
+
+  CHECK_TOK(T_R_PAREN, ")")
+  if (NodeListAppend(&out.children, newNode(N_R_PAREN, NULL, p->tok.line))) {
+    panic("Couldn't append to Node list in parseStructNew");
+  }
+
+  return out;
+}
