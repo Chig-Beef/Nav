@@ -1,4 +1,5 @@
 #include "Lexer.h"
+#include "Parser.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -71,11 +72,30 @@ int main(int argc, char *argv[]) {
     lex(&lexers[i - 1]);
   }
 
+  for (int i = 0; i < argc - 1; ++i) {
+
+    for (int j = 0; j < lexers[i].out.len; ++j) {
+      printf("%s, ", tokenString(&lexers[i].out.p[j]));
+    }
+    printf("\n");
+  }
+
   // Close all the files before moving on
   printf("Closing files\n");
   _fcloseall();
 
   // Parse every file
+  printf("Parsing\n");
+
+  Parser parsers[argc - 1];
+  for (int i = 1; i < argc; ++i) {
+    printf("Parsing %s\n", argv[i]);
+    parserInit(&parsers[i - 1], argv[i], lexers[i - 1].out);
+    printf("Init\n");
+    parse(&parsers[i - 1]);
+    printf("Parsed\n");
+    printf("%s\n", nodeString(&parsers[i - 1].out));
+  }
 
   // Destroy the tokens
   printf("Destroying Lexer garbage\n");
@@ -93,6 +113,8 @@ int main(int argc, char *argv[]) {
   // Optimize
 
   // Emit to C
+
+  printf("Finished\n");
 
   return 0;
 }

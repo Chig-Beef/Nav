@@ -28,7 +28,15 @@ typedef struct Parser {
   TokenList source;
   Token tok;
   int index;
+  Node out;
 } Parser;
+
+void parserInit(Parser *p, char *sourceName, TokenList source) {
+  p->sourceName = sourceName;
+  p->source = source;
+  p->index = 0;
+  p->tok.kind = T_ILLEGAL;
+}
 
 // Because the AST is a tree structure, we should pre-define everything
 Node parseStruct(Parser *p);
@@ -59,9 +67,11 @@ Node parseSwitchStatement(Parser *p);
 Node parseCaseBlock(Parser *p);
 Node parseDefaultBlock(Parser *p);
 Node parseBlock(Parser *p);
-Node parse(Parser *p);
+void parse(Parser *p);
 
 void nextToken(Parser *p) {
+  printf("Getting next token\n");
+
   Token t = {NULL, T_ILLEGAL, 0};
 
   if (p->index < p->source.len) {
@@ -70,6 +80,8 @@ void nextToken(Parser *p) {
 
   ++p->index;
   p->tok = t;
+
+  printf("Got next token\n");
 }
 
 Token peekToken(Parser *p) {
@@ -896,7 +908,8 @@ Node parseBlock(Parser *p) {
 }
 
 // The main program
-Node parse(Parser *p) {
+void parse(Parser *p) {
+  printf("Beginning parsing\n");
   const char FUNC_NAME[] = "program";
 
   Node out = newNode(N_PROGRAM, NULL, 0);
@@ -925,5 +938,6 @@ Node parse(Parser *p) {
     nextToken(p);
   }
 
-  return out;
+  p->out = out;
+  printf("Ending parsing\n");
 }

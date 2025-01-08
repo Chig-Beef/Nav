@@ -1,4 +1,5 @@
 #include "Token.h"
+#include "Panic.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -153,14 +154,32 @@ char *tokenCodeString(TokenCode tc) {
 
 // Returns a string describing the token. The resulting string must be freed.
 char *tokenString(Token *t) {
+  // printf("Stringing token\n");
+
   // Get text of token code
   char *kind = tokenCodeString(t->kind);
 
-  // The final string
-  char *out = malloc((strlen(kind) + strlen(t->data) + 4) * sizeof(char));
+  // printf("Got Code string\n");
 
-  // Format
-  sprintf(out, "(%s %s)", t->data, kind);
+  // The final string
+  char *out;
+
+  if (t->data) {
+    out = malloc((strlen(kind) + strlen(t->data) + 4) * sizeof(char));
+
+    // Format
+    sprintf(out, "(%s %s)", t->data, kind);
+  } else {
+    out = malloc((strlen(kind) + 4 + 4) * sizeof(char));
+
+    // Format
+    sprintf(out, "(NULL %s)", kind);
+  }
+  if (out == NULL) {
+    panic("Couldn't make string for tokenString");
+  }
+
+  // printf("Formatted final string\n");
 
   return out;
 }

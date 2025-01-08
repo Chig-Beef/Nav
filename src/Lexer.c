@@ -319,6 +319,9 @@ void lex(Lexer *l) {
         }
       }
 
+      strBuff[dynLen] = l->curChar;
+      ++dynLen;
+
       // Copy over to dynamic allocation, freeing up strBuff for next char,
       // string, etc
       text = malloc((dynLen + 1) * sizeof(char));
@@ -472,7 +475,6 @@ void lex(Lexer *l) {
       }
     }
 
-    printf("%s\n", tokenCodeString(token.kind));
     // Add that token to the end of the list
     if (TokenListAppend(&l->out, token)) {
       panic("Couldn't append to token list.");
