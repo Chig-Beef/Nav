@@ -777,3 +777,50 @@ Node parseSwitchStatement(Parser *p) {
 
   return out;
 }
+
+Node parseCaseBlock(Parser *p) {
+  Node out = newNode(N_CASE_BLOCK, "Case Block", p->tok.line);
+
+  CHECK_AND_APPEND(T_CASE, "case", N_CASE, NULL, "parseCaseBlock")
+  nextToken(p);
+
+  if (NodeListAppend(&out.children, parseExpression(p))) {
+    panic("Couldn't append to Node list in "
+          "parseSwitchStatement");
+  }
+  nextToken(p);
+
+  CHECK_AND_APPEND(T_COLON, ":", N_COLON, NULL, "parseCaseBlock")
+  nextToken(p);
+
+  while (p->tok.kind != T_CASE && p->tok.kind != T_DEFAULT &&
+         p->tok.kind != T_R_SQUIRLY) {
+    switch (p->tok.kind) {
+      // Statements
+    case T_CALL:
+      break;
+    case T_LET:
+      break;
+    case T_IDENTIFIER:
+      break;
+    case T_IF:
+      break;
+    case T_FOR:
+      break;
+    case T_RETURN:
+      break;
+    case T_BREAK:
+      break;
+    case T_CONTINUE:
+      break;
+    case T_SWITCH:
+      break;
+    default:
+      throwParserError(p, "Valid start to line");
+    }
+
+    nextToken(p);
+  }
+
+  return out;
+}
