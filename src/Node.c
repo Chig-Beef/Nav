@@ -117,8 +117,12 @@ char *nodeCodeString(NodeCode nc) {
     return "N_STRUCT_NEW";
   case N_VAR_DEC:
     return "N_VAR_DEC";
+  case N_NEW_ASSIGNMENT:
+    return "N_NEW_ASSIGNMENT";
   case N_CREMENT:
     return "N_CREMENT";
+  case N_ASSIGNMENT:
+    return "N_ASSIGNMENT";
   case N_IF_BLOCK:
     return "N_IF_BLOCK";
   case N_IF_SEC:

@@ -570,3 +570,37 @@ Node parseCrement(Parser *p) {
 
   return out;
 }
+
+Node parseAssignment(Parser *p) {
+  Node out = newNode(N_ASSIGNMENT, "Crement", p->tok.line);
+
+  // An assignment can just be a crement
+  if (p->tok.kind == T_INC || p->tok.kind == T_DEC) {
+    if (NodeListAppend(&out.children, parseCrement(p))) {
+      panic("Couldn't append to Node list in parseAssignment");
+    }
+    return out;
+  }
+
+  CHECK_TOK(T_IDENTIFIER, "identifier")
+  APPEND_NODE(N_IDENTIFIER, p->tok.data, "parseAssignment")
+  nextToken(p);
+
+  // Assigning to element in array?
+  if (p->tok.kind == T_L_BLOCK) {
+    if (NodeListAppend(&out.children, parseIndex(p))) {
+      panic("Couldn't append to Node list in parseAssignment");
+    }
+    nextToken(p);
+  }
+
+  CHECK_TOK(T_ASSIGN, "=")
+  APPEND_NODE(N_ASSIGN, NULL, "parseAssignment")
+  nextToken(p);
+
+  if (NodeListAppend(&out.children, parseExpression(p))) {
+    panic("Couldn't append to Node list in parseAssignment");
+  }
+
+  return out;
+}
