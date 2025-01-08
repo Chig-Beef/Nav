@@ -552,3 +552,21 @@ Node parseExpression(Parser *p) {
 
   return out;
 }
+
+Node parseCrement(Parser *p) {
+  Node out = newNode(N_CREMENT, "Crement", p->tok.line);
+
+  if (p->tok.kind == T_INC) {
+    APPEND_NODE(N_INC, NULL, "parseCrement")
+  } else if (p->tok.kind == T_DEC) {
+    APPEND_NODE(N_DEC, NULL, "parseCrement")
+  } else {
+    throwParserError(p, "inc or dec");
+  }
+  nextToken(p);
+
+  CHECK_TOK(T_IDENTIFIER, "identifier")
+  APPEND_NODE(N_IDENTIFIER, p->tok.data, "parseCrement")
+
+  return out;
+}
