@@ -652,3 +652,26 @@ Node parseVarDeclaration(Parser *p) {
 
   return out;
 }
+
+Node parseUnary(Parser *p) {
+  switch (p->tok.kind) {
+  case T_DEREF:
+    return newNode(N_DEREF, NULL, p->tok.line);
+  case T_DEC:
+    return newNode(N_DEC, NULL, p->tok.line);
+  case T_INC:
+    return newNode(N_INC, NULL, p->tok.line);
+  case T_NOT:
+    return newNode(N_NOT, NULL, p->tok.line);
+  case T_REF:
+    return newNode(N_REF, NULL, p->tok.line);
+  case T_ADD:
+    return newNode(N_ADD, NULL, p->tok.line);
+  case T_SUB:
+    return newNode(N_SUB, NULL, p->tok.line);
+
+  default:
+    // Don't error, let caller handle it
+    return ZERO_NODE;
+  }
+}

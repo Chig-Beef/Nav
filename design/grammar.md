@@ -28,3 +28,4 @@ contStatement -> 'continue', ';';
 switchStatement = "switch", "(", expression, ")", "{", {caseBlock}, [defaultBlock], "}";
 caseBlock = "case", expression, ":", { statement, } ;
 defaultBlock = "default", ":", { statement, } ;
+unary = '^' | '--' | '++' | '!' | '`' | '+' | '-' ;
