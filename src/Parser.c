@@ -100,7 +100,8 @@ Node parseStruct(Parser *p) {
   CHECK_AND_APPEND(T_L_SQUIRLY, "{", N_L_SQUIRLY, NULL, "parseStruct")
   nextToken(p);
 
-  // TODO: ComplexType
+  APPEND_STRUCTURE(parseComplexType, "parseStruct");
+  nextToken(p);
 
   CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
                    "parseStruct")
@@ -110,7 +111,8 @@ Node parseStruct(Parser *p) {
     APPEND_NODE(N_SEP, NULL, "parseStruct")
     nextToken(p);
 
-    // TODO: ComplexType
+    APPEND_STRUCTURE(parseComplexType, "parseStruct");
+    nextToken(p);
 
     CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
                      "parseStruct")
@@ -149,8 +151,6 @@ Node parseEnum(Parser *p) {
     APPEND_NODE(N_SEP, NULL, "parseEnum")
     nextToken(p);
 
-    // TODO: ComplexType
-
     CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
                      "parseEnum")
     nextToken(p);
@@ -180,32 +180,38 @@ Node parseFunc(Parser *p) {
   CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseFunc")
   nextToken(p);
 
-  // First param
-  if (p->tok.kind != T_SEP && p->tok.kind != T_R_PAREN) {
-    // TODO: Complex type
+  // We have params
+  if (p->tok.kind != T_R_PAREN) {
+    APPEND_STRUCTURE(parseComplexType, "parseFunc");
+    nextToken(p);
 
     CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
                      "parseFunc")
     nextToken(p);
-  }
 
-  while (p->tok.kind == T_SEP) {
-    APPEND_NODE(N_SEP, NULL, "parseFunc")
-    nextToken(p);
+    while (p->tok.kind == T_SEP) {
+      APPEND_NODE(N_SEP, NULL, "parseFunc")
+      nextToken(p);
 
-    // TODO: Complex type
+      APPEND_STRUCTURE(parseComplexType, "parseFunc");
+      nextToken(p);
 
-    CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                     "parseFunc")
-    nextToken(p);
+      CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
+                       "parseFunc")
+      nextToken(p);
+    }
   }
 
   CHECK_AND_APPEND(T_R_PAREN, ")", N_R_PAREN, NULL, "parseFunc")
   nextToken(p);
 
-  // TODO: Maybe complex type
+  // Return type
+  if (p->tok.kind != T_L_SQUIRLY) {
+    APPEND_STRUCTURE(parseComplexType, "parseFunc");
+    nextToken(p);
+  }
 
-  // TODO: Block
+  APPEND_STRUCTURE(parseBlock, "parseFunc");
 
   return out;
 }
@@ -261,7 +267,8 @@ Node parseIndex(Parser *p) {
   CHECK_AND_APPEND(T_L_BLOCK, "[", N_L_BLOCK, NULL, "parseIndex")
   nextToken(p);
 
-  // TODO: Expression
+  APPEND_STRUCTURE(parseExpression, "parseIndex");
+  nextToken(p);
 
   CHECK_AND_APPEND(T_R_BLOCK, "]", N_R_BLOCK, NULL, "parseIndex")
 
@@ -277,34 +284,39 @@ Node parseIfBlock(Parser *p) {
   CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseIfBlock")
   nextToken(p);
 
-  // TODO: Expression
+  APPEND_STRUCTURE(parseExpression, "parseIfBlock");
+  nextToken(p);
 
   CHECK_AND_APPEND(T_R_PAREN, ")", N_R_PAREN, NULL, "parseIfBlock")
   nextToken(p);
 
-  // TODO: Block
+  APPEND_STRUCTURE(parseBlock, "parseIfBlock");
 
   if (peekToken(p).kind == T_ELIF) {
     nextToken(p);
-
     APPEND_NODE(N_ELIF, NULL, "parseIfBlock")
     nextToken(p);
 
     CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseIfBlock")
     nextToken(p);
 
-    // TODO: Expression
+    APPEND_STRUCTURE(parseExpression, "parseIfBlock")
+    nextToken(p);
 
     CHECK_AND_APPEND(T_R_PAREN, ")", N_R_PAREN, NULL, "parseIfBlock")
     nextToken(p);
 
-    // TODO: Block
+    APPEND_STRUCTURE(parseBlock, "parseIfBlock")
+    nextToken(p);
   }
 
   if (peekToken(p).kind == T_ELSE) {
+    nextToken(p);
     APPEND_NODE(N_ELSE, NULL, "parseIfBlock")
+    nextToken(p);
 
-    // TODO: Block
+    APPEND_STRUCTURE(parseBlock, "parseIfBlock")
+    nextToken(p);
   }
 
   return out;
@@ -316,19 +328,31 @@ Node parseForLoop(Parser *p) {
   CHECK_AND_APPEND(T_FOR, "for", N_FOR, NULL, "parseForLoop")
   nextToken(p);
 
-  // TODO: possible Assignment or newassignment
+  if (p->tok.kind == T_LET) {
+    APPEND_STRUCTURE(parseNewAssignment, "parseForLoop")
+    nextToken(p);
+  } else if (p->tok.kind != T_SEMICOLON) {
+    APPEND_STRUCTURE(parseAssignment, "parseForLoop")
+    nextToken(p);
+  }
 
   CHECK_AND_APPEND(T_SEMICOLON, ";", N_SEMICOLON, NULL, "parseForLoop")
   nextToken(p);
 
-  // TODO: possible Expression
+  if (p->tok.kind != T_SEMICOLON) {
+    APPEND_STRUCTURE(parseExpression, "parseForLoop")
+    nextToken(p);
+  }
 
   CHECK_AND_APPEND(T_SEMICOLON, ";", N_SEMICOLON, NULL, "parseForLoop")
   nextToken(p);
 
-  // TODO: Possible assignment
+  if (p->tok.kind != T_L_PAREN) {
+    APPEND_STRUCTURE(parseAssignment, "parseForLoop")
+    nextToken(p);
+  }
 
-  // TODO: Block
+  APPEND_STRUCTURE(parseBlock, "parseForLoop")
 
   return out;
 }
@@ -340,7 +364,8 @@ Node parseRetState(Parser *p) {
   nextToken(p);
 
   if (p->tok.kind != ';') {
-    // TODO: Expression
+    APPEND_STRUCTURE(parseExpression, "parseRetState")
+    nextToken(p);
   }
 
   CHECK_AND_APPEND(T_SEMICOLON, ";", N_SEMICOLON, NULL, "parseRetState")
@@ -377,7 +402,8 @@ Node parseBracketedValue(Parser *p) {
   CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseBracketedValue")
   nextToken(p);
 
-  // TODO: Expression
+  APPEND_STRUCTURE(parseExpression, "parseBracketedValue")
+  nextToken(p);
 
   CHECK_AND_APPEND(T_R_PAREN, ")", N_R_PAREN, NULL, "parseBracketedValue")
 
@@ -397,13 +423,15 @@ Node parseStructNew(Parser *p) {
   CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseStructNew")
   nextToken(p);
 
-  // TODO: expression
+  APPEND_STRUCTURE(parseExpression, "parseStructNew")
+  nextToken(p);
 
   while (p->tok.kind == T_SEP) {
     APPEND_NODE(N_SEP, NULL, "parseStructNew")
     nextToken(p);
 
-    // TODO: expression
+    APPEND_STRUCTURE(parseExpression, "parseStructNew")
+    nextToken(p);
   }
 
   if (p->tok.kind == T_SEP) {
@@ -429,13 +457,15 @@ Node parseFuncCall(Parser *p) {
   CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseFuncCall")
   nextToken(p);
 
-  // TODO: expression
+  APPEND_STRUCTURE(parseExpression, "parseFuncCall")
+  nextToken(p);
 
   while (p->tok.kind == T_SEP) {
     APPEND_NODE(N_SEP, NULL, "parseFuncCall")
     nextToken(p);
 
-    // TODO: expression
+    APPEND_STRUCTURE(parseExpression, "parseFuncCall")
+    nextToken(p);
   }
 
   if (p->tok.kind == T_SEP) {
@@ -457,13 +487,15 @@ Node parseMakeArray(Parser *p) {
   CHECK_AND_APPEND(T_L_BLOCK, "[", N_L_BLOCK, NULL, "parseMakeArray")
   nextToken(p);
 
-  // TODO: expression
+  APPEND_STRUCTURE(parseExpression, "parseMakeArray")
+  nextToken(p);
 
   while (p->tok.kind == T_SEP) {
     APPEND_NODE(N_SEP, NULL, "parseMakeArray")
     nextToken(p);
 
-    // TODO: expression
+    APPEND_STRUCTURE(parseExpression, "parseMakeArray")
+    nextToken(p);
   }
 
   if (p->tok.kind == T_SEP) {
@@ -480,7 +512,7 @@ Node parseMakeArray(Parser *p) {
 Node parseLoneCall(Parser *p) {
   Node out = newNode(N_LONE_CALL, "Lone Call", p->tok.line);
 
-  APPEND_STRUCTURE(parseFuncCall, "parseLoneCall")
+  APPEND_STRUCTURE(parseFuncCall, "parseLoneCall");
   nextToken(p);
 
   CHECK_AND_APPEND(T_SEMICOLON, ";", N_SEMICOLON, NULL, "parseLoneCall")
@@ -491,7 +523,12 @@ Node parseLoneCall(Parser *p) {
 Node parseExpression(Parser *p) {
   Node out = newNode(N_EXPRESSION, "Expression", p->tok.line);
 
-  // TODO: unaryValue | value
+  if (parseUnary(p).kind == N_ILLEGAL) {
+    APPEND_STRUCTURE(parseValue, "parseExpression");
+  } else {
+    APPEND_STRUCTURE(parseUnaryValue, "parseExpression");
+  }
+  nextToken(p);
 
   Node n = parseOperator(p);
   while (n.kind != N_ILLEGAL) {
@@ -500,7 +537,12 @@ Node parseExpression(Parser *p) {
     }
     nextToken(p);
 
-    // TODO: unaryValue | value
+    if (parseUnary(p).kind == N_ILLEGAL) {
+      APPEND_STRUCTURE(parseValue, "parseExpression");
+    } else {
+      APPEND_STRUCTURE(parseUnaryValue, "parseExpression");
+    }
+    nextToken(p);
 
     n = parseOperator(p);
   }
@@ -531,7 +573,7 @@ Node parseAssignment(Parser *p) {
 
   // An assignment can just be a crement
   if (p->tok.kind == T_INC || p->tok.kind == T_DEC) {
-    APPEND_STRUCTURE(parseCrement, "parseAssignment")
+    APPEND_STRUCTURE(parseCrement, "parseAssignment");
     return out;
   }
 
@@ -541,14 +583,14 @@ Node parseAssignment(Parser *p) {
 
   // Assigning to element in array?
   if (p->tok.kind == T_L_BLOCK) {
-    APPEND_STRUCTURE(parseIndex, "parseAssignment")
+    APPEND_STRUCTURE(parseIndex, "parseAssignment");
     nextToken(p);
   }
 
   CHECK_AND_APPEND(T_ASSIGN, "=", N_ASSIGN, NULL, "parseAssignment")
   nextToken(p);
 
-  APPEND_STRUCTURE(parseExpression, "parseAssignment")
+  APPEND_STRUCTURE(parseExpression, "parseAssignment");
 
   return out;
 }
@@ -559,7 +601,8 @@ Node parseNewAssignment(Parser *p) {
   CHECK_AND_APPEND(T_LET, "let", N_LET, NULL, "parseNewAssignment")
   nextToken(p);
 
-  // TODO: complexType
+  APPEND_STRUCTURE(parseComplexType, "parseNewAssignment");
+  nextToken(p);
 
   CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
                    "parseNewAssignment")
@@ -568,7 +611,7 @@ Node parseNewAssignment(Parser *p) {
   CHECK_AND_APPEND(T_ASSIGN, "=", N_ASSIGN, NULL, "parseNewAssignment")
   nextToken(p);
 
-  APPEND_STRUCTURE(parseExpression, "parseNewAssignment")
+  APPEND_STRUCTURE(parseExpression, "parseNewAssignment");
 
   return out;
 }
@@ -578,11 +621,11 @@ Node parseVarDeclaration(Parser *p) {
 
   // New variable
   if (p->tok.kind == T_LET) {
-    APPEND_STRUCTURE(parseNewAssignment, "parseVarDeclaration")
+    APPEND_STRUCTURE(parseNewAssignment, "parseVarDeclaration");
 
     // Old variable
   } else {
-    APPEND_STRUCTURE(parseAssignment, "parseVarDeclaration")
+    APPEND_STRUCTURE(parseAssignment, "parseVarDeclaration");
   }
 
   nextToken(p);
@@ -629,15 +672,10 @@ Node parseUnaryValue(Parser *p) {
   }
   nextToken(p);
 
-  n = parseUnary(p);
-
-  if (n.kind != N_ILLEGAL) {
-    APPEND_STRUCTURE(parseUnaryValue, "parseUnaryValue")
+  if (parseUnary(p).kind != N_ILLEGAL) {
+    APPEND_STRUCTURE(parseUnaryValue, "parseUnaryValue");
   } else {
-    // TODO: Value
-    // if (NodeListAppend(&out.children, parseValue(p))) {
-    //   panic("Couldn't append to Node list in parseUnaryValue");
-    // }
+    APPEND_STRUCTURE(parseValue, "parseUnaryValue");
   }
 
   return out;
@@ -653,7 +691,7 @@ Node parseComplexType(Parser *p) {
   }
 
   if (p->tok.kind == T_L_BLOCK) { // Index
-    APPEND_STRUCTURE(parseIndex, "parseComplexType")
+    APPEND_STRUCTURE(parseIndex, "parseComplexType");
   } else if (p->tok.kind == T_DEREF) { // Deref
     APPEND_NODE(N_DEREF, NULL, "parseComplexType")
   } else { // Bad token in type
@@ -662,7 +700,7 @@ Node parseComplexType(Parser *p) {
 
   nextToken(p);
 
-  APPEND_STRUCTURE(parseComplexType, "parseComplexType")
+  APPEND_STRUCTURE(parseComplexType, "parseComplexType");
 
   return out;
 }
@@ -705,7 +743,7 @@ Node parseSwitchStatement(Parser *p) {
     panic("Couldn't append to Node list in "
           "parseSwitchStatement");
   }
-  APPEND_STRUCTURE(parseExpression, "parseSwitchStatement")
+  APPEND_STRUCTURE(parseExpression, "parseSwitchStatement");
   nextToken(p);
 
   CHECK_AND_APPEND(T_R_PAREN, ")", N_R_PAREN, NULL, "parseSwitchStatement")
@@ -715,22 +753,12 @@ Node parseSwitchStatement(Parser *p) {
   nextToken(p);
 
   while (p->tok.kind == T_CASE) {
-    // TODO: Case Block
-    // if (NodeListAppend(&out.children, parseCaseBlock(p))) {
-    //   panic("Couldn't append to Node list in "
-    //         "parseSwitchStatement");
-    // }
-
+    APPEND_STRUCTURE(parseCaseBlock, "parseSwitchStatement");
     nextToken(p);
   }
 
   if (p->tok.kind == T_DEFAULT) {
-    // TODO: Default Block
-    // if (NodeListAppend(&out.children, parseDefaultBlock(p))) {
-    //   panic("Couldn't append to Node list in "
-    //         "parseSwitchStatement");
-    // }
-
+    APPEND_STRUCTURE(parseDefaultBlock, "parseSwitchStatement");
     nextToken(p);
   }
 
@@ -745,7 +773,7 @@ Node parseCaseBlock(Parser *p) {
   CHECK_AND_APPEND(T_CASE, "case", N_CASE, NULL, "parseCaseBlock")
   nextToken(p);
 
-  APPEND_STRUCTURE(parseExpression, "parseCaseBlock")
+  APPEND_STRUCTURE(parseExpression, "parseCaseBlock");
   nextToken(p);
 
   CHECK_AND_APPEND(T_COLON, ":", N_COLON, NULL, "parseCaseBlock")
@@ -836,7 +864,7 @@ Node parseBlock(Parser *p) {
       if (NodeListAppend(&out.children, parseLoneCall(p))) {
         panic("Couldn't append to Node list in parseBlock");
       }
-      APPEND_STRUCTURE(parseEnum, "parseBlock")
+      APPEND_STRUCTURE(parseEnum, "parseBlock");
 
       break;
     case T_LET:
@@ -879,13 +907,13 @@ Node parse(Parser *p) {
   while (p->tok.kind != T_ILLEGAL) {
     switch (p->tok.kind) {
     case T_ENUM:
-      APPEND_STRUCTURE(parseEnum, "parse")
+      APPEND_STRUCTURE(parseEnum, "parse");
       break;
     case T_FUN:
-      APPEND_STRUCTURE(parseFunc, "parse")
+      APPEND_STRUCTURE(parseFunc, "parse");
       break;
     case T_STRUCT:
-      APPEND_STRUCTURE(parseStruct, "parse")
+      APPEND_STRUCTURE(parseStruct, "parse");
       break;
 
       // All statements will be in functions (main)
