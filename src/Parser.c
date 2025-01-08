@@ -669,3 +669,40 @@ Node parseUnaryValue(Parser *p) {
 
   return out;
 }
+
+Node parseComplexType(Parser *p) {
+  Node out = newNode(N_COMPLEX_TYPE, "Complex Type", p->tok.line);
+
+  // Type is only one word
+  if (p->tok.kind == ((T_IDENTIFIER))) {
+    if (NodeListAppend(&out.children, newNode(((N_IDENTIFIER)), ((p->tok.data)),
+                                              p->tok.line))) {
+      panic("Couldn't append to Node list in "
+            "parseComplexType");
+    }
+    return out;
+  }
+
+  if (p->tok.kind == T_L_BLOCK) { // Index
+    if (NodeListAppend(&out.children, parseIndex(p))) {
+      panic("Couldn't append to Node list in "
+            "parseComplexType");
+    }
+  } else if (p->tok.kind == T_DEREF) { // Deref
+    if (NodeListAppend(&out.children, newNode(N_DEREF, NULL, p->tok.line))) {
+      panic("Couldn't append to Node list in "
+            "parseComplexType");
+    }
+  } else { // Bad token in type
+    throwParserError(p, "index or deref");
+  }
+
+  nextToken(p);
+
+  if (NodeListAppend(&out.children, parseComplexType(p))) {
+    panic("Couldn't append to Node list in "
+          "parseComplexType");
+  }
+
+  return out;
+}

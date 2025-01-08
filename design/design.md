@@ -13,8 +13,8 @@ Complex data types will be:
 
 ## Arrays
 ```
-let char[3] x = [1, 2, 3+4];
-let float[2] z = [1.1, 2.2];
+let [3]char x = [1, 2, 3+4];
+let [2]float z = [1.1, 2.2];
 x[0] = 7;
 
 ```
@@ -24,7 +24,7 @@ x[0] = 7;
 let int x = 0;
 let char x = 0;
 let int x = -1;
-let char[6] x = "hello\0";
+let [6]char x = "hello\0";
 ```
 
 ## Function definitions
@@ -92,7 +92,7 @@ for (int x = 2; x < 10; ++x) {
 struct Point {
     int x
     int y
-    char^ id
+    ^char id
 }
 ```
 
@@ -102,7 +102,7 @@ struct Point {
 Using these symbols that aren't used for anything else will increase
 speed as it avoids ambiguity
 ```
-let int^ x = `7;
+let ^int x = `7;
 ```
 
 ## Multiple files
