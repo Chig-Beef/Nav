@@ -706,3 +706,28 @@ Node parseComplexType(Parser *p) {
 
   return out;
 }
+
+Node parseValue(Parser *p) {
+  switch (p->tok.kind) {
+  case T_INT:
+    return newNode(N_INT, p->tok.data, p->tok.line);
+  case T_FLOAT:
+    return newNode(N_FLOAT, p->tok.data, p->tok.line);
+  case T_CHAR:
+    return newNode(N_CHAR, p->tok.data, p->tok.line);
+  case T_STRING:
+    return newNode(N_STRING, p->tok.data, p->tok.line);
+  case T_IDENTIFIER:
+    return newNode(N_IDENTIFIER, p->tok.data, p->tok.line);
+  case T_MAKE:
+    return parseMakeArray(p);
+  case T_CALL:
+    return parseFuncCall(p);
+  case T_NEW:
+    return parseStructNew(p);
+
+  default:
+    throwParserError(p, "value");
+    return ZERO_NODE;
+  }
+}

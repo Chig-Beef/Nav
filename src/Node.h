@@ -17,7 +17,6 @@ typedef enum NodeCode {
   N_INDEX,
   N_EXPRESSION,
   N_UNARY_VALUE,
-  N_VALUE,
   N_OPERATOR,
   N_BRACKETED_VALUE,
   N_LONE_CALL,

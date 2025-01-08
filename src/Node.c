@@ -101,8 +101,6 @@ char *nodeCodeString(NodeCode nc) {
     return "N_EXPRESSION";
   case N_UNARY_VALUE:
     return "N_UNARY_VALUE";
-  case N_VALUE:
-    return "N_VALUE";
   case N_OPERATOR:
     return "N_OPERATOR";
   case N_BRACKETED_VALUE:
