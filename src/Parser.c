@@ -30,6 +30,37 @@ typedef struct Parser {
   int index;
 } Parser;
 
+// Because the AST is a tree structure, we should pre-define everything
+Node parseStruct(Parser *p);
+Node parseEnum(Parser *p);
+Node parseFunc(Parser *p);
+Node parseOperator(Parser *p);
+Node parseIndex(Parser *p);
+Node parseIfBlock(Parser *p);
+Node parseForLoop(Parser *p);
+Node parseRetState(Parser *p);
+Node parseBreakState(Parser *p);
+Node parseContinueState(Parser *p);
+Node parseBracketedValue(Parser *p);
+Node parseStructNew(Parser *p);
+Node parseFuncCall(Parser *p);
+Node parseMakeArray(Parser *p);
+Node parseLoneCall(Parser *p);
+Node parseExpression(Parser *p);
+Node parseCrement(Parser *p);
+Node parseAssignment(Parser *p);
+Node parseNewAssignment(Parser *p);
+Node parseVarDeclaration(Parser *p);
+Node parseUnary(Parser *p);
+Node parseUnaryValue(Parser *p);
+Node parseComplexType(Parser *p);
+Node parseValue(Parser *p);
+Node parseSwitchStatement(Parser *p);
+Node parseCaseBlock(Parser *p);
+Node parseDefaultBlock(Parser *p);
+Node parseBlock(Parser *p);
+Node parse(Parser *p);
+
 void nextToken(Parser *p) {
   Token t = {NULL, T_ILLEGAL, 0};
 
