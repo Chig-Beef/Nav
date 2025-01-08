@@ -824,3 +824,43 @@ Node parseCaseBlock(Parser *p) {
 
   return out;
 }
+
+Node parseDefaultBlock(Parser *p) {
+  Node out = newNode(N_DEFAULT_BLOCK, "Default Block", p->tok.line);
+
+  CHECK_AND_APPEND(T_DEFAULT, "default", N_DEFAULT, NULL, "parseDefaultBlock")
+  nextToken(p);
+
+  CHECK_AND_APPEND(T_COLON, ":", N_COLON, NULL, "parseDefaultBlock")
+  nextToken(p);
+
+  while (p->tok.kind != T_R_SQUIRLY) {
+    switch (p->tok.kind) {
+      // Statements
+    case T_CALL:
+      break;
+    case T_LET:
+      break;
+    case T_IDENTIFIER:
+      break;
+    case T_IF:
+      break;
+    case T_FOR:
+      break;
+    case T_RETURN:
+      break;
+    case T_BREAK:
+      break;
+    case T_CONTINUE:
+      break;
+    case T_SWITCH:
+      break;
+    default:
+      throwParserError(p, "Valid start to line");
+    }
+
+    nextToken(p);
+  }
+
+  return out;
+}
