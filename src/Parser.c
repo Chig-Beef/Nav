@@ -572,7 +572,7 @@ Node parseCrement(Parser *p) {
 }
 
 Node parseAssignment(Parser *p) {
-  Node out = newNode(N_ASSIGNMENT, "Crement", p->tok.line);
+  Node out = newNode(N_ASSIGNMENT, "Assignment", p->tok.line);
 
   // An assignment can just be a crement
   if (p->tok.kind == T_INC || p->tok.kind == T_DEC) {
@@ -600,6 +600,30 @@ Node parseAssignment(Parser *p) {
 
   if (NodeListAppend(&out.children, parseExpression(p))) {
     panic("Couldn't append to Node list in parseAssignment");
+  }
+
+  return out;
+}
+
+Node parseNewAssignment(Parser *p) {
+  Node out = newNode(N_NEW_ASSIGNMENT, "New Assignment", p->tok.line);
+
+  CHECK_TOK(T_LET, "let")
+  APPEND_NODE(N_LET, NULL, "parseNewAssignment")
+  nextToken(p);
+
+  // TODO: complexType
+
+  CHECK_TOK(T_IDENTIFIER, "identifier")
+  APPEND_NODE(N_IDENTIFIER, p->tok.data, "parseNewAssignment")
+  nextToken(p);
+
+  CHECK_TOK(T_ASSIGN, "=")
+  APPEND_NODE(N_ASSIGN, NULL, "parseNewAssignment")
+  nextToken(p);
+
+  if (NodeListAppend(&out.children, parseExpression(p))) {
+    panic("Couldn't append to Node list in parseNewAssignment");
   }
 
   return out;
