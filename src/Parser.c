@@ -675,3 +675,33 @@ Node parseUnary(Parser *p) {
     return ZERO_NODE;
   }
 }
+
+Node parseUnaryValue(Parser *p) {
+  Node out = newNode(N_UNARY_VALUE, "Unary Value", p->tok.line);
+
+  Node n = parseUnary(p);
+
+  if (n.kind == N_ILLEGAL) {
+    throwParserError(p, "unary");
+  }
+
+  if (NodeListAppend(&out.children, n)) {
+    panic("Couldn't append to Node list in parseUnaryValue");
+  }
+  nextToken(p);
+
+  n = parseUnary(p);
+
+  if (n.kind != N_ILLEGAL) {
+    if (NodeListAppend(&out.children, parseUnaryValue(p))) {
+      panic("Couldn't append to Node list in parseUnaryValue");
+    }
+  } else {
+    // TODO: Value
+    // if (NodeListAppend(&out.children, parseValue(p))) {
+    //   panic("Couldn't append to Node list in parseUnaryValue");
+    // }
+  }
+
+  return out;
+}
