@@ -731,3 +731,49 @@ Node parseValue(Parser *p) {
     return ZERO_NODE;
   }
 }
+
+Node parseSwitchStatement(Parser *p) {
+  Node out = newNode(N_SWITCH_STATE, "Switch Statement", p->tok.line);
+
+  CHECK_AND_APPEND(T_SWITCH, "switch", N_SWITCH, NULL, "parseSwitchStatement")
+  nextToken(p);
+
+  CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseSwitchStatement")
+  nextToken(p);
+
+  if (NodeListAppend(&out.children, parseExpression(p))) {
+    panic("Couldn't append to Node list in "
+          "parseSwitchStatement");
+  }
+  nextToken(p);
+
+  CHECK_AND_APPEND(T_R_PAREN, ")", N_R_PAREN, NULL, "parseSwitchStatement")
+  nextToken(p);
+
+  CHECK_AND_APPEND(T_L_SQUIRLY, "{", N_L_SQUIRLY, NULL, "parseSwitchStatement")
+  nextToken(p);
+
+  while (p->tok.kind == T_CASE) {
+    // TODO: Case Block
+    // if (NodeListAppend(&out.children, parseCaseBlock(p))) {
+    //   panic("Couldn't append to Node list in "
+    //         "parseSwitchStatement");
+    // }
+
+    nextToken(p);
+  }
+
+  if (p->tok.kind == T_DEFAULT) {
+    // TODO: Default Block
+    // if (NodeListAppend(&out.children, parseDefaultBlock(p))) {
+    //   panic("Couldn't append to Node list in "
+    //         "parseSwitchStatement");
+    // }
+
+    nextToken(p);
+  }
+
+  CHECK_AND_APPEND(T_R_SQUIRLY, "}", N_R_SQUIRLY, NULL, "parseSwitchStatement")
+
+  return out;
+}
