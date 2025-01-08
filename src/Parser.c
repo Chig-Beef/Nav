@@ -628,3 +628,27 @@ Node parseNewAssignment(Parser *p) {
 
   return out;
 }
+
+Node parseVarDeclaration(Parser *p) {
+  Node out = newNode(N_VAR_DEC, "Var Declaration", p->tok.line);
+
+  // New variable
+  if (p->tok.kind == T_LET) {
+    if (NodeListAppend(&out.children, parseNewAssignment(p))) {
+      panic("Couldn't append to Node list in parseVarDeclaration");
+    }
+
+    // Old variable
+  } else {
+    if (NodeListAppend(&out.children, parseNewAssignment(p))) {
+      panic("Couldn't append to Node list in parseVarDeclaration");
+    }
+  }
+
+  nextToken(p);
+
+  CHECK_TOK(T_SEMICOLON, ";")
+  APPEND_NODE(N_SEMICOLON, NULL, "parseVarDeclaration")
+
+  return out;
+}
