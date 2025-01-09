@@ -1,5 +1,7 @@
 #include "Node.h"
+#include "Panic.h"
 #include "list.h"
+#include <stdio.h>
 #include <string.h>
 
 NEW_LIST_TYPE(char, Char)
@@ -8,7 +10,7 @@ Node newNode(NodeCode kind, char *data, int line) {
   NodeList children;
 
   if (NodeListInit(&children, 1)) {
-    return ZERO_NODE;
+    panic("Couldn't create node (failed to init list)");
   }
 
   return (Node){kind, children, data, line};
@@ -305,9 +307,24 @@ errno_t stringRec(Node *n, CharList *out, int indent) {
   }
 
   // Data
-  for (int i = 0; n->data[i]; ++i) {
-    if (CharListAppend(out, n->data[i])) {
+  if (n->data == NULL) {
+    if (CharListAppend(out, 'N')) {
       return 1;
+    }
+    if (CharListAppend(out, 'U')) {
+      return 1;
+    }
+    if (CharListAppend(out, 'L')) {
+      return 1;
+    }
+    if (CharListAppend(out, 'L')) {
+      return 1;
+    }
+  } else {
+    for (int i = 0; n->data[i]; ++i) {
+      if (CharListAppend(out, n->data[i])) {
+        return 1;
+      }
     }
   }
 
@@ -326,19 +343,35 @@ errno_t stringRec(Node *n, CharList *out, int indent) {
 
 // Returns a string describing the token. The resulting string must be freed.
 char *nodeString(Node *n) {
+  printf("Stringing node\n");
+
   CharList out;
 
   if (CharListInit(&out, 8)) {
     return NULL;
   }
 
+  printf("Init out\n");
+
   // Node code
-  char *code = nodeCodeString(n->kind);
+  printf("%p\n", n);
+
+  Node n2 = *n;
+  printf("noded\n");
+
+  NodeCode kind = n->kind;
+  printf("%i\n", kind);
+
+  char *code = nodeCodeString(kind);
+  printf("B");
   for (int i = 0; code[i]; ++i) {
+    printf("%i\n", code[i]);
     if (CharListAppend(&out, code[i])) {
       return NULL;
     }
   }
+
+  printf("Pushed code\n");
 
   if (CharListAppend(&out, ':')) {
     return NULL;
@@ -347,22 +380,45 @@ char *nodeString(Node *n) {
     return NULL;
   }
 
+  printf("Pushed Colon\n");
+
   // Data
-  for (int i = 0; n->data[i]; ++i) {
-    if (CharListAppend(&out, n->data[i])) {
+  if (n->data == NULL) {
+    if (CharListAppend(&out, 'N')) {
       return NULL;
     }
+    if (CharListAppend(&out, 'U')) {
+      return NULL;
+    }
+    if (CharListAppend(&out, 'L')) {
+      return NULL;
+    }
+    if (CharListAppend(&out, 'L')) {
+      return NULL;
+    }
+  } else {
+    for (int i = 0; n->data[i]; ++i) {
+      if (CharListAppend(&out, n->data[i])) {
+        return NULL;
+      }
+    }
   }
+
+  printf("Pushed Data\n");
 
   if (CharListAppend(&out, '\n')) {
     return NULL;
   }
+
+  printf("Pushed Newline\n");
 
   for (int i = 0; i < n->children.len; ++i) {
     if (stringRec((n->children.p) + i, &out, 1)) {
       return NULL;
     }
   }
+
+  printf("Finished stringing node\n");
 
   return out.p;
 }

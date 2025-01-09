@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Node.h"
+#include "Token.h"
 
 typedef struct Parser {
   char *sourceName;
@@ -10,5 +11,5 @@ typedef struct Parser {
   Node out;
 } Parser;
 
-Node parse(Parser *p);
+void parse(Parser *p);
 void parserInit(Parser *p, char *sourceName, TokenList source);

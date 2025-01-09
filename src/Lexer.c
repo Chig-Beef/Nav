@@ -487,6 +487,4 @@ void lex(Lexer *l) {
 
     nextChar(l);
   }
-
-  printf("Exit Lexer\n");
 }

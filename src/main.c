@@ -1,4 +1,5 @@
 #include "Lexer.h"
+#include "Panic.h"
 #include "Parser.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -88,13 +89,19 @@ int main(int argc, char *argv[]) {
   printf("Parsing\n");
 
   Parser parsers[argc - 1];
+
   for (int i = 1; i < argc; ++i) {
     printf("Parsing %s\n", argv[i]);
     parserInit(&parsers[i - 1], argv[i], lexers[i - 1].out);
-    printf("Init\n");
     parse(&parsers[i - 1]);
     printf("Parsed\n");
-    printf("%s\n", nodeString(&parsers[i - 1].out));
+
+    char *out = nodeString(&parsers[i - 1].out);
+    if (out) {
+      printf("%s\n", out);
+    } else {
+      panic("Couldn't string node");
+    }
   }
 
   // Destroy the tokens

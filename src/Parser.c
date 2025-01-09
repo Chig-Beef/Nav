@@ -70,8 +70,6 @@ Node parseBlock(Parser *p);
 void parse(Parser *p);
 
 void nextToken(Parser *p) {
-  printf("Getting next token\n");
-
   Token t = {NULL, T_ILLEGAL, 0};
 
   if (p->index < p->source.len) {
@@ -80,8 +78,6 @@ void nextToken(Parser *p) {
 
   ++p->index;
   p->tok = t;
-
-  printf("Got next token\n");
 }
 
 Token peekToken(Parser *p) {
@@ -536,7 +532,13 @@ Node parseExpression(Parser *p) {
   Node out = newNode(N_EXPRESSION, "Expression", p->tok.line);
 
   if (parseUnary(p).kind == N_ILLEGAL) {
-    APPEND_STRUCTURE(parseValue, "parseExpression");
+    Node n = parseValue(p);
+    if (n.kind == N_ILLEGAL) {
+      throwParserError(p, "value");
+    }
+    if (NodeListAppend(&out.children, n)) {
+      panic("Couldn't append to Node list in parseExpression");
+    }
   } else {
     APPEND_STRUCTURE(parseUnaryValue, "parseExpression");
   }
@@ -550,7 +552,13 @@ Node parseExpression(Parser *p) {
     nextToken(p);
 
     if (parseUnary(p).kind == N_ILLEGAL) {
-      APPEND_STRUCTURE(parseValue, "parseExpression");
+      n = parseValue(p);
+      if (n.kind == N_ILLEGAL) {
+        throwParserError(p, "value");
+      }
+      if (NodeListAppend(&out.children, n)) {
+        panic("Couldn't append to Node list in parseExpression");
+      }
     } else {
       APPEND_STRUCTURE(parseUnaryValue, "parseExpression");
     }
@@ -687,7 +695,13 @@ Node parseUnaryValue(Parser *p) {
   if (parseUnary(p).kind != N_ILLEGAL) {
     APPEND_STRUCTURE(parseUnaryValue, "parseUnaryValue");
   } else {
-    APPEND_STRUCTURE(parseValue, "parseUnaryValue");
+    n = parseValue(p);
+    if (n.kind == N_ILLEGAL) {
+      throwParserError(p, "value");
+    }
+    if (NodeListAppend(&out.children, n)) {
+      panic("Couldn't append to Node list in parseUnaryValue");
+    }
   }
 
   return out;
@@ -909,9 +923,6 @@ Node parseBlock(Parser *p) {
 
 // The main program
 void parse(Parser *p) {
-  printf("Beginning parsing\n");
-  const char FUNC_NAME[] = "program";
-
   Node out = newNode(N_PROGRAM, NULL, 0);
   Node n;
 
@@ -939,5 +950,4 @@ void parse(Parser *p) {
   }
 
   p->out = out;
-  printf("Ending parsing\n");
 }
