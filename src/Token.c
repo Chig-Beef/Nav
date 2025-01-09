@@ -153,22 +153,22 @@ char *tokenCodeString(TokenCode tc) {
 }
 
 // Returns a string describing the token. The resulting string must be freed.
-char *tokenString(Token *t) {
+char *tokenString(Token t) {
   // printf("Stringing token\n");
 
   // Get text of token code
-  char *kind = tokenCodeString(t->kind);
+  char *kind = tokenCodeString(t.kind);
 
   // printf("Got Code string\n");
 
   // The final string
   char *out;
 
-  if (t->data) {
-    out = malloc((strlen(kind) + strlen(t->data) + 4) * sizeof(char));
+  if (t.data) {
+    out = malloc((strlen(kind) + strlen(t.data) + 4) * sizeof(char));
 
     // Format
-    sprintf(out, "(%s %s)", t->data, kind);
+    sprintf(out, "(%s %s)", t.data, kind);
   } else {
     out = malloc((strlen(kind) + 4 + 4) * sizeof(char));
 

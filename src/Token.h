@@ -89,6 +89,6 @@ void tokenDestroy(Token *t);
 char *tokenCodeString(TokenCode tc);
 
 // Returns a string describing the token. The resulting string must be freed.
-char *tokenString(Token *t);
+char *tokenString(Token t);
 
 NEW_LIST_TYPE_HEADER(Token, Token)

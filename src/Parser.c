@@ -102,7 +102,7 @@ Token peekToken(Parser *p) {
 void throwParserError(Parser *p, char expected[]) {
   printf("Error in the Parser!\n"
          "Error found in file: %s\nOn line: %i\nExpected: %s\nGot: %s\n",
-         p->sourceName, p->tok.line, expected, tokenString(&p->tok));
+         p->sourceName, p->tok.line, expected, tokenString(p->tok));
   exit(1);
 }
 
@@ -326,7 +326,6 @@ Node parseIfBlock(Parser *p) {
     nextToken(p);
 
     APPEND_STRUCTURE(parseBlock, "parseIfBlock")
-    nextToken(p);
   }
 
   if (peekToken(p).kind == T_ELSE) {
@@ -335,7 +334,6 @@ Node parseIfBlock(Parser *p) {
     nextToken(p);
 
     APPEND_STRUCTURE(parseBlock, "parseIfBlock")
-    nextToken(p);
   }
 
   return out;
@@ -345,6 +343,9 @@ Node parseForLoop(Parser *p) {
   Node out = newNode(N_FOR_LOOP, "For Loop", p->tok.line);
 
   CHECK_AND_APPEND(T_FOR, "for", N_FOR, NULL, "parseForLoop")
+  nextToken(p);
+
+  CHECK_AND_APPEND(T_L_PAREN, "(", N_L_PAREN, NULL, "parseForLoop")
   nextToken(p);
 
   if (p->tok.kind == T_LET) {
@@ -366,10 +367,13 @@ Node parseForLoop(Parser *p) {
   CHECK_AND_APPEND(T_SEMICOLON, ";", N_SEMICOLON, NULL, "parseForLoop")
   nextToken(p);
 
-  if (p->tok.kind != T_L_PAREN) {
+  if (p->tok.kind != T_R_PAREN) {
     APPEND_STRUCTURE(parseAssignment, "parseForLoop")
     nextToken(p);
   }
+
+  CHECK_AND_APPEND(T_R_PAREN, ")", N_R_PAREN, NULL, "parseForLoop")
+  nextToken(p);
 
   APPEND_STRUCTURE(parseBlock, "parseForLoop")
 
