@@ -80,6 +80,17 @@ void nextToken(Parser *p) {
   p->tok = t;
 }
 
+void prevToken(Parser *p) {
+  Token t = {NULL, T_ILLEGAL, 0};
+
+  if (p->index > 0) {
+    t = p->source.p[p->index - 1];
+  }
+
+  --p->index;
+  p->tok = t;
+}
+
 Token peekToken(Parser *p) {
   if (p->index < p->source.len) {
     return p->source.p[p->index];
@@ -567,6 +578,8 @@ Node parseExpression(Parser *p) {
     n = parseOperator(p);
   }
 
+  prevToken(p);
+
   return out;
 }
 
@@ -743,12 +756,18 @@ Node parseValue(Parser *p) {
     return newNode(N_STRING, p->tok.data, p->tok.line);
   case T_IDENTIFIER:
     return newNode(N_IDENTIFIER, p->tok.data, p->tok.line);
+  case T_TRUE:
+    return newNode(N_TRUE, NULL, p->tok.line);
+  case T_FALSE:
+    return newNode(N_FALSE, NULL, p->tok.line);
   case T_MAKE:
     return parseMakeArray(p);
   case T_CALL:
     return parseFuncCall(p);
   case T_NEW:
     return parseStructNew(p);
+  case T_L_PAREN:
+    return parseBracketedValue(p);
 
   default:
     throwParserError(p, "value");
