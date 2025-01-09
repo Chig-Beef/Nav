@@ -41,14 +41,17 @@ void hoist(Hoister *h, Parser parsers[], int parserCount) {
         if (NodeListAppend(&h->enums.children, *n)) {
           panic("Couldn't append to hoister's enums");
         }
+        break;
       case N_STRUCT_DEF:
         if (NodeListAppend(&h->structs.children, *n)) {
           panic("Couldn't append to hoister's structs");
         }
+        break;
       case N_FUNC_DEF:
         if (NodeListAppend(&h->funcs.children, *n)) {
           panic("Couldn't append to hoister's funcs");
         }
+        break;
       default:
         throwHoisterError(h, p->sourceName, n->line,
                           "Invalid top level statement");

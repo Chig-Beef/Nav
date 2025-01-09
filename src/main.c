@@ -97,26 +97,49 @@ int main(int argc, char *argv[]) {
     parse(&parsers[i - 1]);
     printf("Parsed\n");
 
-    // char *out = nodeString(&parsers[i - 1].out);
-    // if (out) {
-    //   printf("%s\n", out);
-    // } else {
-    //   panic("Couldn't string node");
-    // }
+    char *out = nodeString(&parsers[i - 1].out);
+    if (out) {
+      printf("%s\n", out);
+    } else {
+      panic("Couldn't string node");
+    }
   }
 
   // Destroy the tokens
   printf("Destroying Lexer garbage\n");
   for (int i = 1; i < argc; ++i) {
-    for (int j = 0; j < lexers[i - 1].out.len; ++j) {
-      tokenDestroy(&lexers[i - 1].out.p[j]);
-    }
+    // for (int j = 0; j < lexers[i - 1].out.len; ++j) {
+    //   tokenDestroy(&lexers[i - 1].out.p[j]);
+    // }
     TokenListDestroy(&lexers[i - 1].out);
   }
 
   // Hoist from each file into one place
   Hoister h;
   hoist(&h, parsers, argc - 1);
+
+  char *out;
+  out = nodeString(&h.enums);
+  if (out) {
+    printf("Enums\n");
+    printf("%s\n", out);
+  } else {
+    panic("Couldn't string node");
+  }
+  out = nodeString(&h.structs);
+  if (out) {
+    printf("Structs\n");
+    printf("%s\n", out);
+  } else {
+    panic("Couldn't string node");
+  }
+  out = nodeString(&h.funcs);
+  if (out) {
+    printf("Funcs\n");
+    printf("%s\n", out);
+  } else {
+    panic("Couldn't string node");
+  }
 
   // Semantic Analysis
 
