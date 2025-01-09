@@ -343,35 +343,21 @@ errno_t stringRec(Node *n, CharList *out, int indent) {
 
 // Returns a string describing the token. The resulting string must be freed.
 char *nodeString(Node *n) {
-  printf("Stringing node\n");
-
   CharList out;
 
   if (CharListInit(&out, 8)) {
     return NULL;
   }
 
-  printf("Init out\n");
-
   // Node code
-  printf("%p\n", n);
-
-  Node n2 = *n;
-  printf("noded\n");
-
   NodeCode kind = n->kind;
-  printf("%i\n", kind);
 
   char *code = nodeCodeString(kind);
-  printf("B");
   for (int i = 0; code[i]; ++i) {
-    printf("%i\n", code[i]);
     if (CharListAppend(&out, code[i])) {
       return NULL;
     }
   }
-
-  printf("Pushed code\n");
 
   if (CharListAppend(&out, ':')) {
     return NULL;
@@ -379,8 +365,6 @@ char *nodeString(Node *n) {
   if (CharListAppend(&out, ' ')) {
     return NULL;
   }
-
-  printf("Pushed Colon\n");
 
   // Data
   if (n->data == NULL) {
@@ -404,21 +388,15 @@ char *nodeString(Node *n) {
     }
   }
 
-  printf("Pushed Data\n");
-
   if (CharListAppend(&out, '\n')) {
     return NULL;
   }
-
-  printf("Pushed Newline\n");
 
   for (int i = 0; i < n->children.len; ++i) {
     if (stringRec((n->children.p) + i, &out, 1)) {
       return NULL;
     }
   }
-
-  printf("Finished stringing node\n");
 
   return out.p;
 }
