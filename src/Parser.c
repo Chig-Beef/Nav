@@ -838,6 +838,8 @@ Node parseCaseBlock(Parser *p) {
     case T_LET:
       APPEND_STRUCTURE(parseVarDeclaration, "parseCaseBlock");
       break;
+    case T_INC:
+    case T_DEC:
     case T_IDENTIFIER:
       APPEND_STRUCTURE(parseVarDeclaration, "parseCaseBlock");
       break;
@@ -924,6 +926,8 @@ Node parseBlock(Parser *p) {
     case T_LET:
       APPEND_STRUCTURE(parseVarDeclaration, "parseBlock");
       break;
+    case T_INC:
+    case T_DEC:
     case T_IDENTIFIER:
       APPEND_STRUCTURE(parseVarDeclaration, "parseBlock");
       break;
