@@ -1,3 +1,4 @@
+#include "Hoister.h"
 #include "Lexer.h"
 #include "Panic.h"
 #include "Parser.h"
@@ -96,12 +97,12 @@ int main(int argc, char *argv[]) {
     parse(&parsers[i - 1]);
     printf("Parsed\n");
 
-    char *out = nodeString(&parsers[i - 1].out);
-    if (out) {
-      printf("%s\n", out);
-    } else {
-      panic("Couldn't string node");
-    }
+    // char *out = nodeString(&parsers[i - 1].out);
+    // if (out) {
+    //   printf("%s\n", out);
+    // } else {
+    //   panic("Couldn't string node");
+    // }
   }
 
   // Destroy the tokens
@@ -114,6 +115,8 @@ int main(int argc, char *argv[]) {
   }
 
   // Hoist from each file into one place
+  Hoister h;
+  hoist(&h, parsers, argc - 1);
 
   // Semantic Analysis
 
