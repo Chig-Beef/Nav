@@ -73,13 +73,13 @@ int main(int argc, char *argv[]) {
     lex(&lexers[i - 1]);
   }
 
-  for (int i = 0; i < argc - 1; ++i) {
-
-    for (int j = 0; j < lexers[i].out.len; ++j) {
-      printf("%s, ", tokenString(&lexers[i].out.p[j]));
-    }
-    printf("\n");
-  }
+  // Print all lexed soruces
+  // for (int i = 0; i < argc - 1; ++i) {
+  //   for (int j = 0; j < lexers[i].out.len; ++j) {
+  //     printf("%s, ", tokenString(&lexers[i].out.p[j]));
+  //   }
+  //   printf("\n");
+  // }
 
   // Close all the files before moving on
   printf("Closing files\n");

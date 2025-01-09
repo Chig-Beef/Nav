@@ -63,7 +63,7 @@ Node parseUnary(Parser *p);
 Node parseUnaryValue(Parser *p);
 Node parseComplexType(Parser *p);
 Node parseValue(Parser *p);
-Node parseSwitchStatement(Parser *p);
+Node parseSwitchState(Parser *p);
 Node parseCaseBlock(Parser *p);
 Node parseDefaultBlock(Parser *p);
 Node parseBlock(Parser *p);
@@ -756,7 +756,7 @@ Node parseValue(Parser *p) {
   }
 }
 
-Node parseSwitchStatement(Parser *p) {
+Node parseSwitchState(Parser *p) {
   Node out = newNode(N_SWITCH_STATE, "Switch Statement", p->tok.line);
 
   CHECK_AND_APPEND(T_SWITCH, "switch", N_SWITCH, NULL, "parseSwitchStatement")
@@ -810,22 +810,31 @@ Node parseCaseBlock(Parser *p) {
     switch (p->tok.kind) {
       // Statements
     case T_CALL:
+      APPEND_STRUCTURE(parseLoneCall, "parseCaseBlock");
       break;
     case T_LET:
+      APPEND_STRUCTURE(parseVarDeclaration, "parseCaseBlock");
       break;
     case T_IDENTIFIER:
+      APPEND_STRUCTURE(parseVarDeclaration, "parseCaseBlock");
       break;
     case T_IF:
+      APPEND_STRUCTURE(parseIfBlock, "parseCaseBlock");
       break;
     case T_FOR:
+      APPEND_STRUCTURE(parseForLoop, "parseCaseBlock");
       break;
     case T_RETURN:
+      APPEND_STRUCTURE(parseRetState, "parseCaseBlock");
       break;
     case T_BREAK:
+      APPEND_STRUCTURE(parseBreakState, "parseCaseBlock");
       break;
     case T_CONTINUE:
+      APPEND_STRUCTURE(parseContinueState, "parseCaseBlock");
       break;
     case T_SWITCH:
+      APPEND_STRUCTURE(parseSwitchState, "parseCaseBlock");
       break;
     default:
       throwParserError(p, "Valid start to line");
@@ -887,27 +896,31 @@ Node parseBlock(Parser *p) {
     switch (p->tok.kind) {
       // Statements
     case T_CALL:
-      if (NodeListAppend(&out.children, parseLoneCall(p))) {
-        panic("Couldn't append to Node list in parseBlock");
-      }
-      APPEND_STRUCTURE(parseEnum, "parseBlock");
-
+      APPEND_STRUCTURE(parseLoneCall, "parseBlock");
       break;
     case T_LET:
+      APPEND_STRUCTURE(parseVarDeclaration, "parseBlock");
       break;
     case T_IDENTIFIER:
+      APPEND_STRUCTURE(parseVarDeclaration, "parseBlock");
       break;
     case T_IF:
+      APPEND_STRUCTURE(parseIfBlock, "parseBlock");
       break;
     case T_FOR:
+      APPEND_STRUCTURE(parseForLoop, "parseBlock");
       break;
     case T_RETURN:
+      APPEND_STRUCTURE(parseRetState, "parseBlock");
       break;
     case T_BREAK:
+      APPEND_STRUCTURE(parseBreakState, "parseBlock");
       break;
     case T_CONTINUE:
+      APPEND_STRUCTURE(parseContinueState, "parseBlock");
       break;
     case T_SWITCH:
+      APPEND_STRUCTURE(parseSwitchState, "parseBlock");
       break;
     default:
       throwParserError(p, "Valid start to line");
