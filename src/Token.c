@@ -1,14 +1,11 @@
 #include "Token.h"
 #include "Panic.h"
+#include "String.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void tokenDestroy(Token *t) {
-  if (t->data) {
-    free(t->data);
-  }
-}
+void tokenDestroy(Token *t) { strFree(t->data); }
 
 char *tokenCodeString(TokenCode tc) {
   switch (tc) {
@@ -154,21 +151,17 @@ char *tokenCodeString(TokenCode tc) {
 
 // Returns a string describing the token. The resulting string must be freed.
 char *tokenString(Token t) {
-  // printf("Stringing token\n");
-
   // Get text of token code
   char *kind = tokenCodeString(t.kind);
-
-  // printf("Got Code string\n");
 
   // The final string
   char *out;
 
   if (t.data) {
-    out = malloc((strlen(kind) + strlen(t.data) + 4) * sizeof(char));
+    out = malloc((strlen(kind) + strlen(t.data->data) + 4) * sizeof(char));
 
     // Format
-    sprintf(out, "(%s %s)", t.data, kind);
+    sprintf(out, "(%s %s)", t.data->data, kind);
   } else {
     out = malloc((strlen(kind) + 4 + 4) * sizeof(char));
 

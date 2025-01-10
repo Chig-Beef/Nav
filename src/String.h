@@ -15,6 +15,6 @@ void strFree(String *s);
 // Gets another ref to this string
 String *strGet(String *s);
 
-String strNew(char *data, bool freeable);
+String *strNew(char *data, bool freeable);
 
 void strReroute(String *s, char *data, bool freeable);

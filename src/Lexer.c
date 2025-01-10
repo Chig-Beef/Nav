@@ -1,4 +1,5 @@
 #include "Panic.h"
+#include "String.h"
 #include "Token.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -278,7 +279,7 @@ void lex(Lexer *l) {
       }
 
       // Save the token
-      token = (Token){text, T_CHAR, l->line};
+      token = (Token){strNew(text, true), T_CHAR, l->line};
       break;
 
     // String
@@ -334,7 +335,7 @@ void lex(Lexer *l) {
       text[dynLen] = 0;
 
       // Save the token
-      token = (Token){text, T_STRING, l->line};
+      token = (Token){strNew(text, true), T_STRING, l->line};
       break;
 
     default:
@@ -385,9 +386,9 @@ void lex(Lexer *l) {
 
         // Save the token
         if (isFloat) {
-          token = (Token){text, T_FLOAT, l->line};
+          token = (Token){strNew(text, true), T_FLOAT, l->line};
         } else {
-          token = (Token){text, T_INT, l->line};
+          token = (Token){strNew(text, true), T_INT, l->line};
         }
       }
 
@@ -465,7 +466,7 @@ void lex(Lexer *l) {
             panic("Couldn't copy string\n");
           }
 
-          token = (Token){text, T_IDENTIFIER, l->line};
+          token = (Token){strNew(text, true), T_IDENTIFIER, l->line};
         }
       }
 

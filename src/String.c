@@ -1,4 +1,6 @@
+#include "Panic.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct String {
@@ -9,10 +11,18 @@ typedef struct String {
 
 // Attempts to free the string
 void strFree(String *s) {
+  if (s == NULL) {
+    printf("Double free on string wrapper\n");
+    return;
+  }
+
   --s->arc;
 
   if (s->arc == 0 && s->freeable) {
     free(s->data);
+
+    // Also rid self
+    free(s);
   }
 
   s->freeable = false;
@@ -24,12 +34,16 @@ String *strGet(String *s) {
   return s;
 }
 
-String strNew(char *data, bool freeable) {
-  String string;
+String *strNew(char *data, bool freeable) {
+  String *string = malloc(sizeof(String));
 
-  string.freeable = freeable;
-  string.data = data;
-  string.arc = 1;
+  if (string == NULL) {
+    panic("Couldn't allocate string wrapper\n");
+  }
+
+  string->freeable = freeable;
+  string->data = data;
+  string->arc = 1;
 
   return string;
 }

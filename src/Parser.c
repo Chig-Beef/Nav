@@ -1,5 +1,6 @@
 #include "Node.h"
 #include "Panic.h"
+#include "String.h"
 #include "Token.h"
 #include <stdio.h>
 
@@ -112,18 +113,18 @@ void throwParserError(Parser *p, char expected[]) {
 }
 
 Node parseStruct(Parser *p) {
-  Node out = newNode(N_STRUCT_DEF, "Struct Def", p->tok.line);
+  Node out = newNode(N_STRUCT_DEF, strNew("Struct Def", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_STRUCT, "struct", N_STRUCT, NULL, "parseStruct")
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseStruct")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseStruct")
   CHECK_APPEND_NEXT(T_L_SQUIRLY, "{", N_L_SQUIRLY, NULL, "parseStruct")
 
   APPEND_STRUCTURE(parseComplexType, "parseStruct");
   nextToken(p);
 
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseStruct")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseStruct")
 
   while (p->tok.kind == T_SEP) {
     APPEND_NODE(N_SEP, NULL, "parseStruct")
@@ -132,8 +133,8 @@ Node parseStruct(Parser *p) {
     APPEND_STRUCTURE(parseComplexType, "parseStruct");
     nextToken(p);
 
-    CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                      "parseStruct")
+    CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                      strGet(p->tok.data), "parseStruct")
   }
 
   if (p->tok.kind == T_SEP) {
@@ -147,21 +148,21 @@ Node parseStruct(Parser *p) {
 }
 
 Node parseEnum(Parser *p) {
-  Node out = newNode(N_ENUM_DEF, "Enum Def", p->tok.line);
+  Node out = newNode(N_ENUM_DEF, strNew("Enum Def", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_ENUM, "enum", N_ENUM, NULL, "parseEnum")
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseEnum")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseEnum")
   CHECK_APPEND_NEXT(T_L_SQUIRLY, "{", N_L_SQUIRLY, NULL, "parseEnum")
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseEnum")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseEnum")
 
   while (p->tok.kind == T_SEP) {
     APPEND_NODE(N_SEP, NULL, "parseEnum")
     nextToken(p);
 
-    CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                      "parseEnum")
+    CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                      strGet(p->tok.data), "parseEnum")
   }
 
   if (p->tok.kind == T_SEP) {
@@ -175,11 +176,11 @@ Node parseEnum(Parser *p) {
 }
 
 Node parseFunc(Parser *p) {
-  Node out = newNode(N_FUNC_DEF, "Func Def", p->tok.line);
+  Node out = newNode(N_FUNC_DEF, strNew("Func Def", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_FUN, "fun", N_FUN, NULL, "parseFunc")
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseFunc")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseFunc")
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseFunc")
 
   // We have params
@@ -187,8 +188,8 @@ Node parseFunc(Parser *p) {
     APPEND_STRUCTURE(parseComplexType, "parseFunc");
     nextToken(p);
 
-    CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                      "parseFunc")
+    CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                      strGet(p->tok.data), "parseFunc")
 
     while (p->tok.kind == T_SEP) {
       APPEND_NODE(N_SEP, NULL, "parseFunc")
@@ -197,8 +198,8 @@ Node parseFunc(Parser *p) {
       APPEND_STRUCTURE(parseComplexType, "parseFunc");
       nextToken(p);
 
-      CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                        "parseFunc")
+      CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                        strGet(p->tok.data), "parseFunc")
     }
   }
 
@@ -261,7 +262,7 @@ Node parseOperator(Parser *p) {
 }
 
 Node parseIndex(Parser *p) {
-  Node out = newNode(N_INDEX, "Index", p->tok.line);
+  Node out = newNode(N_INDEX, strNew("Index", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_L_BLOCK, "[", N_L_BLOCK, NULL, "parseIndex")
 
@@ -274,7 +275,7 @@ Node parseIndex(Parser *p) {
 }
 
 Node parseIfBlock(Parser *p) {
-  Node out = newNode(N_IF_BLOCK, "If Block", p->tok.line);
+  Node out = newNode(N_IF_BLOCK, strNew("If Block", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_IF, "if", N_IF, NULL, "parseIfBlock")
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseIfBlock")
@@ -311,7 +312,7 @@ Node parseIfBlock(Parser *p) {
 }
 
 Node parseForLoop(Parser *p) {
-  Node out = newNode(N_FOR_LOOP, "For Loop", p->tok.line);
+  Node out = newNode(N_FOR_LOOP, strNew("For Loop", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_FOR, "for", N_FOR, NULL, "parseForLoop")
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseForLoop")
@@ -345,7 +346,7 @@ Node parseForLoop(Parser *p) {
 }
 
 Node parseRetState(Parser *p) {
-  Node out = newNode(N_RET_STATE, "Ret State", p->tok.line);
+  Node out = newNode(N_RET_STATE, strNew("Ret State", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_RETURN, "return", N_RETURN, NULL, "parseRetState")
 
@@ -360,7 +361,7 @@ Node parseRetState(Parser *p) {
 }
 
 Node parseBreakState(Parser *p) {
-  Node out = newNode(N_BREAK_STATE, "Break State", p->tok.line);
+  Node out = newNode(N_BREAK_STATE, strNew("Break State", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_BREAK, "break", N_BREAK, NULL, "parseBreakState")
   CHECK_AND_APPEND(T_SEMICOLON, ";", N_SEMICOLON, NULL, "parseBreakState")
@@ -369,7 +370,8 @@ Node parseBreakState(Parser *p) {
 }
 
 Node parseContinueState(Parser *p) {
-  Node out = newNode(N_CONTINUE_STATE, "Continue State", p->tok.line);
+  Node out =
+      newNode(N_CONTINUE_STATE, strNew("Continue State", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_CONTINUE, "continue", N_CONTINUE, NULL,
                     "parseContinueState")
@@ -379,7 +381,8 @@ Node parseContinueState(Parser *p) {
 }
 
 Node parseBracketedValue(Parser *p) {
-  Node out = newNode(N_BRACKETED_VALUE, "Bracketed Value", p->tok.line);
+  Node out =
+      newNode(N_BRACKETED_VALUE, strNew("Bracketed Value", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseBracketedValue")
 
@@ -392,11 +395,11 @@ Node parseBracketedValue(Parser *p) {
 }
 
 Node parseStructNew(Parser *p) {
-  Node out = newNode(N_STRUCT_NEW, "Struct New", p->tok.line);
+  Node out = newNode(N_STRUCT_NEW, strNew("Struct New", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_STRUCT, "struct", N_STRUCT, NULL, "parseStructNew")
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseStructNew")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseStructNew")
 
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseStructNew")
 
@@ -422,11 +425,11 @@ Node parseStructNew(Parser *p) {
 }
 
 Node parseFuncCall(Parser *p) {
-  Node out = newNode(N_FUNC_CALL, "Func Call", p->tok.line);
+  Node out = newNode(N_FUNC_CALL, strNew("Func Call", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_FUN, "fun", N_FUN, NULL, "parseFuncCall")
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, NULL,
-                    "parseFuncCall")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseFuncCall")
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseFuncCall")
 
   APPEND_STRUCTURE(parseExpression, "parseFuncCall")
@@ -451,7 +454,7 @@ Node parseFuncCall(Parser *p) {
 }
 
 Node parseMakeArray(Parser *p) {
-  Node out = newNode(N_MAKE_ARRAY, "Make Array", p->tok.line);
+  Node out = newNode(N_MAKE_ARRAY, strNew("Make Array", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_MAKE, "make", N_MAKE, NULL, "parseMakeArray")
   CHECK_APPEND_NEXT(T_L_BLOCK, "[", N_L_BLOCK, NULL, "parseMakeArray")
@@ -478,7 +481,7 @@ Node parseMakeArray(Parser *p) {
 }
 
 Node parseLoneCall(Parser *p) {
-  Node out = newNode(N_LONE_CALL, "Lone Call", p->tok.line);
+  Node out = newNode(N_LONE_CALL, strNew("Lone Call", false), p->tok.line);
 
   APPEND_STRUCTURE(parseFuncCall, "parseLoneCall");
   nextToken(p);
@@ -489,7 +492,7 @@ Node parseLoneCall(Parser *p) {
 }
 
 Node parseExpression(Parser *p) {
-  Node out = newNode(N_EXPRESSION, "Expression", p->tok.line);
+  Node out = newNode(N_EXPRESSION, strNew("Expression", false), p->tok.line);
 
   if (parseUnary(p).kind == N_ILLEGAL) {
     Node n = parseValue(p);
@@ -533,7 +536,7 @@ Node parseExpression(Parser *p) {
 }
 
 Node parseCrement(Parser *p) {
-  Node out = newNode(N_CREMENT, "Crement", p->tok.line);
+  Node out = newNode(N_CREMENT, strNew("Crement", false), p->tok.line);
 
   if (p->tok.kind == T_INC) {
     APPEND_NODE(N_INC, NULL, "parseCrement")
@@ -544,14 +547,14 @@ Node parseCrement(Parser *p) {
   }
   nextToken(p);
 
-  CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                   "parseCrement")
+  CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                   strGet(p->tok.data), "parseCrement")
 
   return out;
 }
 
 Node parseAssignment(Parser *p) {
-  Node out = newNode(N_ASSIGNMENT, "Assignment", p->tok.line);
+  Node out = newNode(N_ASSIGNMENT, strNew("Assignment", false), p->tok.line);
 
   // An assignment can just be a crement
   if (p->tok.kind == T_INC || p->tok.kind == T_DEC) {
@@ -559,8 +562,8 @@ Node parseAssignment(Parser *p) {
     return out;
   }
 
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseAssignment")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseAssignment")
 
   // Assigning to element in array?
   if (p->tok.kind == T_L_BLOCK) {
@@ -575,15 +578,16 @@ Node parseAssignment(Parser *p) {
 }
 
 Node parseNewAssignment(Parser *p) {
-  Node out = newNode(N_NEW_ASSIGNMENT, "New Assignment", p->tok.line);
+  Node out =
+      newNode(N_NEW_ASSIGNMENT, strNew("New Assignment", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_LET, "let", N_LET, NULL, "parseNewAssignment")
 
   APPEND_STRUCTURE(parseComplexType, "parseNewAssignment");
   nextToken(p);
 
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
-                    "parseNewAssignment")
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                    strGet(p->tok.data), "parseNewAssignment")
   CHECK_APPEND_NEXT(T_ASSIGN, "=", N_ASSIGN, NULL, "parseNewAssignment")
   APPEND_STRUCTURE(parseExpression, "parseNewAssignment");
 
@@ -591,7 +595,7 @@ Node parseNewAssignment(Parser *p) {
 }
 
 Node parseVarDeclaration(Parser *p) {
-  Node out = newNode(N_VAR_DEC, "Var Declaration", p->tok.line);
+  Node out = newNode(N_VAR_DEC, strNew("Var Declaration", false), p->tok.line);
 
   // New variable
   if (p->tok.kind == T_LET) {
@@ -633,7 +637,7 @@ Node parseUnary(Parser *p) {
 }
 
 Node parseUnaryValue(Parser *p) {
-  Node out = newNode(N_UNARY_VALUE, "Unary Value", p->tok.line);
+  Node out = newNode(N_UNARY_VALUE, strNew("Unary Value", false), p->tok.line);
 
   Node n = parseUnary(p);
 
@@ -662,11 +666,12 @@ Node parseUnaryValue(Parser *p) {
 }
 
 Node parseComplexType(Parser *p) {
-  Node out = newNode(N_COMPLEX_TYPE, "Complex Type", p->tok.line);
+  Node out =
+      newNode(N_COMPLEX_TYPE, strNew("Complex Type", false), p->tok.line);
 
   // Type is only one word
   if (p->tok.kind == ((T_IDENTIFIER))) {
-    APPEND_NODE(N_IDENTIFIER, p->tok.data, "parseComplexType")
+    APPEND_NODE(N_IDENTIFIER, strGet(p->tok.data), "parseComplexType")
     return out;
   }
 
@@ -717,7 +722,8 @@ Node parseValue(Parser *p) {
 }
 
 Node parseSwitchState(Parser *p) {
-  Node out = newNode(N_SWITCH_STATE, "Switch Statement", p->tok.line);
+  Node out =
+      newNode(N_SWITCH_STATE, strNew("Switch Statement", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_SWITCH, "switch", N_SWITCH, NULL, "parseSwitchStatement")
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseSwitchStatement")
@@ -748,7 +754,7 @@ Node parseSwitchState(Parser *p) {
 }
 
 Node parseCaseBlock(Parser *p) {
-  Node out = newNode(N_CASE_BLOCK, "Case Block", p->tok.line);
+  Node out = newNode(N_CASE_BLOCK, strNew("Case Block", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_CASE, "case", N_CASE, NULL, "parseCaseBlock")
 
@@ -801,7 +807,8 @@ Node parseCaseBlock(Parser *p) {
 }
 
 Node parseDefaultBlock(Parser *p) {
-  Node out = newNode(N_DEFAULT_BLOCK, "Default Block", p->tok.line);
+  Node out =
+      newNode(N_DEFAULT_BLOCK, strNew("Default Block", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_DEFAULT, "default", N_DEFAULT, NULL, "parseDefaultBlock")
   CHECK_APPEND_NEXT(T_COLON, ":", N_COLON, NULL, "parseDefaultBlock")
@@ -838,7 +845,7 @@ Node parseDefaultBlock(Parser *p) {
 }
 
 Node parseBlock(Parser *p) {
-  Node out = newNode(N_BLOCK, "Block", p->tok.line);
+  Node out = newNode(N_BLOCK, strNew("Block", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_L_SQUIRLY, "{", N_L_SQUIRLY, NULL, "parseBlock")
 
