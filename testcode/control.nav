@@ -1,6 +1,6 @@
 fun main() {
 	let int x = 7;
-	let int y= 0;
+	let int y = 0;
 	if (x == 7) {
 		y = 3;
 	} elif (x == 3) {

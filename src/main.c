@@ -98,11 +98,8 @@ int main(int argc, char *argv[]) {
     printf("Parsed\n");
 
     char *out = nodeString(&parsers[i - 1].out);
-    if (out) {
-      printf("%s\n", out);
-    } else {
-      panic("Couldn't string node");
-    }
+    printf("%s\n", out);
+    free(out);
   }
 
   // Destroy the tokens
@@ -119,27 +116,18 @@ int main(int argc, char *argv[]) {
   hoist(&h, parsers, argc - 1);
 
   char *out;
+
   out = nodeString(&h.enums);
-  if (out) {
-    printf("Enums\n");
-    printf("%s\n", out);
-  } else {
-    panic("Couldn't string node");
-  }
+  printf("Enums\n%s\n", out);
+  free(out);
+
   out = nodeString(&h.structs);
-  if (out) {
-    printf("Structs\n");
-    printf("%s\n", out);
-  } else {
-    panic("Couldn't string node");
-  }
+  printf("Structs\n%s\n", out);
+  free(out);
+
   out = nodeString(&h.funcs);
-  if (out) {
-    printf("Funcs\n");
-    printf("%s\n", out);
-  } else {
-    panic("Couldn't string node");
-  }
+  printf("Funcs\n%s\n", out);
+  free(out);
 
   // Semantic Analysis
 

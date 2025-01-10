@@ -346,7 +346,7 @@ char *nodeString(Node *n) {
   CharList out;
 
   if (CharListInit(&out, 8)) {
-    return NULL;
+    panic("Couldn't string node (init issue)");
   }
 
   // Node code
@@ -355,46 +355,46 @@ char *nodeString(Node *n) {
   char *code = nodeCodeString(kind);
   for (int i = 0; code[i]; ++i) {
     if (CharListAppend(&out, code[i])) {
-      return NULL;
+      panic("Couldn't string node (append issue)");
     }
   }
 
   if (CharListAppend(&out, ':')) {
-    return NULL;
+    panic("Couldn't string node (append issue)");
   }
   if (CharListAppend(&out, ' ')) {
-    return NULL;
+    panic("Couldn't string node (append issue)");
   }
 
   // Data
   if (n->data == NULL) {
     if (CharListAppend(&out, 'N')) {
-      return NULL;
+      panic("Couldn't string node (append issue)");
     }
     if (CharListAppend(&out, 'U')) {
-      return NULL;
+      panic("Couldn't string node (append issue)");
     }
     if (CharListAppend(&out, 'L')) {
-      return NULL;
+      panic("Couldn't string node (append issue)");
     }
     if (CharListAppend(&out, 'L')) {
-      return NULL;
+      panic("Couldn't string node (append issue)");
     }
   } else {
     for (int i = 0; n->data[i]; ++i) {
       if (CharListAppend(&out, n->data[i])) {
-        return NULL;
+        panic("Couldn't string node (append issue)");
       }
     }
   }
 
   if (CharListAppend(&out, '\n')) {
-    return NULL;
+    panic("Couldn't string node (append issue)");
   }
 
   for (int i = 0; i < n->children.len; ++i) {
     if (stringRec((n->children.p) + i, &out, 1)) {
-      return NULL;
+      panic("Couldn't string node (Recursive string issue)");
     }
   }
 
