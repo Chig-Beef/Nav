@@ -76,3 +76,9 @@ Ident stackPop(Stack *s) {
   s->tail = s->tail->next;
   return tail;
 }
+
+void stackClear(Stack *s) {
+  while (s->len > 0) {
+    stackPop(s);
+  }
+}

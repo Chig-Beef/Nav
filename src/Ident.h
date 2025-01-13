@@ -34,3 +34,5 @@ Ident stackPop(Stack *s);
 
 void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod,
                Ident *ret, Ident **params);
+
+void stackClear(Stack *s);

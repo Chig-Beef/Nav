@@ -49,4 +49,6 @@ void analyse(Analyser *a) {
   analyseEnums(a);
   analyseStructs(a);
   analyseFuncs(a);
+
+  stackClear(&a->vars);
 }
