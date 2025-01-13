@@ -1,4 +1,6 @@
+#include "Panic.h"
 #include "String.h"
+#include <stdlib.h>
 
 typedef enum TypeModifier {
   TM_NONE,
@@ -21,6 +23,31 @@ typedef struct Ident {
 
 // Variables are held in a stack structure
 typedef struct Stack {
-  Ident *base;
+  Ident *tail;
   int len;
 } Stack;
+
+void stackPush(Stack *s, String name, Ident *type, TypeModifier mod, Ident *ret,
+               Ident **params) {
+
+  Ident *n = malloc(sizeof(Ident));
+  if (n == NULL) {
+    panic("Couldn't allocated node for stack");
+  }
+
+  n->name = name;
+  n->type = type;
+  n->mod = mod;
+  n->ret = ret;
+  n->params = params;
+
+  ++s->len;
+
+  if (s->len == 1) {
+    s->tail = n;
+    return;
+  }
+
+  n->next = s->tail;
+  s->tail = n;
+}
