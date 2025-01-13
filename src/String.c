@@ -12,7 +12,6 @@ typedef struct String {
 // Attempts to free the string
 void strFree(String *s) {
   if (s == NULL) {
-    printf("Double free on string wrapper\n");
     return;
   }
 
