@@ -1,6 +1,7 @@
 #include "Ident.h"
 #include "Node.h"
 #include "String.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct Analyser {
@@ -10,6 +11,13 @@ typedef struct Analyser {
   // Defined variables, types, etc
   Stack vars;
 } Analyser;
+
+void throwAnalyserError(Analyser *a, char *fileName, int line, char msg[]) {
+  printf("Error in the Hoister!\n"
+         "Error found in file: %s\nOn line: %i\n\n%s\n",
+         fileName, line, msg);
+  exit(1);
+}
 
 void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   a->enums = enums;
@@ -39,16 +47,27 @@ Ident *varExists(Analyser *a, String *name) {
 void analyseEnums(Analyser *a) {
   Node *enumNode, *enumChildNode;
   Ident *enumType;
+  String *enumName;
+
   for (int i = 0; i < a->enums.children.len; ++i) {
     enumNode = a->enums.children.p + i;
+    enumName = strGet(enumNode->children.p[1].data);
+
+    if (varExists(a, enumName)) {
+      throwAnalyserError(a, NULL, 0, "Enum already exists");
+    }
 
     // Add the actual enum type
-    stackPush(&a->vars, strGet(enumNode->children.p[1].data), NULL, TM_NONE);
+    stackPush(&a->vars, enumName, NULL, TM_NONE);
     enumType = a->vars.tail;
 
     // Each of the constants in the enum
     for (int j = 3; j < enumNode->children.len - 1; j += 2) {
       enumChildNode = enumNode->children.p + j;
+
+      if (varExists(a, enumChildNode->data)) {
+        throwAnalyserError(a, NULL, 0, "Enum constant already exists");
+      }
 
       stackPush(&a->vars, enumChildNode->data, enumType, TM_NONE);
     }
@@ -59,9 +78,15 @@ void analyseStructs(Analyser *a) {
   Node *structNode, *propTypeNode, *propNode;
   Ident *structType;
   int numProps;
+  String *structName;
 
   for (int i = 0; i < a->structs.children.len; ++i) {
     structNode = a->structs.children.p + i;
+    structName = strGet(structNode->children.p[1].data);
+
+    if (varExists(a, structName)) {
+      throwAnalyserError(a, NULL, 0, "Struct already exists");
+    }
 
     // Add the struct as a type
     stackPush(&a->vars, strGet(structNode->children.p[1].data), NULL, TM_NONE);
@@ -103,9 +128,15 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
   Node *funcNode, *paramTypeNode, *paramNode;
   Ident *funcDec;
   int numParams;
+  String *funcName;
 
   for (int i = 0; i < a->funcs.children.len; ++i) {
     funcNode = a->structs.children.p + i;
+    funcName = strGet(funcNode->children.p[1].data);
+
+    if (varExists(a, funcName)) {
+      throwAnalyserError(a, NULL, 0, "Function already exists");
+    }
 
     // Add the function
     stackPush(&a->vars, strGet(funcNode->children.p[1].data), funcType,
