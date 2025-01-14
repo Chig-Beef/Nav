@@ -62,7 +62,7 @@ void analyseStructs(Analyser *a) {
     // (complexType, Identifier, comma)
     numProps = (numProps + 1) / 3;
 
-    structType->params = malloc(sizeof(Ident *) * numProps);
+    structType->props = malloc(sizeof(Ident) * numProps);
 
     for (int j = 0; j < numProps; ++j) {
       propTypeNode = structNode->children.p + 3 + (j * 3);
@@ -83,12 +83,65 @@ void analyseStructs(Analyser *a) {
   }
 }
 
-void analyseFuncs(Analyser *a) {}
+void analyseFuncs(Analyser *a, Ident *funcType) {
+  Node *funcNode, *paramTypeNode, *paramNode;
+  Ident *funcDec;
+  int numParams;
+
+  for (int i = 0; i < a->funcs.children.len; ++i) {
+    funcNode = a->structs.children.p + i;
+
+    // Add the function
+    stackPush(&a->vars, strGet(funcNode->children.p[1].data), funcType,
+              TM_NONE);
+    funcDec = a->vars.tail;
+
+    // Each param of this func
+    if (funcNode->children.p[funcNode->children.len - 2].kind ==
+        N_COMPLEX_TYPE) {
+      // We have a return value
+      numParams = funcNode->children.len - 5;
+
+      // TODO: Add the return value
+    } else {
+      numParams = funcNode->children.len - 4;
+    }
+
+    numParams /= 3;
+
+    // Empty func
+    if (numParams == 0) {
+      continue;
+    }
+
+    funcDec->params = malloc(sizeof(Ident) * numParams);
+
+    for (int j = 0; j < numParams; ++j) {
+      paramTypeNode = funcNode->children.p + 3 + (j * 3);
+      paramNode = funcNode->children.p + 4 + (j * 3);
+
+      funcDec->params[j] = (Ident){
+          paramNode->data,
+          NULL, // TODO: Get the correct type from paramTypeNode
+
+          NULL,    // Next is null, as func params aren't added to the variable
+                   // stack (yet)
+          TM_NONE, // TODO: Get the correct type modifier from param type node
+          NULL,
+          NULL,
+          NULL,
+      };
+    }
+  }
+}
 
 void analyse(Analyser *a) {
+  // The type of functions
+  Ident *funcType = a->vars.tail;
+
   analyseEnums(a);
   analyseStructs(a);
-  analyseFuncs(a);
+  analyseFuncs(a, funcType);
 
   stackClear(&a->vars);
 }

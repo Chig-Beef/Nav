@@ -19,8 +19,8 @@ typedef struct Ident {
   Ident *next;      // Linked list structure (stack)
   TypeModifier mod; // Is this a pointer of a type
 
-  Ident *ret;     // If this is of type fun, what this function returns
-  Ident **params; // An array of params, used for functions
+  Ident *ret;    // If this is of type fun, what this function returns
+  Ident *params; // An array of params, used for functions
 
   Ident *props; // An array of props, used for structs
 } Ident;
