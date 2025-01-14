@@ -253,8 +253,21 @@ void analyseForLoop(Analyser *a, Context c, Node *n) {
 }
 
 void analyseRetState(Analyser *a, Context c, Node *n) {}
-void analyseBreakState(Analyser *a, Context c, Node *n) {}
-void analyseContinueState(Analyser *a, Context c, Node *n) {}
+
+void analyseBreakState(Analyser *a, Context c, Node *n) {
+  if (!c.inLoop) {
+    throwAnalyserError(a, NULL, 0,
+                       "Can't have break statement outside of loop");
+  }
+}
+
+void analyseContinueState(Analyser *a, Context c, Node *n) {
+  if (!c.inLoop) {
+    throwAnalyserError(a, NULL, 0,
+                       "Can't have continue statement outside of loop");
+  }
+}
+
 void analyseBracketedValue(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
 void analyseFuncCall(Analyser *a, Context c, Node *n) {}
