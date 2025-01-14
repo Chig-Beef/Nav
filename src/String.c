@@ -9,6 +9,26 @@ typedef struct String {
   bool freeable;
 } String;
 
+bool strEql(String *s1, String *s2) {
+  char *p1 = s1->data;
+  char *p2 = s2->data;
+
+  while (*p1 && *p2) {
+    if (*p1 != *p2) {
+      return false;
+    }
+
+    ++p1;
+    ++p2;
+  }
+
+  if (*p1 != *p2) {
+    return false;
+  }
+
+  return true;
+}
+
 // Attempts to free the string
 void strFree(String *s) {
   if (s == NULL) {

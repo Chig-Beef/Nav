@@ -21,6 +21,21 @@ void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   stackPush(&a->vars, strNew("fun", false), NULL, TM_NONE);
 }
 
+Ident *varExists(Analyser *a, String *name) {
+  Ident *curIdent = a->vars.tail;
+
+  while (curIdent != NULL) {
+    if (strEql(curIdent->name, name)) {
+      return curIdent;
+    }
+
+    // Next identifier
+    curIdent = curIdent->next;
+  }
+
+  return NULL;
+}
+
 void analyseEnums(Analyser *a) {
   Node *enumNode, *enumChildNode;
   Ident *enumType;
@@ -108,7 +123,7 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
       funcDec->ret = malloc(sizeof(Ident));
       *funcDec->ret = (Ident){
           NULL, // No name
-          NULL, // TODO get the type correctly
+          NULL, // TODO: get the type correctly
           NULL, // Not on stack, so no next
           TM_NONE, NULL, NULL, NULL,
       };
