@@ -19,9 +19,10 @@ typedef struct Ident {
   Ident *next;      // Linked list structure (stack)
   TypeModifier mod; // Is this a pointer of a type
 
-  Ident *ret; // If this is of type fun, what this function returns
+  Ident *ret;     // If this is of type fun, what this function returns
+  Ident **params; // An array of params, used for functions
 
-  Ident **params; // An array of params, used for functions or structs
+  Ident *props; // An array of props, used for structs
 } Ident;
 
 // Variables are held in a stack structure
@@ -32,7 +33,6 @@ typedef struct Stack {
 
 Ident stackPop(Stack *s);
 
-void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod,
-               Ident *ret, Ident **params);
+void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod);
 
 void stackClear(Stack *s);

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define ZERO_IDENT                                                             \
-  (Ident) { NULL, NULL, NULL, TM_NONE, NULL, NULL }
+  (Ident) { NULL, NULL, NULL, TM_NONE, NULL, NULL, NULL }
 
 typedef enum TypeModifier {
   TM_NONE,
@@ -19,9 +19,10 @@ typedef struct Ident {
   Ident *next;      // Linked list structure (stack)
   TypeModifier mod; // Is this a pointer of a type
 
-  Ident *ret; // If this is of type fun, what this function returns
+  Ident *ret;     // If this is of type fun, what this function returns
+  Ident **params; // An array of params, used for functions
 
-  Ident **params; // An array of params, used for functions or structs
+  Ident *props; // An array of props, used for structs
 } Ident;
 
 // Variables are held in a stack structure
@@ -30,9 +31,7 @@ typedef struct Stack {
   int len;
 } Stack;
 
-void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod,
-               Ident *ret, Ident **params) {
-
+void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod) {
   Ident *n = malloc(sizeof(Ident));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
@@ -41,8 +40,11 @@ void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod,
   n->name = name;
   n->type = type;
   n->mod = mod;
-  n->ret = ret;
-  n->params = params;
+
+  // This will usually be changed by the user after if needed
+  n->ret = NULL;
+  n->params = NULL;
+  n->props = NULL;
 
   ++s->len;
 
