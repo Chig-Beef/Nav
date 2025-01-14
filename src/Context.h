@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Ident.h"
+
 typedef struct Context {
   bool inLoop;
-  bool inFun;
-  bool exprType;
+  Ident *exprType;
 } Context;

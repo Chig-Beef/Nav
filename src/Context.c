@@ -1,7 +1,7 @@
+#include "Ident.h"
 #include <stdbool.h>
 
 typedef struct Context {
   bool inLoop;
-  bool inFun;
-  bool exprType;
+  Ident *exprType;
 } Context;
