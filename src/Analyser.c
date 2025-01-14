@@ -1,6 +1,7 @@
 #include "Ident.h"
 #include "Node.h"
 #include "String.h"
+#include <stdlib.h>
 
 typedef struct Analyser {
   // Source
@@ -102,7 +103,16 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
       // We have a return value
       numParams = funcNode->children.len - 5;
 
-      // TODO: Add the return value
+      Node *retNode = funcNode->children.p + funcNode->children.len - 2;
+
+      funcDec->ret = malloc(sizeof(Ident));
+      *funcDec->ret = (Ident){
+          NULL, // No name
+          NULL, // TODO get the type correctly
+          NULL, // Not on stack, so no next
+          TM_NONE, NULL, NULL, NULL,
+      };
+
     } else {
       numParams = funcNode->children.len - 4;
     }
