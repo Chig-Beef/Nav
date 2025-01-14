@@ -231,7 +231,27 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseIndex(Analyser *a, Context c, Node *n) {}
 void analyseIfBlock(Analyser *a, Context c, Node *n) {}
-void analyseForLoop(Analyser *a, Context c, Node *n) {}
+
+void analyseForLoop(Analyser *a, Context c, Node *n) {
+  // To get rid of all vars defined in the loop, including the one defined in
+  // the loop header
+  int stackBase = a->vars.len;
+
+  // TODO: Assignment
+
+  // TODO: Expression
+
+  // TODO: Assignment
+
+  analyseBlock(a, (Context){true, c.exprType},
+               n->children.p + n->children.len - 1);
+
+  // Delete variables used in the loop
+  while (a->vars.len > stackBase) {
+    stackPop(&a->vars);
+  }
+}
+
 void analyseRetState(Analyser *a, Context c, Node *n) {}
 void analyseBreakState(Analyser *a, Context c, Node *n) {}
 void analyseContinueState(Analyser *a, Context c, Node *n) {}
