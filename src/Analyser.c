@@ -1,3 +1,4 @@
+#include "Context.h"
 #include "Ident.h"
 #include "Node.h"
 #include "String.h"
@@ -190,6 +191,64 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
     }
   }
 }
+
+void analyseStruct(Analyser *a, Context c);
+void analyseEnum(Analyser *a, Context c);
+void analyseFunc(Analyser *a, Context c);
+void analyseOperator(Analyser *a, Context c);
+void analyseIndex(Analyser *a, Context c);
+void analyseIfBlock(Analyser *a, Context c);
+void analyseForLoop(Analyser *a, Context c);
+void analyseRetState(Analyser *a, Context c);
+void analyseBreakState(Analyser *a, Context c);
+void analyseContinueState(Analyser *a, Context c);
+void analyseBracketedValue(Analyser *a, Context c);
+void analyseStructNew(Analyser *a, Context c);
+void analyseFuncCall(Analyser *a, Context c);
+void analyseMakeArray(Analyser *a, Context c);
+void analyseLoneCall(Analyser *a, Context c);
+void analyseExpression(Analyser *a, Context c);
+void analyseCrement(Analyser *a, Context c);
+void analyseAssignment(Analyser *a, Context c);
+void analyseNewAssignment(Analyser *a, Context c);
+void analyseVarDeclaration(Analyser *a, Context c);
+void analyseUnary(Analyser *a, Context c);
+void analyseUnaryValue(Analyser *a, Context c);
+void analyseComplexType(Analyser *a, Context c);
+void analyseValue(Analyser *a, Context c);
+void analyseSwitchState(Analyser *a, Context c);
+void analyseCaseBlock(Analyser *a, Context c);
+void analyseDefaultBlock(Analyser *a, Context c);
+void analyseBlock(Analyser *a, Context c);
+
+void analyseStruct(Analyser *a, Context c) {}
+void analyseEnum(Analyser *a, Context c) {}
+void analyseFunc(Analyser *a, Context c) {}
+void analyseOperator(Analyser *a, Context c) {}
+void analyseIndex(Analyser *a, Context c) {}
+void analyseIfBlock(Analyser *a, Context c) {}
+void analyseForLoop(Analyser *a, Context c) {}
+void analyseRetState(Analyser *a, Context c) {}
+void analyseBreakState(Analyser *a, Context c) {}
+void analyseContinueState(Analyser *a, Context c) {}
+void analyseBracketedValue(Analyser *a, Context c) {}
+void analyseStructNew(Analyser *a, Context c) {}
+void analyseFuncCall(Analyser *a, Context c) {}
+void analyseMakeArray(Analyser *a, Context c) {}
+void analyseLoneCall(Analyser *a, Context c) {}
+void analyseExpression(Analyser *a, Context c) {}
+void analyseCrement(Analyser *a, Context c) {}
+void analyseAssignment(Analyser *a, Context c) {}
+void analyseNewAssignment(Analyser *a, Context c) {}
+void analyseVarDeclaration(Analyser *a, Context c) {}
+void analyseUnary(Analyser *a, Context c) {}
+void analyseUnaryValue(Analyser *a, Context c) {}
+void analyseComplexType(Analyser *a, Context c) {}
+void analyseValue(Analyser *a, Context c) {}
+void analyseSwitchState(Analyser *a, Context c) {}
+void analyseCaseBlock(Analyser *a, Context c) {}
+void analyseDefaultBlock(Analyser *a, Context c) {}
+void analyseBlock(Analyser *a, Context c) {}
 
 void analyse(Analyser *a) {
   // The type of functions
