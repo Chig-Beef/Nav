@@ -218,7 +218,8 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
 
     int stackBase = a->vars.len;
 
-    analyseBlock(a, (Context){false, NULL},
+    // TODO: Add in return type correctly
+    analyseBlock(a, (Context){false, false, NULL, NULL},
                  funcNode->children.p + funcNode->children.len - 1);
 
     // Delete variables used in the function
@@ -227,10 +228,6 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
     }
   }
 }
-
-void analyseOperator(Analyser *a, Context c, Node *n) {}
-void analyseIndex(Analyser *a, Context c, Node *n) {}
-void analyseIfBlock(Analyser *a, Context c, Node *n) {}
 
 void analyseForLoop(Analyser *a, Context c, Node *n) {
   // To get rid of all vars defined in the loop, including the one defined in
@@ -243,7 +240,7 @@ void analyseForLoop(Analyser *a, Context c, Node *n) {
 
   // TODO: Assignment
 
-  analyseBlock(a, (Context){true, c.exprType},
+  analyseBlock(a, (Context){true, true, c.expType, c.retType},
                n->children.p + n->children.len - 1);
 
   // Delete variables used in the loop
@@ -252,22 +249,40 @@ void analyseForLoop(Analyser *a, Context c, Node *n) {
   }
 }
 
-void analyseRetState(Analyser *a, Context c, Node *n) {}
+void analyseRetState(Analyser *a, Context c, Node *n) {
+  // We don't expect a return value
+  if (c.retType == NULL && n->children.len == 3) {
+    throwAnalyserError(a, NULL, 0,
+                       "This function expected no return value, but got one.");
+  }
+
+  // Now check the return value, and expect a type
+  c.expType = c.retType;
+  analyseExpression(a, c, n->children.p + 1);
+}
 
 void analyseBreakState(Analyser *a, Context c, Node *n) {
-  if (!c.inLoop) {
+  if (!c.canBreak) {
     throwAnalyserError(a, NULL, 0,
                        "Can't have break statement outside of loop");
   }
 }
 
 void analyseContinueState(Analyser *a, Context c, Node *n) {
-  if (!c.inLoop) {
+  if (!c.canCont) {
     throwAnalyserError(a, NULL, 0,
                        "Can't have continue statement outside of loop");
   }
 }
 
+void analyseIndex(Analyser *a, Context c, Node *n) {
+  // TODO: Expect type of int
+  // c.expType = INT??;
+  analyseExpression(a, c, n->children.p + 1);
+}
+
+void analyseOperator(Analyser *a, Context c, Node *n) {}
+void analyseIfBlock(Analyser *a, Context c, Node *n) {}
 void analyseBracketedValue(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
 void analyseFuncCall(Analyser *a, Context c, Node *n) {}

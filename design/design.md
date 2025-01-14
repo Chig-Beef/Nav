@@ -5,7 +5,6 @@ The primitive types will be:
 2. bool
 3. char
 4. float
-5. void
 
 Complex data types will be:
 1. array
