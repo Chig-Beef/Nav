@@ -523,6 +523,7 @@ Ident *analyseValue(Analyser *a, Context c, Node *n) {
   case N_FALSE:
     return a->preDefs.BOOL;
   case N_IDENTIFIER:
+
     // TODO: Get type of identifier
     return NULL;
   case N_MAKE_ARRAY:
@@ -539,6 +540,54 @@ Ident *analyseValue(Analyser *a, Context c, Node *n) {
   }
 }
 
+Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) {
+  Ident *type;
+
+  if (n->children.p[1].kind == N_UNARY_VALUE) {
+    type = analyseUnaryValue(a, c, n->children.p + 1);
+  } else {
+    type = analyseValue(a, c, n->children.p + 1);
+  }
+
+  switch (n->children.p[0].kind) {
+  case N_DEREF:
+    // TODO: Check for pointer
+    return NULL;
+  case N_DEC:
+    if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
+      throwAnalyserError(a, NULL, 0, "Can only decrement ints or chars");
+    }
+    return type;
+  case N_INC:
+    if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
+      throwAnalyserError(a, NULL, 0, "Can only increment ints or chars");
+    }
+    return type;
+  case N_NOT:
+    if (type != a->preDefs.INT && type != a->preDefs.CHAR &&
+        type != a->preDefs.BOOL) {
+      throwAnalyserError(a, NULL, 0, "Can only not int, char, bool, or float");
+    }
+    return type;
+  case N_REF:
+    // TODO: Return pointer to type
+    return type;
+  case N_ADD:
+    if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
+      throwAnalyserError(a, NULL, 0, "Can only positive int or char");
+    }
+    return type;
+  case N_SUB:
+    if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
+      throwAnalyserError(a, NULL, 0, "Can only negative int or char");
+    }
+    return type;
+  default:
+    throwAnalyserError(a, NULL, 0, "Unexpected unary");
+  }
+  return NULL;
+}
+
 // analyseExpression also returns the type of the expression
 Ident *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
 
@@ -547,7 +596,6 @@ Ident *analyseStructNew(Analyser *a, Context c, Node *n) { return NULL; }
 Ident *analyseFuncCall(Analyser *a, Context c, Node *n) { return NULL; }
 Ident *analyseMakeArray(Analyser *a, Context c, Node *n) { return NULL; }
 void analyseUnary(Analyser *a, Context c, Node *n) {}
-Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) { return NULL; }
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
 
 void analyseBlock(Analyser *a, Context c, Node *n) {
