@@ -429,6 +429,25 @@ void analyseLoneCall(Analyser *a, Context c, Node *n) {
   analyseFuncCall(a, c, n->children.p);
 }
 
+void analyseSwitchState(Analyser *a, Context c, Node *n) {
+  c.expType = NULL;
+
+  analyseExpression(a, c, n->children.p + 2);
+
+  int i = 5;
+
+  while (n->children.p[i].kind == N_CASE_BLOCK) {
+    analyseCaseBlock(a, c, n->children.p + i);
+    ++i;
+  }
+
+  if (n->children.p[i].kind == N_DEFAULT_BLOCK) {
+    analyseDefaultBlock(a, c, n->children.p + i);
+  }
+}
+
+void analyseCaseBlock(Analyser *a, Context c, Node *n) {}
+void analyseDefaultBlock(Analyser *a, Context c, Node *n) {}
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
 void analyseFuncCall(Analyser *a, Context c, Node *n) {}
@@ -438,9 +457,6 @@ void analyseUnary(Analyser *a, Context c, Node *n) {}
 void analyseUnaryValue(Analyser *a, Context c, Node *n) {}
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
 void analyseValue(Analyser *a, Context c, Node *n) {}
-void analyseSwitchState(Analyser *a, Context c, Node *n) {}
-void analyseCaseBlock(Analyser *a, Context c, Node *n) {}
-void analyseDefaultBlock(Analyser *a, Context c, Node *n) {}
 
 void analyseBlock(Analyser *a, Context c, Node *n) {
   for (int i = 1; i < n->children.len - 1; ++i) {
