@@ -21,8 +21,10 @@ typedef struct Ident {
 
   Ident *ret;    // If this is of type fun, what this function returns
   Ident *params; // An array of params, used for functions
+  int paramsLen;
 
   Ident *props; // An array of props, used for structs
+  int propsLen;
 } Ident;
 
 // Variables are held in a stack structure

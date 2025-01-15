@@ -78,7 +78,6 @@ void analyseCrement(Analyser *a, Context c, Node *n);
 void analyseAssignment(Analyser *a, Context c, Node *n);
 void analyseNewAssignment(Analyser *a, Context c, Node *n);
 void analyseVarDeclaration(Analyser *a, Context c, Node *n);
-void analyseUnary(Analyser *a, Context c, Node *n);
 Ident *analyseUnaryValue(Analyser *a, Context c, Node *n);
 void analyseComplexType(Analyser *a, Context c, Node *n);
 Ident *analyseValue(Analyser *a, Context c, Node *n);
@@ -162,6 +161,7 @@ void analyseStructs(Analyser *a) {
     numProps = (numProps + 1) / 3;
 
     structType->props = malloc(sizeof(Ident) * numProps);
+    structType->propsLen = numProps;
 
     for (int j = 0; j < numProps; ++j) {
       propTypeNode = structNode->children.p + 3 + (j * 3);
@@ -229,6 +229,7 @@ void analyseFuncs(Analyser *a) {
     }
 
     funcDec->params = malloc(sizeof(Ident) * numParams);
+    funcDec->paramsLen = numParams;
 
     for (int j = 0; j < numParams; ++j) {
       paramTypeNode = funcNode->children.p + 3 + (j * 3);
@@ -588,14 +589,53 @@ Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) {
   return NULL;
 }
 
+funcCall = 'call', IDENTIFIER, '(', [
+  expression,
+  {
+      ',',
+      expression,
+  }[',', ]
+] ')';
+
+Ident *analyseFuncCall(Analyser *a, Context c, Node *n) {
+  Ident *func = varExists(a, n->children.p[1].data);
+  if (func == NULL) {
+    throwAnalyserError(a, NULL, 0, "Function doesn't exist");
+  }
+
+  int paramIndex = 0;
+  int nodeIndex = 3;
+
+  while (paramIndex < func->paramsLen) {
+    if (nodeIndex >= n->children.len) {
+      throwAnalyserError(a, NULL, 0, "Not enough args for function");
+    }
+
+    if (n->children.p[nodeIndex].kind != N_EXPRESSION) {
+      throwAnalyserError(a, NULL, 0, "Not enough args for function");
+    }
+
+    // TODO: Correct expected type
+    // c.expType = ???
+    analyseExpression(a, c, n->children.p + nodeIndex);
+
+    ++paramIndex;
+    nodeIndex += 2;
+  }
+
+  if (n->children.p[nodeIndex].kind == N_EXPRESSION) {
+    throwAnalyserError(a, NULL, 0, "Too many args for function");
+  }
+
+  return NULL;
+}
+
 // analyseExpression also returns the type of the expression
 Ident *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
 
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 Ident *analyseStructNew(Analyser *a, Context c, Node *n) { return NULL; }
-Ident *analyseFuncCall(Analyser *a, Context c, Node *n) { return NULL; }
 Ident *analyseMakeArray(Analyser *a, Context c, Node *n) { return NULL; }
-void analyseUnary(Analyser *a, Context c, Node *n) {}
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
 
 void analyseBlock(Analyser *a, Context c, Node *n) {

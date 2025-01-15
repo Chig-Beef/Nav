@@ -21,8 +21,10 @@ typedef struct Ident {
 
   Ident *ret;    // If this is of type fun, what this function returns
   Ident *params; // An array of params, used for functions
+  int paramsLen;
 
   Ident *props; // An array of props, used for structs
+  int propsLen;
 } Ident;
 
 // Variables are held in a stack structure
@@ -44,7 +46,9 @@ void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod) {
   // This will usually be changed by the user after if needed
   n->ret = NULL;
   n->params = NULL;
+  n->paramsLen = 0;
   n->props = NULL;
+  n->propsLen = 0;
 
   ++s->len;
 
