@@ -655,11 +655,30 @@ Ident *analyseStructNew(Analyser *a, Context c, Node *n) {
   return NULL;
 }
 
+Ident *analyseMakeArray(Analyser *a, Context c, Node *n) {
+  // TODO: Expected type must be array
+
+  // TODO: Unwrap type from array
+
+  int i = 2;
+
+  while (i < n->children.len) {
+    if (n->children.p[i].kind != N_EXPRESSION) {
+      break;
+    }
+
+    analyseExpression(a, c, n->children.p + i);
+
+    i += 2;
+  }
+
+  return NULL;
+}
+
 // analyseExpression also returns the type of the expression
 Ident *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
 
 void analyseOperator(Analyser *a, Context c, Node *n) {}
-Ident *analyseMakeArray(Analyser *a, Context c, Node *n) { return NULL; }
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
 
 void analyseBlock(Analyser *a, Context c, Node *n) {
