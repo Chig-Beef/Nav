@@ -334,6 +334,19 @@ void analyseIfBlock(Analyser *a, Context c, Node *n) {
   }
 }
 
+void analyseCrement(Analyser *a, Context c, Node *n) {
+  Ident *var = varExists(a, n->children.p[1].data);
+  if (var == NULL) {
+    throwAnalyserError(a, NULL, 0, "Variable doesn't exist");
+  }
+
+  Ident *type = var->type;
+  if (type != a->preDefs.INT) {
+    throwAnalyserError(a, NULL, 0,
+                       "Can only use -- and ++ operators on integers");
+  }
+}
+
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseBracketedValue(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
@@ -341,7 +354,6 @@ void analyseFuncCall(Analyser *a, Context c, Node *n) {}
 void analyseMakeArray(Analyser *a, Context c, Node *n) {}
 void analyseLoneCall(Analyser *a, Context c, Node *n) {}
 void analyseExpression(Analyser *a, Context c, Node *n) {}
-void analyseCrement(Analyser *a, Context c, Node *n) {}
 void analyseAssignment(Analyser *a, Context c, Node *n) {}
 void analyseNewAssignment(Analyser *a, Context c, Node *n) {}
 void analyseVarDeclaration(Analyser *a, Context c, Node *n) {}
