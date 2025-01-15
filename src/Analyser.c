@@ -446,7 +446,39 @@ void analyseSwitchState(Analyser *a, Context c, Node *n) {
   }
 }
 
-void analyseCaseBlock(Analyser *a, Context c, Node *n) {}
+void analyseCaseBlock(Analyser *a, Context c, Node *n) {
+  c.expType = NULL;
+  // TODO: Expect the type of the arg to the switch
+
+  analyseExpression(a, c, n->children.p + 1);
+
+  c.canBreak = true;
+
+  for (int i = 3; i < n->children.len; ++i) {
+    switch (n->children.p[i].kind) {
+    case N_LONE_CALL:
+      analyseLoneCall(a, c, n);
+    case N_VAR_DEC:
+      analyseVarDeclaration(a, c, n);
+    case N_IF_BLOCK:
+      analyseIfBlock(a, c, n);
+    case N_FOR_LOOP:
+      analyseForLoop(a, c, n);
+    case N_RET_STATE:
+      analyseRetState(a, c, n);
+    case N_BREAK_STATE:
+      analyseBreakState(a, c, n);
+    case N_CONTINUE_STATE:
+      analyseContinueState(a, c, n);
+    case N_SWITCH_STATE:
+      analyseSwitchState(a, c, n);
+
+    default:
+      throwAnalyserError(a, NULL, 0, "Invalid statement in case block");
+    }
+  }
+}
+
 void analyseDefaultBlock(Analyser *a, Context c, Node *n) {}
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
