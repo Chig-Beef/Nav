@@ -265,11 +265,32 @@ void analyseForLoop(Analyser *a, Context c, Node *n) {
   // the loop header
   int stackBase = a->vars.len;
 
-  // TODO: Assignment
+  int i = 1;
 
-  // TODO: Expression
+  // Assignment
+  if (n->children.p[i].kind == N_ASSIGNMENT) {
+    analyseAssignment(a, c, n->children.p + i);
+    i += 2;
+  } else if (n->children.p[i].kind == N_NEW_ASSIGNMENT) {
+    analyseNewAssignment(a, c, n->children.p + i);
+    i += 2;
+  } else {
+    ++i;
+  }
 
-  // TODO: Assignment
+  // Expression
+  if (n->children.p[i].kind == N_EXPRESSION) {
+    c.expType = a->preDefs.BOOL;
+    analyseExpression(a, c, n->children.p + i);
+    i += 2;
+  } else {
+    ++i;
+  }
+
+  // Assignment
+  if (n->children.p[i].kind == N_ASSIGNMENT) {
+    analyseAssignment(a, c, n->children.p + i);
+  }
 
   analyseBlock(a, (Context){true, true, c.expType, c.retType},
                n->children.p + n->children.len - 1);
@@ -312,6 +333,8 @@ void analyseIndex(Analyser *a, Context c, Node *n) {
 }
 
 void analyseIfBlock(Analyser *a, Context c, Node *n) {
+  int stackBase = a->vars.len;
+
   c.expType = a->preDefs.BOOL;
   analyseExpression(a, c, n->children.p + 2);
   analyseBlock(a, c, n->children.p + 4);
@@ -329,8 +352,13 @@ void analyseIfBlock(Analyser *a, Context c, Node *n) {
 
       analyseBlock(a, c, n->children.p + i + 1);
 
-      return;
+      break;
     }
+  }
+
+  // Delete variables used in the if block
+  while (a->vars.len > stackBase) {
+    stackPop(&a->vars);
   }
 }
 
