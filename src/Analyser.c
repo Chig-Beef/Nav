@@ -68,20 +68,20 @@ void analyseForLoop(Analyser *a, Context c, Node *n);
 void analyseRetState(Analyser *a, Context c, Node *n);
 void analyseBreakState(Analyser *a, Context c, Node *n);
 void analyseContinueState(Analyser *a, Context c, Node *n);
-void analyseBracketedValue(Analyser *a, Context c, Node *n);
-void analyseStructNew(Analyser *a, Context c, Node *n);
-void analyseFuncCall(Analyser *a, Context c, Node *n);
-void analyseMakeArray(Analyser *a, Context c, Node *n);
+Ident *analyseBracketedValue(Analyser *a, Context c, Node *n);
+Ident *analyseStructNew(Analyser *a, Context c, Node *n);
+Ident *analyseFuncCall(Analyser *a, Context c, Node *n);
+Ident *analyseMakeArray(Analyser *a, Context c, Node *n);
 void analyseLoneCall(Analyser *a, Context c, Node *n);
-void analyseExpression(Analyser *a, Context c, Node *n);
+Ident *analyseExpression(Analyser *a, Context c, Node *n);
 void analyseCrement(Analyser *a, Context c, Node *n);
 void analyseAssignment(Analyser *a, Context c, Node *n);
 void analyseNewAssignment(Analyser *a, Context c, Node *n);
 void analyseVarDeclaration(Analyser *a, Context c, Node *n);
 void analyseUnary(Analyser *a, Context c, Node *n);
-void analyseUnaryValue(Analyser *a, Context c, Node *n);
+Ident *analyseUnaryValue(Analyser *a, Context c, Node *n);
 void analyseComplexType(Analyser *a, Context c, Node *n);
-void analyseValue(Analyser *a, Context c, Node *n);
+Ident *analyseValue(Analyser *a, Context c, Node *n);
 void analyseSwitchState(Analyser *a, Context c, Node *n);
 void analyseCaseBlock(Analyser *a, Context c, Node *n);
 void analyseDefaultBlock(Analyser *a, Context c, Node *n);
@@ -420,9 +420,9 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
   analyseExpression(a, c, n->children.p + n->children.len - 1);
 }
 
-void analyseBracketedValue(Analyser *a, Context c, Node *n) {
+Ident *analyseBracketedValue(Analyser *a, Context c, Node *n) {
   // Keep same expected type and everything
-  analyseExpression(a, c, n->children.p + 1);
+  return analyseExpression(a, c, n->children.p + 1);
 }
 
 void analyseLoneCall(Analyser *a, Context c, Node *n) {
@@ -507,15 +507,48 @@ void analyseDefaultBlock(Analyser *a, Context c, Node *n) {
   }
 }
 
+Ident *analyseValue(Analyser *a, Context c, Node *n) {
+  switch (n->kind) {
+  case N_INT:
+    return a->preDefs.INT;
+  case N_FLOAT:
+    return a->preDefs.FLOAT;
+  case N_CHAR:
+    return a->preDefs.CHAR;
+  case N_STRING:
+    // TODO: Char array
+    return a->preDefs.CHAR;
+  case N_TRUE:
+    return a->preDefs.BOOL;
+  case N_FALSE:
+    return a->preDefs.BOOL;
+  case N_IDENTIFIER:
+    // TODO: Get type of identifier
+    return NULL;
+  case N_MAKE_ARRAY:
+    return analyseMakeArray(a, c, n);
+  case N_FUNC_CALL:
+    return analyseFuncCall(a, c, n);
+  case N_STRUCT_NEW:
+    return analyseStructNew(a, c, n);
+  case N_BRACKETED_VALUE:
+    return analyseBracketedValue(a, c, n);
+
+  default:
+    return NULL;
+  }
+}
+
+// analyseExpression also returns the type of the expression
+Ident *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
+
 void analyseOperator(Analyser *a, Context c, Node *n) {}
-void analyseStructNew(Analyser *a, Context c, Node *n) {}
-void analyseFuncCall(Analyser *a, Context c, Node *n) {}
-void analyseMakeArray(Analyser *a, Context c, Node *n) {}
-void analyseExpression(Analyser *a, Context c, Node *n) {}
+Ident *analyseStructNew(Analyser *a, Context c, Node *n) { return NULL; }
+Ident *analyseFuncCall(Analyser *a, Context c, Node *n) { return NULL; }
+Ident *analyseMakeArray(Analyser *a, Context c, Node *n) { return NULL; }
 void analyseUnary(Analyser *a, Context c, Node *n) {}
-void analyseUnaryValue(Analyser *a, Context c, Node *n) {}
+Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) { return NULL; }
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
-void analyseValue(Analyser *a, Context c, Node *n) {}
 
 void analyseBlock(Analyser *a, Context c, Node *n) {
   for (int i = 1; i < n->children.len - 1; ++i) {
