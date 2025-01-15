@@ -420,8 +420,12 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
   analyseExpression(a, c, n->children.p + n->children.len - 1);
 }
 
+void analyseBracketedValue(Analyser *a, Context c, Node *n) {
+  // Keep same expected type and everything
+  analyseExpression(a, c, n->children.p + 1);
+}
+
 void analyseOperator(Analyser *a, Context c, Node *n) {}
-void analyseBracketedValue(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
 void analyseFuncCall(Analyser *a, Context c, Node *n) {}
 void analyseMakeArray(Analyser *a, Context c, Node *n) {}
