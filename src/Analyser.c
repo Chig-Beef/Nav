@@ -400,6 +400,26 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
   analyseExpression(a, c, n->children.p + n->children.len - 1);
 }
 
+void analyseAssignment(Analyser *a, Context c, Node *n) {
+  if (n->children.p[0].kind == N_CREMENT) {
+    analyseCrement(a, c, n->children.p);
+    return;
+  }
+
+  String *varName = n->children.p[0].data;
+  Ident *var = varExists(a, varName);
+  if (var == NULL) {
+    throwAnalyserError(a, NULL, 0, "Variable does not exists");
+  }
+
+  if (n->children.p[1].kind == N_INDEX) {
+    analyseIndex(a, c, n->children.p + 1);
+  }
+
+  c.expType = var->type;
+  analyseExpression(a, c, n->children.p + n->children.len - 1);
+}
+
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseBracketedValue(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
@@ -407,7 +427,6 @@ void analyseFuncCall(Analyser *a, Context c, Node *n) {}
 void analyseMakeArray(Analyser *a, Context c, Node *n) {}
 void analyseLoneCall(Analyser *a, Context c, Node *n) {}
 void analyseExpression(Analyser *a, Context c, Node *n) {}
-void analyseAssignment(Analyser *a, Context c, Node *n) {}
 void analyseUnary(Analyser *a, Context c, Node *n) {}
 void analyseUnaryValue(Analyser *a, Context c, Node *n) {}
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
