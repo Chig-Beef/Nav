@@ -5,12 +5,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct PreDefs {
+  // Primitive types
+  Ident *INT;
+  Ident *BOOL;
+  Ident *CHAR;
+  Ident *FLOAT;
+  Ident *FUN;
+
+  // Functions
+  Ident *PRINT;
+} PreDefs;
+
 typedef struct Analyser {
   // Source
   Node enums, structs, funcs;
 
   // Defined variables, types, etc
   Stack vars;
+
+  PreDefs preDefs;
+
 } Analyser;
 
 void throwAnalyserError(Analyser *a, char *fileName, int line, char msg[]) {
@@ -26,8 +41,24 @@ void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   a->funcs = funcs;
   a->vars = (Stack){NULL, 0};
 
-  // Function type,
+  stackPush(&a->vars, strNew("int", false), NULL, TM_NONE);
+  a->preDefs.INT = a->vars.tail;
+
+  stackPush(&a->vars, strNew("bool", false), NULL, TM_NONE);
+  a->preDefs.BOOL = a->vars.tail;
+
+  stackPush(&a->vars, strNew("char", false), NULL, TM_NONE);
+  a->preDefs.CHAR = a->vars.tail;
+
+  stackPush(&a->vars, strNew("float", false), NULL, TM_NONE);
+  a->preDefs.FLOAT = a->vars.tail;
+
+  // Function type
   stackPush(&a->vars, strNew("fun", false), NULL, TM_NONE);
+  a->preDefs.FUN = a->vars.tail;
+
+  stackPush(&a->vars, strNew("print", false), a->preDefs.FUN, TM_NONE);
+  a->preDefs.PRINT = a->vars.tail;
 }
 
 void analyseOperator(Analyser *a, Context c, Node *n);
@@ -151,7 +182,7 @@ void analyseStructs(Analyser *a) {
   }
 }
 
-void analyseFuncs(Analyser *a, Ident *funcType) {
+void analyseFuncs(Analyser *a) {
   Node *funcNode, *paramTypeNode, *paramNode;
   Ident *funcDec;
   int numParams;
@@ -166,7 +197,7 @@ void analyseFuncs(Analyser *a, Ident *funcType) {
     }
 
     // Add the function
-    stackPush(&a->vars, strGet(funcNode->children.p[1].data), funcType,
+    stackPush(&a->vars, strGet(funcNode->children.p[1].data), a->preDefs.FUN,
               TM_NONE);
     funcDec = a->vars.tail;
 
@@ -276,13 +307,34 @@ void analyseContinueState(Analyser *a, Context c, Node *n) {
 }
 
 void analyseIndex(Analyser *a, Context c, Node *n) {
-  // TODO: Expect type of int
-  // c.expType = INT??;
+  c.expType = a->preDefs.INT;
   analyseExpression(a, c, n->children.p + 1);
 }
 
+void analyseIfBlock(Analyser *a, Context c, Node *n) {
+  c.expType = a->preDefs.BOOL;
+  analyseExpression(a, c, n->children.p + 2);
+  analyseBlock(a, c, n->children.p + 4);
+
+  int i = 5;
+
+  while (n->children.len > i) {
+    if (n->children.p[i].kind == N_ELIF) {
+      c.expType = a->preDefs.BOOL;
+      analyseExpression(a, c, n->children.p + i + 2);
+      analyseBlock(a, c, n->children.p + i + 4);
+
+      i += 5;
+    } else if (n->children.p[i].kind == N_ELSE) {
+
+      analyseBlock(a, c, n->children.p + i + 1);
+
+      return;
+    }
+  }
+}
+
 void analyseOperator(Analyser *a, Context c, Node *n) {}
-void analyseIfBlock(Analyser *a, Context c, Node *n) {}
 void analyseBracketedValue(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
 void analyseFuncCall(Analyser *a, Context c, Node *n) {}
@@ -328,12 +380,9 @@ void analyseBlock(Analyser *a, Context c, Node *n) {
 }
 
 void analyse(Analyser *a) {
-  // The type of functions
-  Ident *funcType = a->vars.tail;
-
   analyseEnums(a);
   analyseStructs(a);
-  analyseFuncs(a, funcType);
+  analyseFuncs(a);
 
   stackClear(&a->vars);
 }

@@ -110,7 +110,7 @@ Functions, types, are hoisted.
 
 ## Calling functions
 ```
-call println(6);
+call print(6);
 let int x = call add(2, 3);
 ```
 
