@@ -385,6 +385,21 @@ void analyseVarDeclaration(Analyser *a, Context c, Node *n) {
   }
 }
 
+void analyseNewAssignment(Analyser *a, Context c, Node *n) {
+  String *varName = n->children.p[2].data;
+
+  if (varExists(a, varName) != NULL) {
+    throwAnalyserError(a, NULL, 0, "Variable name already exists");
+  }
+
+  // TODO: Get type from complexType
+
+  // TODO: Expect the correct type from expression
+  // c.expType = ??
+
+  analyseExpression(a, c, n->children.p + n->children.len - 1);
+}
+
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseBracketedValue(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
@@ -393,7 +408,6 @@ void analyseMakeArray(Analyser *a, Context c, Node *n) {}
 void analyseLoneCall(Analyser *a, Context c, Node *n) {}
 void analyseExpression(Analyser *a, Context c, Node *n) {}
 void analyseAssignment(Analyser *a, Context c, Node *n) {}
-void analyseNewAssignment(Analyser *a, Context c, Node *n) {}
 void analyseUnary(Analyser *a, Context c, Node *n) {}
 void analyseUnaryValue(Analyser *a, Context c, Node *n) {}
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
