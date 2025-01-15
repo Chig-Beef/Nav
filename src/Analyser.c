@@ -589,14 +589,6 @@ Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) {
   return NULL;
 }
 
-funcCall = 'call', IDENTIFIER, '(', [
-  expression,
-  {
-      ',',
-      expression,
-  }[',', ]
-] ')';
-
 Ident *analyseFuncCall(Analyser *a, Context c, Node *n) {
   Ident *func = varExists(a, n->children.p[1].data);
   if (func == NULL) {
@@ -630,11 +622,43 @@ Ident *analyseFuncCall(Analyser *a, Context c, Node *n) {
   return NULL;
 }
 
+Ident *analyseStructNew(Analyser *a, Context c, Node *n) {
+  Ident *stt = varExists(a, n->children.p[1].data);
+  if (stt == NULL) {
+    throwAnalyserError(a, NULL, 0, "Struct doesn't exist");
+  }
+
+  int propIndex = 0;
+  int nodeIndex = 3;
+
+  while (propIndex < stt->propsLen) {
+    if (nodeIndex >= n->children.len) {
+      throwAnalyserError(a, NULL, 0, "Not enough args for struct");
+    }
+
+    if (n->children.p[nodeIndex].kind != N_EXPRESSION) {
+      throwAnalyserError(a, NULL, 0, "Not enough args for struct");
+    }
+
+    // TODO: Correct expected type
+    // c.expType = ???
+    analyseExpression(a, c, n->children.p + nodeIndex);
+
+    ++propIndex;
+    nodeIndex += 2;
+  }
+
+  if (n->children.p[nodeIndex].kind == N_EXPRESSION) {
+    throwAnalyserError(a, NULL, 0, "Too many args for struct");
+  }
+
+  return NULL;
+}
+
 // analyseExpression also returns the type of the expression
 Ident *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
 
 void analyseOperator(Analyser *a, Context c, Node *n) {}
-Ident *analyseStructNew(Analyser *a, Context c, Node *n) { return NULL; }
 Ident *analyseMakeArray(Analyser *a, Context c, Node *n) { return NULL; }
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
 
