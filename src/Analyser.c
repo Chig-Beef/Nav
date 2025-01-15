@@ -425,11 +425,14 @@ void analyseBracketedValue(Analyser *a, Context c, Node *n) {
   analyseExpression(a, c, n->children.p + 1);
 }
 
+void analyseLoneCall(Analyser *a, Context c, Node *n) {
+  analyseFuncCall(a, c, n->children.p);
+}
+
 void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseStructNew(Analyser *a, Context c, Node *n) {}
 void analyseFuncCall(Analyser *a, Context c, Node *n) {}
 void analyseMakeArray(Analyser *a, Context c, Node *n) {}
-void analyseLoneCall(Analyser *a, Context c, Node *n) {}
 void analyseExpression(Analyser *a, Context c, Node *n) {}
 void analyseUnary(Analyser *a, Context c, Node *n) {}
 void analyseUnaryValue(Analyser *a, Context c, Node *n) {}
