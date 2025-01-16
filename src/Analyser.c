@@ -1,4 +1,5 @@
 #include "Context.h"
+#include "Fun.h"
 #include "Ident.h"
 #include "Node.h"
 #include "String.h"
@@ -14,15 +15,17 @@ typedef struct PreDefs {
   Ident *FUN;
 
   // Functions
-  Ident *PRINT;
+  Fun *PRINT;
 } PreDefs;
 
 typedef struct Analyser {
   // Source
-  Node enums, structs, funcs;
+  Node inEnums, inStructs, inFuns;
 
   // Defined variables, types, etc
-  Stack vars;
+  IdentStack vars;
+  IdentStack types;
+  FunStack funs;
 
   PreDefs preDefs;
 
@@ -36,32 +39,29 @@ void throwAnalyserError(Analyser *a, char *fileName, int line, char msg[]) {
 }
 
 void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
-  a->enums = enums;
-  a->structs = structs;
-  a->funcs = funcs;
-  a->vars = (Stack){NULL, 0};
+  a->inEnums = enums;
+  a->inStructs = structs;
+  a->inFuns = funcs;
+  a->vars = (IdentStack){NULL, 0};
+  a->types = (IdentStack){NULL, 0};
+  a->funs = (FunStack){NULL, 0};
 
-  stackPush(&a->vars, strNew("int", false), NULL, TM_NONE);
-  a->preDefs.INT = a->vars.tail;
+  identStackPush(&a->types, strNew("int", false), NULL, TM_NONE);
+  a->preDefs.INT = a->types.tail;
 
-  stackPush(&a->vars, strNew("bool", false), NULL, TM_NONE);
-  a->preDefs.BOOL = a->vars.tail;
+  identStackPush(&a->types, strNew("bool", false), NULL, TM_NONE);
+  a->preDefs.BOOL = a->types.tail;
 
-  stackPush(&a->vars, strNew("char", false), NULL, TM_NONE);
-  a->preDefs.CHAR = a->vars.tail;
+  identStackPush(&a->types, strNew("char", false), NULL, TM_NONE);
+  a->preDefs.CHAR = a->types.tail;
 
-  stackPush(&a->vars, strNew("float", false), NULL, TM_NONE);
-  a->preDefs.FLOAT = a->vars.tail;
+  identStackPush(&a->types, strNew("float", false), NULL, TM_NONE);
+  a->preDefs.FLOAT = a->types.tail;
 
-  // Function type
-  stackPush(&a->vars, strNew("fun", false), NULL, TM_NONE);
-  a->preDefs.FUN = a->vars.tail;
-
-  stackPush(&a->vars, strNew("print", false), a->preDefs.FUN, TM_NONE);
-  a->preDefs.PRINT = a->vars.tail;
+  funStackPush(&a->funs, strNew("print", false));
+  a->preDefs.PRINT = a->funs.tail;
 }
 
-void analyseOperator(Analyser *a, Context c, Node *n);
 void analyseIndex(Analyser *a, Context c, Node *n);
 void analyseIfBlock(Analyser *a, Context c, Node *n);
 void analyseForLoop(Analyser *a, Context c, Node *n);
@@ -101,22 +101,52 @@ Ident *varExists(Analyser *a, String *name) {
   return NULL;
 }
 
+Fun *funExists(Analyser *a, String *name) {
+  Fun *curFun = a->funs.tail;
+
+  while (curFun != NULL) {
+    if (strEql(curFun->name, name)) {
+      return curFun;
+    }
+
+    // Next identifier
+    curFun = curFun->next;
+  }
+
+  return NULL;
+}
+
+Ident *typeExists(Analyser *a, String *name) {
+  Ident *curIdent = a->types.tail;
+
+  while (curIdent != NULL) {
+    if (strEql(curIdent->name, name)) {
+      return curIdent;
+    }
+
+    // Next identifier
+    curIdent = curIdent->next;
+  }
+
+  return NULL;
+}
+
 void analyseEnums(Analyser *a) {
   Node *enumNode, *enumChildNode;
   Ident *enumType;
   String *enumName;
 
-  for (int i = 0; i < a->enums.children.len; ++i) {
-    enumNode = a->enums.children.p + i;
+  for (int i = 0; i < a->inEnums.children.len; ++i) {
+    enumNode = a->inEnums.children.p + i;
     enumName = strGet(enumNode->children.p[1].data);
 
-    if (varExists(a, enumName)) {
+    if (typeExists(a, enumName)) {
       throwAnalyserError(a, NULL, 0, "Enum already exists");
     }
 
     // Add the actual enum type
-    stackPush(&a->vars, enumName, NULL, TM_NONE);
-    enumType = a->vars.tail;
+    identStackPush(&a->types, enumName, NULL, TM_NONE);
+    enumType = a->types.tail;
 
     // Each of the constants in the enum
     for (int j = 3; j < enumNode->children.len - 1; j += 2) {
@@ -126,7 +156,7 @@ void analyseEnums(Analyser *a) {
         throwAnalyserError(a, NULL, 0, "Enum constant already exists");
       }
 
-      stackPush(&a->vars, enumChildNode->data, enumType, TM_NONE);
+      identStackPush(&a->vars, enumChildNode->data, enumType, TM_NONE);
     }
   }
 }
@@ -137,17 +167,18 @@ void analyseStructs(Analyser *a) {
   int numProps;
   String *structName;
 
-  for (int i = 0; i < a->structs.children.len; ++i) {
-    structNode = a->structs.children.p + i;
+  for (int i = 0; i < a->inStructs.children.len; ++i) {
+    structNode = a->inStructs.children.p + i;
     structName = strGet(structNode->children.p[1].data);
 
-    if (varExists(a, structName)) {
+    if (typeExists(a, structName)) {
       throwAnalyserError(a, NULL, 0, "Struct already exists");
     }
 
     // Add the struct as a type
-    stackPush(&a->vars, strGet(structNode->children.p[1].data), NULL, TM_NONE);
-    structType = a->vars.tail;
+    identStackPush(&a->types, strGet(structNode->children.p[1].data), NULL,
+                   TM_NONE);
+    structType = a->types.tail;
 
     // Each property of this struct
     numProps = structNode->children.len - 4;
@@ -184,22 +215,21 @@ void analyseStructs(Analyser *a) {
 
 void analyseFuncs(Analyser *a) {
   Node *funcNode, *paramTypeNode, *paramNode;
-  Ident *funcDec;
+  Fun *funcDec;
   int numParams;
   String *funcName;
 
-  for (int i = 0; i < a->funcs.children.len; ++i) {
-    funcNode = a->structs.children.p + i;
+  for (int i = 0; i < a->inFuns.children.len; ++i) {
+    funcNode = a->inStructs.children.p + i;
     funcName = strGet(funcNode->children.p[1].data);
 
-    if (varExists(a, funcName)) {
+    if (funExists(a, funcName)) {
       throwAnalyserError(a, NULL, 0, "Function already exists");
     }
 
     // Add the function
-    stackPush(&a->vars, strGet(funcNode->children.p[1].data), a->preDefs.FUN,
-              TM_NONE);
-    funcDec = a->vars.tail;
+    funStackPush(&a->funs, strGet(funcNode->children.p[1].data));
+    funcDec = a->funs.tail;
 
     // Each param of this func
     if (funcNode->children.p[funcNode->children.len - 2].kind ==
@@ -214,7 +244,7 @@ void analyseFuncs(Analyser *a) {
           NULL, // No name
           NULL, // TODO: get the type correctly
           NULL, // Not on stack, so no next
-          TM_NONE, NULL, NULL, NULL,
+          TM_NONE, NULL, 0,
       };
 
     } else {
@@ -243,8 +273,7 @@ void analyseFuncs(Analyser *a) {
                    // stack (yet)
           TM_NONE, // TODO: Get the correct type modifier from param type node
           NULL,
-          NULL,
-          NULL,
+          0,
       };
     }
 
@@ -256,7 +285,7 @@ void analyseFuncs(Analyser *a) {
 
     // Delete variables used in the function
     while (a->vars.len > stackBase) {
-      stackPop(&a->vars);
+      identStackPop(&a->vars);
     }
   }
 }
@@ -298,7 +327,7 @@ void analyseForLoop(Analyser *a, Context c, Node *n) {
 
   // Delete variables used in the loop
   while (a->vars.len > stackBase) {
-    stackPop(&a->vars);
+    identStackPop(&a->vars);
   }
 }
 
@@ -359,7 +388,7 @@ void analyseIfBlock(Analyser *a, Context c, Node *n) {
 
   // Delete variables used in the if block
   while (a->vars.len > stackBase) {
-    stackPop(&a->vars);
+    identStackPop(&a->vars);
   }
 }
 
@@ -590,15 +619,15 @@ Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) {
 }
 
 Ident *analyseFuncCall(Analyser *a, Context c, Node *n) {
-  Ident *func = varExists(a, n->children.p[1].data);
-  if (func == NULL) {
+  Fun *fun = funExists(a, n->children.p[1].data);
+  if (fun == NULL) {
     throwAnalyserError(a, NULL, 0, "Function doesn't exist");
   }
 
   int paramIndex = 0;
   int nodeIndex = 3;
 
-  while (paramIndex < func->paramsLen) {
+  while (paramIndex < fun->paramsLen) {
     if (nodeIndex >= n->children.len) {
       throwAnalyserError(a, NULL, 0, "Not enough args for function");
     }
@@ -623,10 +652,11 @@ Ident *analyseFuncCall(Analyser *a, Context c, Node *n) {
 }
 
 Ident *analyseStructNew(Analyser *a, Context c, Node *n) {
-  Ident *stt = varExists(a, n->children.p[1].data);
+  Ident *stt = typeExists(a, n->children.p[1].data);
   if (stt == NULL) {
     throwAnalyserError(a, NULL, 0, "Struct doesn't exist");
   }
+  // TODO: Make sure thingy is actually a struct, not primitive or enum
 
   int propIndex = 0;
   int nodeIndex = 3;
@@ -678,7 +708,6 @@ Ident *analyseMakeArray(Analyser *a, Context c, Node *n) {
 // analyseExpression also returns the type of the expression
 Ident *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
 
-void analyseOperator(Analyser *a, Context c, Node *n) {}
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
 
 void analyseBlock(Analyser *a, Context c, Node *n) {
@@ -712,5 +741,7 @@ void analyse(Analyser *a) {
   analyseStructs(a);
   analyseFuncs(a);
 
-  stackClear(&a->vars);
+  identStackClear(&a->vars);
+  funStackClear(&a->funs);
+  identStackClear(&a->types);
 }

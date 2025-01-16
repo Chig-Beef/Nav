@@ -1,15 +1,9 @@
 #include "Panic.h"
 #include "String.h"
+#include "TypeModifier.h"
 #include <stdlib.h>
 
-#define ZERO_IDENT                                                             \
-  (Ident) { NULL, NULL, NULL, TM_NONE, NULL, NULL, NULL }
-
-typedef enum TypeModifier {
-  TM_NONE,
-  TM_ARRAY,
-  TM_POINTER,
-} TypeModifier;
+#define ZERO_IDENT (Ident){NULL, NULL, NULL, TM_NONE, NULL, 0}
 
 typedef struct Ident Ident;
 
@@ -19,21 +13,18 @@ typedef struct Ident {
   Ident *next;      // Linked list structure (stack)
   TypeModifier mod; // Is this a pointer of a type
 
-  Ident *ret;    // If this is of type fun, what this function returns
-  Ident *params; // An array of params, used for functions
-  int paramsLen;
-
   Ident *props; // An array of props, used for structs
   int propsLen;
 } Ident;
 
 // Variables are held in a stack structure
-typedef struct Stack {
+typedef struct IdentStack {
   Ident *tail;
   int len;
-} Stack;
+} IdentStack;
 
-void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod) {
+void identStackPush(IdentStack *s, String *name, Ident *type,
+                    TypeModifier mod) {
   Ident *n = malloc(sizeof(Ident));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
@@ -44,9 +35,6 @@ void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod) {
   n->mod = mod;
 
   // This will usually be changed by the user after if needed
-  n->ret = NULL;
-  n->params = NULL;
-  n->paramsLen = 0;
   n->props = NULL;
   n->propsLen = 0;
 
@@ -63,7 +51,7 @@ void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod) {
 
 // The reason we return the thing and not the pointer to the thing is because we
 // free the pointer, so we're returning a copy
-Ident stackPop(Stack *s) {
+Ident identStackPop(IdentStack *s) {
   if (s->len == 0) {
     return ZERO_IDENT;
   }
@@ -83,8 +71,8 @@ Ident stackPop(Stack *s) {
   return tail;
 }
 
-void stackClear(Stack *s) {
+void identStackClear(IdentStack *s) {
   while (s->len > 0) {
-    stackPop(s);
+    identStackPop(s);
   }
 }

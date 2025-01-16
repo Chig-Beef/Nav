@@ -1,15 +1,9 @@
 #pragma once
 
 #include "String.h"
+#include "TypeModifier.h"
 
-#define ZERO_IDENT                                                             \
-  (Ident) { NULL, NULL, NULL, TM_NONE, NULL, NULL }
-
-typedef enum TypeModifier {
-  TM_NONE,
-  TM_ARRAY,
-  TM_POINTER,
-} TypeModifier;
+#define ZERO_IDENT (Ident){NULL, NULL, NULL, TM_NONE, NULL, 0}
 
 typedef struct Ident Ident;
 
@@ -19,22 +13,18 @@ typedef struct Ident {
   Ident *next;      // Linked list structure (stack)
   TypeModifier mod; // Is this a pointer of a type
 
-  Ident *ret;    // If this is of type fun, what this function returns
-  Ident *params; // An array of params, used for functions
-  int paramsLen;
-
   Ident *props; // An array of props, used for structs
   int propsLen;
 } Ident;
 
 // Variables are held in a stack structure
-typedef struct Stack {
+typedef struct IdentStack {
   Ident *tail;
   int len;
-} Stack;
+} IdentStack;
 
-Ident stackPop(Stack *s);
+Ident identStackPop(IdentStack *s);
 
-void stackPush(Stack *s, String *name, Ident *type, TypeModifier mod);
+void identStackPush(IdentStack *s, String *name, Ident *type, TypeModifier mod);
 
-void stackClear(Stack *s);
+void identStackClear(IdentStack *s);
