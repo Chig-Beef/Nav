@@ -3,6 +3,7 @@
 #include "Ident.h"
 #include "Node.h"
 #include "String.h"
+#include "Types.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -75,7 +76,7 @@ void analyseAssignment(Analyser *a, Context c, Node *n);
 void analyseNewAssignment(Analyser *a, Context c, Node *n);
 void analyseVarDeclaration(Analyser *a, Context c, Node *n);
 Type *analyseUnaryValue(Analyser *a, Context c, Node *n);
-void analyseComplexType(Analyser *a, Context c, Node *n);
+Type *analyseComplexType(Analyser *a, Context c, Node *n);
 Type *analyseValue(Analyser *a, Context c, Node *n);
 void analyseSwitchState(Analyser *a, Context c, Node *n);
 void analyseCaseBlock(Analyser *a, Context c, Node *n);
@@ -697,9 +698,90 @@ Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
 }
 
 // analyseExpression also returns the type of the expression
-Type *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
+Type *analyseExpression(Analyser *a, Context c, Node *n) {
+  Type *exprType = NULL;
 
-void analyseComplexType(Analyser *a, Context c, Node *n) {}
+  // Only one value
+  if (n->children.len == 1) {
+    // Unary or value?
+    if (n->children.p[0].kind == N_UNARY_VALUE) {
+      exprType = analyseUnaryValue(a, c, n->children.p);
+    } else {
+      exprType = analyseValue(a, c, n->children.p);
+    }
+
+    // Did we get the expected type?
+    if (c.expType == NULL) { // Multiple types, caller will decide
+      return exprType;
+    } else if (c.expType == exprType) { // We got the right type
+      return exprType;
+    } else { // bad type
+      throwAnalyserError(a, NULL, 0,
+                         "Expression did not have the correct type");
+    }
+  }
+
+  // Unary or value?
+  if (n->children.p[0].kind == N_UNARY_VALUE) {
+    exprType = analyseUnaryValue(a, c, n->children.p);
+  } else {
+    exprType = analyseValue(a, c, n->children.p);
+  }
+
+  for (int i = 1; i < n->children.len - 1; i += 2) {
+    if (n->children.p[i + 1].kind == N_UNARY_VALUE) {
+      if (analyseUnaryValue(a, c, n->children.p + i + 1) != exprType) {
+        throwAnalyserError(a, NULL, 0, "Unexpected type in expression");
+      }
+    }
+  }
+
+  return exprType;
+}
+
+Type *analyseComplexType(Analyser *a, Context c, Node *n) {
+  // Base level type
+  if (n->kind == N_IDENTIFIER) {
+    Type *t = typeExists(a, n->data);
+    if (t == NULL) {
+      throwAnalyserError(a, NULL, 0, "Couldn't find type");
+    }
+    return t;
+  }
+
+  TypeModifier mod = TM_NONE;
+
+  if (n->children.p[0].kind == N_INDEX) {
+    analyseIndex(a, c, n->children.p);
+    mod = TM_ARRAY;
+  } else {
+    mod = TM_POINTER;
+  }
+
+  Type *t = analyseComplexType(a, c, n->children.p + 1);
+
+  Type *curType = a->types.tail;
+
+  Type *finalType = NULL;
+
+  // Try to find this exact type already on the stack
+  while (curType != NULL) {
+    if (curType->parent == t && curType->mod == mod) {
+      finalType = curType;
+      break;
+    }
+    curType = curType->next;
+  }
+
+  // Couldn't find it?
+  if (finalType == NULL) {
+    // Make it
+    typeStackPush(&a->types, TK_COMP, NULL, mod, t);
+    finalType = a->types.tail;
+  }
+
+  return finalType;
+}
 
 void analyseBlock(Analyser *a, Context c, Node *n) {
   for (int i = 1; i < n->children.len - 1; ++i) {

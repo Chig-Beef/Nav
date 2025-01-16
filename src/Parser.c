@@ -666,14 +666,14 @@ Node parseUnaryValue(Parser *p) {
 }
 
 Node parseComplexType(Parser *p) {
-  Node out =
-      newNode(N_COMPLEX_TYPE, strNew("Complex Type", false), p->tok.line);
 
   // Type is only one word
   if (p->tok.kind == ((T_IDENTIFIER))) {
-    APPEND_NODE(N_IDENTIFIER, strGet(p->tok.data), "parseComplexType")
-    return out;
+    return newNode(N_IDENTIFIER, strGet(p->tok.data), p->tok.line);
   }
+
+  Node out =
+      newNode(N_COMPLEX_TYPE, strNew("Complex Type", false), p->tok.line);
 
   if (p->tok.kind == T_L_BLOCK) { // Index
     APPEND_STRUCTURE(parseIndex, "parseComplexType");
