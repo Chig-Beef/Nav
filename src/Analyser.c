@@ -8,11 +8,7 @@
 
 typedef struct PreDefs {
   // Primitive types
-  Ident *INT;
-  Ident *BOOL;
-  Ident *CHAR;
-  Ident *FLOAT;
-  Ident *FUN;
+  Type *INT, *BOOL, *CHAR, *FLOAT, *FUN;
 
   // Functions
   Fun *PRINT;
@@ -24,7 +20,7 @@ typedef struct Analyser {
 
   // Defined variables, types, etc
   IdentStack vars;
-  IdentStack types;
+  TypeStack types;
   FunStack funs;
 
   PreDefs preDefs;
@@ -43,19 +39,19 @@ void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   a->inStructs = structs;
   a->inFuns = funcs;
   a->vars = (IdentStack){NULL, 0};
-  a->types = (IdentStack){NULL, 0};
+  a->types = (TypeStack){NULL, 0};
   a->funs = (FunStack){NULL, 0};
 
-  identStackPush(&a->types, strNew("int", false), NULL, TM_NONE);
+  typeStackPush(&a->types, strNew("int", false));
   a->preDefs.INT = a->types.tail;
 
-  identStackPush(&a->types, strNew("bool", false), NULL, TM_NONE);
+  typeStackPush(&a->types, strNew("bool", false));
   a->preDefs.BOOL = a->types.tail;
 
-  identStackPush(&a->types, strNew("char", false), NULL, TM_NONE);
+  typeStackPush(&a->types, strNew("char", false));
   a->preDefs.CHAR = a->types.tail;
 
-  identStackPush(&a->types, strNew("float", false), NULL, TM_NONE);
+  typeStackPush(&a->types, strNew("float", false));
   a->preDefs.FLOAT = a->types.tail;
 
   funStackPush(&a->funs, strNew("print", false));
@@ -68,19 +64,19 @@ void analyseForLoop(Analyser *a, Context c, Node *n);
 void analyseRetState(Analyser *a, Context c, Node *n);
 void analyseBreakState(Analyser *a, Context c, Node *n);
 void analyseContinueState(Analyser *a, Context c, Node *n);
-Ident *analyseBracketedValue(Analyser *a, Context c, Node *n);
-Ident *analyseStructNew(Analyser *a, Context c, Node *n);
-Ident *analyseFuncCall(Analyser *a, Context c, Node *n);
-Ident *analyseMakeArray(Analyser *a, Context c, Node *n);
+Type *analyseBracketedValue(Analyser *a, Context c, Node *n);
+Type *analyseStructNew(Analyser *a, Context c, Node *n);
+Type *analyseFuncCall(Analyser *a, Context c, Node *n);
+Type *analyseMakeArray(Analyser *a, Context c, Node *n);
 void analyseLoneCall(Analyser *a, Context c, Node *n);
-Ident *analyseExpression(Analyser *a, Context c, Node *n);
+Type *analyseExpression(Analyser *a, Context c, Node *n);
 void analyseCrement(Analyser *a, Context c, Node *n);
 void analyseAssignment(Analyser *a, Context c, Node *n);
 void analyseNewAssignment(Analyser *a, Context c, Node *n);
 void analyseVarDeclaration(Analyser *a, Context c, Node *n);
-Ident *analyseUnaryValue(Analyser *a, Context c, Node *n);
+Type *analyseUnaryValue(Analyser *a, Context c, Node *n);
 void analyseComplexType(Analyser *a, Context c, Node *n);
-Ident *analyseValue(Analyser *a, Context c, Node *n);
+Type *analyseValue(Analyser *a, Context c, Node *n);
 void analyseSwitchState(Analyser *a, Context c, Node *n);
 void analyseCaseBlock(Analyser *a, Context c, Node *n);
 void analyseDefaultBlock(Analyser *a, Context c, Node *n);
@@ -116,16 +112,16 @@ Fun *funExists(Analyser *a, String *name) {
   return NULL;
 }
 
-Ident *typeExists(Analyser *a, String *name) {
-  Ident *curIdent = a->types.tail;
+Type *typeExists(Analyser *a, String *name) {
+  Type *curType = a->types.tail;
 
-  while (curIdent != NULL) {
-    if (strEql(curIdent->name, name)) {
-      return curIdent;
+  while (curType != NULL) {
+    if (strEql(curType->name, name)) {
+      return curType;
     }
 
     // Next identifier
-    curIdent = curIdent->next;
+    curType = curType->next;
   }
 
   return NULL;
@@ -133,7 +129,7 @@ Ident *typeExists(Analyser *a, String *name) {
 
 void analyseEnums(Analyser *a) {
   Node *enumNode, *enumChildNode;
-  Ident *enumType;
+  Type *enumType;
   String *enumName;
 
   for (int i = 0; i < a->inEnums.children.len; ++i) {
@@ -145,7 +141,7 @@ void analyseEnums(Analyser *a) {
     }
 
     // Add the actual enum type
-    identStackPush(&a->types, enumName, NULL, TM_NONE);
+    typeStackPush(&a->types, enumName);
     enumType = a->types.tail;
 
     // Each of the constants in the enum
@@ -163,7 +159,7 @@ void analyseEnums(Analyser *a) {
 
 void analyseStructs(Analyser *a) {
   Node *structNode, *propTypeNode, *propNode;
-  Ident *structType;
+  Type *structType;
   int numProps;
   String *structName;
 
@@ -176,8 +172,7 @@ void analyseStructs(Analyser *a) {
     }
 
     // Add the struct as a type
-    identStackPush(&a->types, strGet(structNode->children.p[1].data), NULL,
-                   TM_NONE);
+    typeStackPush(&a->types, strGet(structNode->children.p[1].data));
     structType = a->types.tail;
 
     // Each property of this struct
@@ -205,9 +200,6 @@ void analyseStructs(Analyser *a) {
           NULL, // Next is null, as struct params aren't added to the variable
                 // stack
           TM_NONE, // TODO: Get the correct type modifier from prop type node
-          NULL,
-          NULL,
-          NULL,
       };
     }
   }
@@ -244,7 +236,7 @@ void analyseFuncs(Analyser *a) {
           NULL, // No name
           NULL, // TODO: get the type correctly
           NULL, // Not on stack, so no next
-          TM_NONE, NULL, 0,
+          TM_NONE,
       };
 
     } else {
@@ -272,8 +264,6 @@ void analyseFuncs(Analyser *a) {
           NULL,    // Next is null, as func params aren't added to the variable
                    // stack (yet)
           TM_NONE, // TODO: Get the correct type modifier from param type node
-          NULL,
-          0,
       };
     }
 
@@ -398,7 +388,7 @@ void analyseCrement(Analyser *a, Context c, Node *n) {
     throwAnalyserError(a, NULL, 0, "Variable doesn't exist");
   }
 
-  Ident *type = var->type;
+  Type *type = var->type;
   if (type != a->preDefs.INT) {
     throwAnalyserError(a, NULL, 0,
                        "Can only use -- and ++ operators on integers");
@@ -450,7 +440,7 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
   analyseExpression(a, c, n->children.p + n->children.len - 1);
 }
 
-Ident *analyseBracketedValue(Analyser *a, Context c, Node *n) {
+Type *analyseBracketedValue(Analyser *a, Context c, Node *n) {
   // Keep same expected type and everything
   return analyseExpression(a, c, n->children.p + 1);
 }
@@ -537,7 +527,7 @@ void analyseDefaultBlock(Analyser *a, Context c, Node *n) {
   }
 }
 
-Ident *analyseValue(Analyser *a, Context c, Node *n) {
+Type *analyseValue(Analyser *a, Context c, Node *n) {
   switch (n->kind) {
   case N_INT:
     return a->preDefs.INT;
@@ -570,8 +560,8 @@ Ident *analyseValue(Analyser *a, Context c, Node *n) {
   }
 }
 
-Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) {
-  Ident *type;
+Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
+  Type *type;
 
   if (n->children.p[1].kind == N_UNARY_VALUE) {
     type = analyseUnaryValue(a, c, n->children.p + 1);
@@ -618,7 +608,7 @@ Ident *analyseUnaryValue(Analyser *a, Context c, Node *n) {
   return NULL;
 }
 
-Ident *analyseFuncCall(Analyser *a, Context c, Node *n) {
+Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
   Fun *fun = funExists(a, n->children.p[1].data);
   if (fun == NULL) {
     throwAnalyserError(a, NULL, 0, "Function doesn't exist");
@@ -651,8 +641,8 @@ Ident *analyseFuncCall(Analyser *a, Context c, Node *n) {
   return NULL;
 }
 
-Ident *analyseStructNew(Analyser *a, Context c, Node *n) {
-  Ident *stt = typeExists(a, n->children.p[1].data);
+Type *analyseStructNew(Analyser *a, Context c, Node *n) {
+  Type *stt = typeExists(a, n->children.p[1].data);
   if (stt == NULL) {
     throwAnalyserError(a, NULL, 0, "Struct doesn't exist");
   }
@@ -685,7 +675,7 @@ Ident *analyseStructNew(Analyser *a, Context c, Node *n) {
   return NULL;
 }
 
-Ident *analyseMakeArray(Analyser *a, Context c, Node *n) {
+Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
   // TODO: Expected type must be array
 
   // TODO: Unwrap type from array
@@ -706,7 +696,7 @@ Ident *analyseMakeArray(Analyser *a, Context c, Node *n) {
 }
 
 // analyseExpression also returns the type of the expression
-Ident *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
+Type *analyseExpression(Analyser *a, Context c, Node *n) { return NULL; }
 
 void analyseComplexType(Analyser *a, Context c, Node *n) {}
 
@@ -743,5 +733,5 @@ void analyse(Analyser *a) {
 
   identStackClear(&a->vars);
   funStackClear(&a->funs);
-  identStackClear(&a->types);
+  typeStackClear(&a->types);
 }

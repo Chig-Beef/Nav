@@ -1,18 +1,19 @@
-#include "Ident.h"
+#include "Types.h"
 #include "Panic.h"
 #include "String.h"
-#include "TypeModifier.h"
 #include <stdlib.h>
 
-void identStackPush(IdentStack *s, String *name, Type *type, TypeModifier mod) {
-  Ident *n = malloc(sizeof(Ident));
+void typeStackPush(TypeStack *s, String *name) {
+  Type *n = malloc(sizeof(Type));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
   }
 
   n->name = name;
-  n->type = type;
-  n->mod = mod;
+
+  // This will usually be changed by the user after if needed
+  n->props = NULL;
+  n->propsLen = 0;
 
   ++s->len;
 
@@ -27,28 +28,28 @@ void identStackPush(IdentStack *s, String *name, Type *type, TypeModifier mod) {
 
 // The reason we return the thing and not the pointer to the thing is because we
 // free the pointer, so we're returning a copy
-Ident identStackPop(IdentStack *s) {
+Type typeStackPop(TypeStack *s) {
   if (s->len == 0) {
-    return ZERO_IDENT;
+    return ZERO_TYPE;
   }
 
   --s->len;
 
   if (s->len == 0) {
-    Ident tail = *(s->tail);
+    Type tail = *(s->tail);
     free(s->tail);
     s->tail = NULL;
     return tail;
   }
 
-  Ident tail = *(s->tail);
+  Type tail = *(s->tail);
   free(s->tail);
   s->tail = s->tail->next;
   return tail;
 }
 
-void identStackClear(IdentStack *s) {
+void typeStackClear(TypeStack *s) {
   while (s->len > 0) {
-    identStackPop(s);
+    typeStackPop(s);
   }
 }

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Ident.h"
+#include "Types.h"
 
 typedef struct Context {
   bool canBreak;
   bool canCont;
-  Ident *expType; // What the caller expects this things type to be
-  Ident *retType; // What the function we're in expects the return type to be
+  Type *expType; // What the caller expects this things type to be
+  Type *retType; // What the function we're in expects the return type to be
 } Context;
