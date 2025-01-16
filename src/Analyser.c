@@ -42,16 +42,16 @@ void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   a->types = (TypeStack){NULL, 0};
   a->funs = (FunStack){NULL, 0};
 
-  typeStackPush(&a->types, strNew("int", false));
+  typeStackPush(&a->types, TK_ABS, strNew("int", false), TM_NONE, NULL);
   a->preDefs.INT = a->types.tail;
 
-  typeStackPush(&a->types, strNew("bool", false));
+  typeStackPush(&a->types, TK_ABS, strNew("bool", false), TM_NONE, NULL);
   a->preDefs.BOOL = a->types.tail;
 
-  typeStackPush(&a->types, strNew("char", false));
+  typeStackPush(&a->types, TK_ABS, strNew("char", false), TM_NONE, NULL);
   a->preDefs.CHAR = a->types.tail;
 
-  typeStackPush(&a->types, strNew("float", false));
+  typeStackPush(&a->types, TK_ABS, strNew("float", false), TM_NONE, NULL);
   a->preDefs.FLOAT = a->types.tail;
 
   funStackPush(&a->funs, strNew("print", false));
@@ -141,7 +141,7 @@ void analyseEnums(Analyser *a) {
     }
 
     // Add the actual enum type
-    typeStackPush(&a->types, enumName);
+    typeStackPush(&a->types, TK_ABS, enumName, TM_NONE, NULL);
     enumType = a->types.tail;
 
     // Each of the constants in the enum
@@ -172,7 +172,8 @@ void analyseStructs(Analyser *a) {
     }
 
     // Add the struct as a type
-    typeStackPush(&a->types, strGet(structNode->children.p[1].data));
+    typeStackPush(&a->types, TK_ABS, strGet(structNode->children.p[1].data),
+                  TM_NONE, NULL);
     structType = a->types.tail;
 
     // Each property of this struct

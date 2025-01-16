@@ -1,19 +1,21 @@
 #include "Types.h"
 #include "Panic.h"
-#include "String.h"
 #include <stdlib.h>
 
-void typeStackPush(TypeStack *s, String *name) {
+TypeKind kind;
+
+void typeStackPush(TypeStack *s, TypeKind kind, String *name, TypeModifier mod,
+                   Type *parent) {
+
   Type *n = malloc(sizeof(Type));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
   }
 
+  n->kind = kind;
   n->name = name;
-
-  // This will usually be changed by the user after if needed
-  n->props = NULL;
-  n->propsLen = 0;
+  n->mod = mod;
+  n->parent = parent;
 
   ++s->len;
 
