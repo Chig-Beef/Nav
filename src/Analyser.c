@@ -138,7 +138,7 @@ void analyseEnums(Analyser *a) {
     enumName = strGet(enumNode->children.p[1].data);
 
     if (typeExists(a, enumName)) {
-      throwAnalyserError(a, NULL, 0, "Enum already exists");
+      throwAnalyserError(a, NULL, enumNode->line, "Enum already exists");
     }
 
     // Add the actual enum type
@@ -150,7 +150,8 @@ void analyseEnums(Analyser *a) {
       enumChildNode = enumNode->children.p + j;
 
       if (varExists(a, enumChildNode->data)) {
-        throwAnalyserError(a, NULL, 0, "Enum constant already exists");
+        throwAnalyserError(a, NULL, enumChildNode->line,
+                           "Enum constant already exists");
       }
 
       identStackPush(&a->vars, enumChildNode->data, enumType);
@@ -169,7 +170,7 @@ void analyseStructs(Analyser *a) {
     structName = strGet(structNode->children.p[1].data);
 
     if (typeExists(a, structName)) {
-      throwAnalyserError(a, NULL, 0, "Struct already exists");
+      throwAnalyserError(a, NULL, structNode->line, "Struct already exists");
     }
 
     // Add the struct as a type
@@ -219,7 +220,7 @@ void analyseFuncs(Analyser *a) {
     printf("Analysing function %s\n", funcName->data);
 
     if (funExists(a, funcName)) {
-      throwAnalyserError(a, NULL, 0, "Function already exists");
+      throwAnalyserError(a, NULL, funcNode->line, "Function already exists");
     }
 
     // Add the function
@@ -241,6 +242,8 @@ void analyseFuncs(Analyser *a) {
 
     numParams /= 3;
 
+    // printf("Got function return type\n");
+
     if (numParams != 0) {
       funcDec->params = malloc(sizeof(Ident) * numParams);
       funcDec->paramsLen = numParams;
@@ -257,6 +260,8 @@ void analyseFuncs(Analyser *a) {
         };
       }
     }
+
+    // printf("Got function params\n");
 
     int stackBase = a->vars.len;
 
@@ -317,7 +322,7 @@ void analyseRetState(Analyser *a, Context c, Node *n) {
 
   // We don't expect a return value
   if (c.retType == NULL && n->children.len == 3) {
-    throwAnalyserError(a, NULL, 0,
+    throwAnalyserError(a, NULL, n->line,
                        "This function expected no return value, but got one.");
   }
 
@@ -330,7 +335,7 @@ void analyseBreakState(Analyser *a, Context c, Node *n) {
   // printf("BreakState %s\n", nodeCodeString(n->kind));
 
   if (!c.canBreak) {
-    throwAnalyserError(a, NULL, 0,
+    throwAnalyserError(a, NULL, n->line,
                        "Can't have break statement outside of loop");
   }
 }
@@ -339,7 +344,7 @@ void analyseContinueState(Analyser *a, Context c, Node *n) {
   // printf("ContinueState %s\n", nodeCodeString(n->kind));
 
   if (!c.canCont) {
-    throwAnalyserError(a, NULL, 0,
+    throwAnalyserError(a, NULL, n->line,
                        "Can't have continue statement outside of loop");
   }
 }
@@ -388,12 +393,13 @@ void analyseCrement(Analyser *a, Context c, Node *n) {
 
   Ident *var = varExists(a, n->children.p[1].data);
   if (var == NULL) {
-    throwAnalyserError(a, NULL, 0, "Variable doesn't exist");
+    throwAnalyserError(a, NULL, n->children.p[1].line,
+                       "Variable doesn't exist");
   }
 
   Type *type = var->type;
   if (type != a->preDefs.INT) {
-    throwAnalyserError(a, NULL, 0,
+    throwAnalyserError(a, NULL, n->line,
                        "Can only use -- and ++ operators on integers");
   }
 }
@@ -416,7 +422,8 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
   String *varName = n->children.p[2].data;
 
   if (varExists(a, varName) != NULL) {
-    throwAnalyserError(a, NULL, 0, "Variable name already exists");
+    throwAnalyserError(a, NULL, n->children.p[2].line,
+                       "Variable name already exists");
   }
 
   Type *t = analyseComplexType(a, c, n->children.p + 1);
@@ -424,12 +431,16 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
   // Expect the correct type from expression
   c.expType = t;
 
+  // printf("Got new var type\n");
+
   if (analyseExpression(a, c, n->children.p + n->children.len - 1) != t) {
-    throwAnalyserError(a, NULL, 0,
+    throwAnalyserError(a, NULL, n->children.p[n->children.len - 1].line,
                        "Expression in assignment wasn't correct type");
   }
 
   identStackPush(&a->vars, strGet(n->children.p[2].data), t);
+
+  // printf("End NewAssign %s\n", nodeCodeString(n->kind));
 }
 
 void analyseAssignment(Analyser *a, Context c, Node *n) {
@@ -443,12 +454,13 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
   String *varName = n->children.p[0].data;
   Ident *var = varExists(a, varName);
   if (var == NULL) {
-    throwAnalyserError(a, NULL, 0, "Variable does not exists");
+    throwAnalyserError(a, NULL, n->children.p[0].line,
+                       "Variable does not exists");
   }
 
   if (n->children.p[1].kind == N_INDEX) {
     if (var->type->mod != TM_ARRAY) {
-      throwAnalyserError(a, NULL, 0, "Can't index non-array");
+      throwAnalyserError(a, NULL, n->line, "Can't index non-array");
     }
     analyseIndex(a, c, n->children.p + 1);
   }
@@ -525,7 +537,8 @@ void analyseCaseBlock(Analyser *a, Context c, Node *n) {
       break;
 
     default:
-      throwAnalyserError(a, NULL, 0, "Invalid statement in case block");
+      throwAnalyserError(a, NULL, n->children.p[i].line,
+                         "Invalid statement in case block");
     }
   }
 }
@@ -563,7 +576,8 @@ void analyseDefaultBlock(Analyser *a, Context c, Node *n) {
       break;
 
     default:
-      throwAnalyserError(a, NULL, 0, "Invalid statement in default block");
+      throwAnalyserError(a, NULL, n->children.p[i].line,
+                         "Invalid statement in default block");
     }
   }
 }
@@ -600,7 +614,7 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
   case N_IDENTIFIER:
     Ident *v = varExists(a, n->data);
     if (v == NULL) {
-      throwAnalyserError(a, NULL, 0, "Thats variable doesn't exist");
+      throwAnalyserError(a, NULL, n->line, "Thats variable doesn't exist");
     }
 
     return v->type;
@@ -616,7 +630,7 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
     return analyseBracketedValue(a, c, n);
 
   default:
-    throwAnalyserError(a, NULL, 0, "Invalid value?");
+    throwAnalyserError(a, NULL, n->line, "Invalid value?");
     return NULL;
   }
 }
@@ -635,23 +649,27 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
   switch (n->children.p[0].kind) {
   case N_DEREF:
     if (type->mod != TM_POINTER) {
-      throwAnalyserError(a, NULL, 0, "Can only deref pointers");
+      throwAnalyserError(a, NULL, n->children.p[0].line,
+                         "Can only deref pointers");
     }
     return type->parent;
   case N_DEC:
     if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
-      throwAnalyserError(a, NULL, 0, "Can only decrement ints or chars");
+      throwAnalyserError(a, NULL, n->children.p[0].line,
+                         "Can only decrement ints or chars");
     }
     return type;
   case N_INC:
     if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
-      throwAnalyserError(a, NULL, 0, "Can only increment ints or chars");
+      throwAnalyserError(a, NULL, n->children.p[0].line,
+                         "Can only increment ints or chars");
     }
     return type;
   case N_NOT:
     if (type != a->preDefs.INT && type != a->preDefs.CHAR &&
         type != a->preDefs.BOOL) {
-      throwAnalyserError(a, NULL, 0, "Can only not int, char, bool, or float");
+      throwAnalyserError(a, NULL, n->children.p[0].line,
+                         "Can only not int, char, bool, or float");
     }
     return type;
   case N_REF:
@@ -671,16 +689,18 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
 
   case N_ADD:
     if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
-      throwAnalyserError(a, NULL, 0, "Can only positive int or char");
+      throwAnalyserError(a, NULL, n->children.p[0].line,
+                         "Can only positive int or char");
     }
     return type;
   case N_SUB:
     if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
-      throwAnalyserError(a, NULL, 0, "Can only negative int or char");
+      throwAnalyserError(a, NULL, n->children.p[0].line,
+                         "Can only negative int or char");
     }
     return type;
   default:
-    throwAnalyserError(a, NULL, 0, "Unexpected unary");
+    throwAnalyserError(a, NULL, n->children.p[0].line, "Unexpected unary");
   }
   return NULL;
 }
@@ -690,7 +710,8 @@ Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
 
   Fun *fun = funExists(a, n->children.p[1].data);
   if (fun == NULL) {
-    throwAnalyserError(a, NULL, 0, "Function doesn't exist");
+    throwAnalyserError(a, NULL, n->children.p[1].line,
+                       "Function doesn't exist");
   }
 
   int paramIndex = 0;
@@ -698,11 +719,12 @@ Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
 
   while (paramIndex < fun->paramsLen) {
     if (nodeIndex >= n->children.len) {
-      throwAnalyserError(a, NULL, 0, "Not enough args for function");
+      throwAnalyserError(a, NULL, n->line, "Not enough args for function");
     }
 
     if (n->children.p[nodeIndex].kind != N_EXPRESSION) {
-      throwAnalyserError(a, NULL, 0, "Not enough args for function");
+      throwAnalyserError(a, NULL, n->children.p[nodeIndex].line,
+                         "Not enough args for function");
     }
 
     // Correct expected type
@@ -714,10 +736,11 @@ Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
   }
 
   if (n->children.p[nodeIndex].kind == N_EXPRESSION) {
-    throwAnalyserError(a, NULL, 0, "Too many args for function");
+    throwAnalyserError(a, NULL, n->children.p[nodeIndex].line,
+                       "Too many args for function");
   }
 
-  return NULL;
+  return fun->ret;
 }
 
 Type *analyseStructNew(Analyser *a, Context c, Node *n) {
@@ -725,10 +748,11 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
 
   Type *stt = typeExists(a, n->children.p[1].data);
   if (stt == NULL) {
-    throwAnalyserError(a, NULL, 0, "Struct doesn't exist");
+    throwAnalyserError(a, NULL, n->children.p[1].line, "Struct doesn't exist");
   }
   if (stt->propsLen == 0) {
-    throwAnalyserError(a, NULL, 0, "Type used in struct new must be struct");
+    throwAnalyserError(a, NULL, n->children.p[1].line,
+                       "Type used in struct new must be struct");
   }
 
   int propIndex = 0;
@@ -736,11 +760,12 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
 
   while (propIndex < stt->propsLen) {
     if (nodeIndex >= n->children.len) {
-      throwAnalyserError(a, NULL, 0, "Not enough args for struct");
+      throwAnalyserError(a, NULL, n->line, "Not enough args for struct");
     }
 
     if (n->children.p[nodeIndex].kind != N_EXPRESSION) {
-      throwAnalyserError(a, NULL, 0, "Not enough args for struct");
+      throwAnalyserError(a, NULL, n->children.p[nodeIndex].line,
+                         "Not enough args for struct");
     }
 
     // Correct expected type
@@ -752,7 +777,7 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
   }
 
   if (n->children.p[nodeIndex].kind == N_EXPRESSION) {
-    throwAnalyserError(a, NULL, 0, "Too many args for struct");
+    throwAnalyserError(a, NULL, n->line, "Too many args for struct");
   }
 
   return NULL;
@@ -768,7 +793,7 @@ Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
     // We don't have to worry about array, etc
   } else {
     if (c.expType->mod != TM_ARRAY) {
-      throwAnalyserError(a, NULL, 0, "Expected type wasn't array");
+      throwAnalyserError(a, NULL, n->line, "Expected type wasn't array");
     }
 
     // Unwrap type from array
@@ -790,7 +815,7 @@ Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
     if (subType == NULL) { // Expect that we get consistent typing
       subType = exprType;
     } else if (subType != exprType) {
-      throwAnalyserError(a, NULL, 0,
+      throwAnalyserError(a, NULL, n->children.p[i].line,
                          "Expected correct typing for elements of new array");
     }
 
@@ -842,7 +867,7 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
     } else if (c.expType == exprType) { // We got the right type
       return exprType;
     } else { // bad type
-      throwAnalyserError(a, NULL, 0,
+      throwAnalyserError(a, NULL, n->children.p[0].line,
                          "Expression did not have the correct type");
     }
   }
@@ -857,7 +882,8 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
   for (int i = 1; i < n->children.len - 1; i += 2) {
     if (n->children.p[i + 1].kind == N_UNARY_VALUE) {
       if (analyseUnaryValue(a, c, n->children.p + i + 1) != exprType) {
-        throwAnalyserError(a, NULL, 0, "Unexpected type in expression");
+        throwAnalyserError(a, NULL, n->children.p[i + 1].line,
+                           "Unexpected type in expression");
       }
     }
   }
@@ -872,7 +898,7 @@ Type *analyseComplexType(Analyser *a, Context c, Node *n) {
   if (n->kind == N_IDENTIFIER) {
     Type *t = typeExists(a, n->data);
     if (t == NULL) {
-      throwAnalyserError(a, NULL, 0, "Couldn't find type");
+      throwAnalyserError(a, NULL, n->line, "Couldn't find type");
     }
     return t;
   }
@@ -943,7 +969,8 @@ void analyseBlock(Analyser *a, Context c, Node *n) {
       break;
 
     default:
-      throwAnalyserError(a, NULL, 0, "Invalid statement in block");
+      throwAnalyserError(a, NULL, n->children.p[i].line,
+                         "Invalid statement in block");
     }
   }
 }

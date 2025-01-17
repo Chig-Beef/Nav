@@ -10,6 +10,26 @@ typedef struct String {
 } String;
 
 bool strEql(String *s1, String *s2) {
+  // Same string
+  if (s1 == s2) {
+    return true;
+  }
+
+  // One string doesn't exist
+  if (s1 == NULL || s2 == NULL) {
+    return false;
+  }
+
+  // Both strings point to same underlying array
+  if (s1->data == s2->data) {
+    return true;
+  }
+
+  // A string points to nothing
+  if (s1->data == NULL || s2->data == NULL) {
+    return false;
+  }
+
   char *p1 = s1->data;
   char *p2 = s2->data;
 
