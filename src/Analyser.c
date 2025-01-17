@@ -447,6 +447,9 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
   }
 
   if (n->children.p[1].kind == N_INDEX) {
+    if (var->type->mod != TM_ARRAY) {
+      throwAnalyserError(a, NULL, 0, "Can't index non-array");
+    }
     analyseIndex(a, c, n->children.p + 1);
   }
 
