@@ -1,3 +1,4 @@
+#include "Analyser.h"
 #include "Hoister.h"
 #include "Lexer.h"
 #include "Panic.h"
@@ -65,6 +66,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
   }
+  printf("End validating files\n\n");
 
   // Lex every file
   printf("Lexing\n");
@@ -85,6 +87,7 @@ int main(int argc, char *argv[]) {
   // Close all the files before moving on
   printf("Closing files\n");
   _fcloseall();
+  printf("End lexing\n\n");
 
   // Parse every file
   printf("Parsing\n");
@@ -95,11 +98,10 @@ int main(int argc, char *argv[]) {
     printf("Parsing %s\n", argv[i]);
     parserInit(&parsers[i - 1], argv[i], lexers[i - 1].out);
     parse(&parsers[i - 1]);
-    printf("Parsed\n");
 
-    char *out = nodeString(&parsers[i - 1].out);
-    printf("%s\n", out);
-    free(out);
+    // char *out = nodeString(&parsers[i - 1].out);
+    // printf("%s\n", out);
+    // free(out);
   }
 
   // Destroy the tokens
@@ -110,26 +112,34 @@ int main(int argc, char *argv[]) {
     // }
     TokenListDestroy(&lexers[i - 1].out);
   }
+  printf("End parsing\n\n");
 
   // Hoist from each file into one place
+  printf("Hoisting\n");
   Hoister h;
   hoist(&h, parsers, argc - 1);
+  printf("End hoisting\n\n");
 
-  char *out;
-
-  out = nodeString(&h.enums);
-  printf("Enums\n%s\n", out);
-  free(out);
-
-  out = nodeString(&h.structs);
-  printf("Structs\n%s\n", out);
-  free(out);
-
-  out = nodeString(&h.funcs);
-  printf("Funcs\n%s\n", out);
-  free(out);
+  // char *out;
+  //
+  // out = nodeString(&h.enums);
+  // printf("Enums\n%s\n", out);
+  // free(out);
+  //
+  // out = nodeString(&h.structs);
+  // printf("Structs\n%s\n", out);
+  // free(out);
+  //
+  // out = nodeString(&h.funcs);
+  // printf("Funcs\n%s\n", out);
+  // free(out);
 
   // Semantic Analysis
+  printf("Analysing\n");
+  Analyser a;
+  analyserInit(&a, h.enums, h.structs, h.funcs);
+  analyse(&a);
+  printf("End anlysis\n\n");
 
   // Optimize
 

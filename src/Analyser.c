@@ -554,6 +554,8 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
     }
 
     return v->type;
+  case N_NIL:
+    return a->preDefs.INT;
   case N_MAKE_ARRAY:
     return analyseMakeArray(a, c, n);
   case N_FUNC_CALL:
@@ -564,6 +566,7 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
     return analyseBracketedValue(a, c, n);
 
   default:
+    throwAnalyserError(a, NULL, 0, "Invalid value?");
     return NULL;
   }
 }
