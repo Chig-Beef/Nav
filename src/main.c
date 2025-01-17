@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
   hoist(&h, parsers, argc - 1);
   printf("End hoisting\n\n");
 
-  // char *out;
+  char *out;
   //
   // out = nodeString(&h.enums);
   // printf("Enums\n%s\n", out);
@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
   printf("Analysing\n");
   Analyser a;
   analyserInit(&a, h.enums, h.structs, h.funcs);
+  printf("Analyser initialised\n");
   analyse(&a);
   printf("End anlysis\n\n");
 

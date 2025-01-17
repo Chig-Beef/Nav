@@ -29,7 +29,7 @@ typedef struct Analyser {
 } Analyser;
 
 void throwAnalyserError(Analyser *a, char *fileName, int line, char msg[]) {
-  printf("Error in the Hoister!\n"
+  printf("Error in the Analyser!\n"
          "Error found in file: %s\nOn line: %i\n\n%s\n",
          fileName, line, msg);
   exit(1);
@@ -212,8 +212,11 @@ void analyseFuncs(Analyser *a) {
   String *funcName;
 
   for (int i = 0; i < a->inFuns.children.len; ++i) {
-    funcNode = a->inStructs.children.p + i;
+
+    funcNode = a->inFuns.children.p + i;
     funcName = strGet(funcNode->children.p[1].data);
+
+    printf("Analysing function %s\n", funcName->data);
 
     if (funExists(a, funcName)) {
       throwAnalyserError(a, NULL, 0, "Function already exists");
@@ -238,24 +241,21 @@ void analyseFuncs(Analyser *a) {
 
     numParams /= 3;
 
-    // Empty func
-    if (numParams == 0) {
-      continue;
-    }
+    if (numParams != 0) {
+      funcDec->params = malloc(sizeof(Ident) * numParams);
+      funcDec->paramsLen = numParams;
 
-    funcDec->params = malloc(sizeof(Ident) * numParams);
-    funcDec->paramsLen = numParams;
+      for (int j = 0; j < numParams; ++j) {
+        paramTypeNode = funcNode->children.p + 3 + (j * 3);
+        paramNode = funcNode->children.p + 4 + (j * 3);
 
-    for (int j = 0; j < numParams; ++j) {
-      paramTypeNode = funcNode->children.p + 3 + (j * 3);
-      paramNode = funcNode->children.p + 4 + (j * 3);
+        funcDec->params[j] = (Ident){
+            paramNode->data, analyseComplexType(a, ZERO_CONTEXT, paramTypeNode),
 
-      funcDec->params[j] = (Ident){
-          paramNode->data, analyseComplexType(a, ZERO_CONTEXT, paramTypeNode),
-
-          NULL, // Next is null, as func params aren't added to the variable
-                // stack (yet)
-      };
+            NULL, // Next is null, as func params aren't added to the variable
+                  // stack (yet)
+        };
+      }
     }
 
     int stackBase = a->vars.len;
@@ -271,6 +271,7 @@ void analyseFuncs(Analyser *a) {
 }
 
 void analyseForLoop(Analyser *a, Context c, Node *n) {
+  // printf("ForLoop %s\n", nodeCodeString(n->kind));
   // To get rid of all vars defined in the loop, including the one defined in
   // the loop header
   int stackBase = a->vars.len;
@@ -312,6 +313,8 @@ void analyseForLoop(Analyser *a, Context c, Node *n) {
 }
 
 void analyseRetState(Analyser *a, Context c, Node *n) {
+  // printf("RetState %s\n", nodeCodeString(n->kind));
+
   // We don't expect a return value
   if (c.retType == NULL && n->children.len == 3) {
     throwAnalyserError(a, NULL, 0,
@@ -324,6 +327,8 @@ void analyseRetState(Analyser *a, Context c, Node *n) {
 }
 
 void analyseBreakState(Analyser *a, Context c, Node *n) {
+  // printf("BreakState %s\n", nodeCodeString(n->kind));
+
   if (!c.canBreak) {
     throwAnalyserError(a, NULL, 0,
                        "Can't have break statement outside of loop");
@@ -331,6 +336,8 @@ void analyseBreakState(Analyser *a, Context c, Node *n) {
 }
 
 void analyseContinueState(Analyser *a, Context c, Node *n) {
+  // printf("ContinueState %s\n", nodeCodeString(n->kind));
+
   if (!c.canCont) {
     throwAnalyserError(a, NULL, 0,
                        "Can't have continue statement outside of loop");
@@ -338,11 +345,15 @@ void analyseContinueState(Analyser *a, Context c, Node *n) {
 }
 
 void analyseIndex(Analyser *a, Context c, Node *n) {
+  // printf("Index %s\n", nodeCodeString(n->kind));
+
   c.expType = a->preDefs.INT;
   analyseExpression(a, c, n->children.p + 1);
 }
 
 void analyseIfBlock(Analyser *a, Context c, Node *n) {
+  // printf("IfBlock %s\n", nodeCodeString(n->kind));
+
   int stackBase = a->vars.len;
 
   c.expType = a->preDefs.BOOL;
@@ -373,6 +384,8 @@ void analyseIfBlock(Analyser *a, Context c, Node *n) {
 }
 
 void analyseCrement(Analyser *a, Context c, Node *n) {
+  // printf("Crement %s\n", nodeCodeString(n->kind));
+
   Ident *var = varExists(a, n->children.p[1].data);
   if (var == NULL) {
     throwAnalyserError(a, NULL, 0, "Variable doesn't exist");
@@ -386,6 +399,8 @@ void analyseCrement(Analyser *a, Context c, Node *n) {
 }
 
 void analyseVarDeclaration(Analyser *a, Context c, Node *n) {
+  // printf("VarDec %s\n", nodeCodeString(n->kind));
+
   Node *assignment = n->children.p;
 
   if (assignment->kind == N_ASSIGNMENT) {
@@ -396,6 +411,8 @@ void analyseVarDeclaration(Analyser *a, Context c, Node *n) {
 }
 
 void analyseNewAssignment(Analyser *a, Context c, Node *n) {
+  // printf("NewAssign %s\n", nodeCodeString(n->kind));
+
   String *varName = n->children.p[2].data;
 
   if (varExists(a, varName) != NULL) {
@@ -416,6 +433,8 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
 }
 
 void analyseAssignment(Analyser *a, Context c, Node *n) {
+  // printf("Assign %s\n", nodeCodeString(n->kind));
+
   if (n->children.p[0].kind == N_CREMENT) {
     analyseCrement(a, c, n->children.p);
     return;
@@ -436,15 +455,21 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseBracketedValue(Analyser *a, Context c, Node *n) {
+  // printf("BracketedValue %s\n", nodeCodeString(n->kind));
+
   // Keep same expected type and everything
   return analyseExpression(a, c, n->children.p + 1);
 }
 
 void analyseLoneCall(Analyser *a, Context c, Node *n) {
+  // printf("LoneCall %s\n", nodeCodeString(n->kind));
+
   analyseFuncCall(a, c, n->children.p);
 }
 
 void analyseSwitchState(Analyser *a, Context c, Node *n) {
+  // printf("SwitchState %s\n", nodeCodeString(n->kind));
+
   c.expType = NULL;
 
   analyseExpression(a, c, n->children.p + 2);
@@ -462,6 +487,8 @@ void analyseSwitchState(Analyser *a, Context c, Node *n) {
 }
 
 void analyseCaseBlock(Analyser *a, Context c, Node *n) {
+  // printf("CaseBlock %s\n", nodeCodeString(n->kind));
+
   // Expect the type of the arg to the switch
   c.expType = analyseExpression(a, c, n->children.p + 1);
 
@@ -471,20 +498,28 @@ void analyseCaseBlock(Analyser *a, Context c, Node *n) {
     switch (n->children.p[i].kind) {
     case N_LONE_CALL:
       analyseLoneCall(a, c, n);
+      break;
     case N_VAR_DEC:
       analyseVarDeclaration(a, c, n);
+      break;
     case N_IF_BLOCK:
       analyseIfBlock(a, c, n);
+      break;
     case N_FOR_LOOP:
       analyseForLoop(a, c, n);
+      break;
     case N_RET_STATE:
       analyseRetState(a, c, n);
+      break;
     case N_BREAK_STATE:
       analyseBreakState(a, c, n);
+      break;
     case N_CONTINUE_STATE:
       analyseContinueState(a, c, n);
+      break;
     case N_SWITCH_STATE:
       analyseSwitchState(a, c, n);
+      break;
 
     default:
       throwAnalyserError(a, NULL, 0, "Invalid statement in case block");
@@ -493,26 +528,36 @@ void analyseCaseBlock(Analyser *a, Context c, Node *n) {
 }
 
 void analyseDefaultBlock(Analyser *a, Context c, Node *n) {
+  // printf("DefaultBlock %s\n", nodeCodeString(n->kind));
+
   c.canBreak = true;
 
   for (int i = 2; i < n->children.len; ++i) {
     switch (n->children.p[i].kind) {
     case N_LONE_CALL:
       analyseLoneCall(a, c, n);
+      break;
     case N_VAR_DEC:
       analyseVarDeclaration(a, c, n);
+      break;
     case N_IF_BLOCK:
       analyseIfBlock(a, c, n);
+      break;
     case N_FOR_LOOP:
       analyseForLoop(a, c, n);
+      break;
     case N_RET_STATE:
       analyseRetState(a, c, n);
+      break;
     case N_BREAK_STATE:
       analyseBreakState(a, c, n);
+      break;
     case N_CONTINUE_STATE:
       analyseContinueState(a, c, n);
+      break;
     case N_SWITCH_STATE:
       analyseSwitchState(a, c, n);
+      break;
 
     default:
       throwAnalyserError(a, NULL, 0, "Invalid statement in default block");
@@ -521,6 +566,8 @@ void analyseDefaultBlock(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseValue(Analyser *a, Context c, Node *n) {
+  // printf("Value %s\n", nodeCodeString(n->kind));
+
   switch (n->kind) {
   case N_INT:
     return a->preDefs.INT;
@@ -572,6 +619,8 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
+  // printf("UnaryValue %s\n", nodeCodeString(n->kind));
+
   Type *type;
 
   if (n->children.p[1].kind == N_UNARY_VALUE) {
@@ -634,6 +683,8 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
+  // printf("FuncCall %s\n", nodeCodeString(n->kind));
+
   Fun *fun = funExists(a, n->children.p[1].data);
   if (fun == NULL) {
     throwAnalyserError(a, NULL, 0, "Function doesn't exist");
@@ -667,6 +718,8 @@ Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseStructNew(Analyser *a, Context c, Node *n) {
+  // printf("StructNew %s\n", nodeCodeString(n->kind));
+
   Type *stt = typeExists(a, n->children.p[1].data);
   if (stt == NULL) {
     throwAnalyserError(a, NULL, 0, "Struct doesn't exist");
@@ -703,6 +756,8 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
+  // printf("MakeArray %s\n", nodeCodeString(n->kind));
+
   Type *expType = NULL;
   Type *subType = NULL;
 
@@ -765,6 +820,8 @@ Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
 
 // analyseExpression also returns the type of the expression
 Type *analyseExpression(Analyser *a, Context c, Node *n) {
+  // printf("Expr %s\n", nodeCodeString(n->kind));
+
   Type *exprType = NULL;
 
   // Only one value
@@ -806,6 +863,8 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseComplexType(Analyser *a, Context c, Node *n) {
+  // printf("ComplexType %s\n", nodeCodeString(n->kind));
+
   // Base level type
   if (n->kind == N_IDENTIFIER) {
     Type *t = typeExists(a, n->data);
@@ -850,24 +909,35 @@ Type *analyseComplexType(Analyser *a, Context c, Node *n) {
 }
 
 void analyseBlock(Analyser *a, Context c, Node *n) {
+  // printf("Block %s\n", nodeCodeString(n->kind));
+
   for (int i = 1; i < n->children.len - 1; ++i) {
-    switch (n->kind) {
+    // printf("Statement %s\n", nodeCodeString(n->children.p[i].kind));
+    switch (n->children.p[i].kind) {
     case N_LONE_CALL:
-      analyseLoneCall(a, c, n);
+      analyseLoneCall(a, c, n->children.p + i);
+      break;
     case N_VAR_DEC:
-      analyseVarDeclaration(a, c, n);
+      analyseVarDeclaration(a, c, n->children.p + i);
+      break;
     case N_IF_BLOCK:
-      analyseIfBlock(a, c, n);
+      analyseIfBlock(a, c, n->children.p + i);
+      break;
     case N_FOR_LOOP:
-      analyseForLoop(a, c, n);
+      analyseForLoop(a, c, n->children.p + i);
+      break;
     case N_RET_STATE:
-      analyseRetState(a, c, n);
+      analyseRetState(a, c, n->children.p + i);
+      break;
     case N_BREAK_STATE:
-      analyseBreakState(a, c, n);
+      analyseBreakState(a, c, n->children.p + i);
+      break;
     case N_CONTINUE_STATE:
-      analyseContinueState(a, c, n);
+      analyseContinueState(a, c, n->children.p + i);
+      break;
     case N_SWITCH_STATE:
-      analyseSwitchState(a, c, n);
+      analyseSwitchState(a, c, n->children.p + i);
+      break;
 
     default:
       throwAnalyserError(a, NULL, 0, "Invalid statement in block");
@@ -877,10 +947,14 @@ void analyseBlock(Analyser *a, Context c, Node *n) {
 
 void analyse(Analyser *a) {
   analyseEnums(a);
+  printf("Analysed enums\n");
   analyseStructs(a);
+  printf("Analysed structs\n");
   analyseFuncs(a);
+  printf("Analysed funs\n");
 
   identStackClear(&a->vars);
   funStackClear(&a->funs);
   typeStackClear(&a->types);
+  printf("Cleared stacks\n");
 }
