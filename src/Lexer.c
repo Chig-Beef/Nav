@@ -203,8 +203,8 @@ void lex(Lexer *l) {
         while (l->curChar != '\n' && l->curChar >= 0) {
           nextChar(l);
         }
-        nextChar(l); // Now the character for the next loop is the first one of
-                     // the next line
+        // Now the character for the next loop is the first one of
+        // the next line
         goto NO_TOKEN;
       } else if (l->peekChar == '*') {
         nextChar(l);

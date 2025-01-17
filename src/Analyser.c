@@ -137,6 +137,8 @@ void analyseEnums(Analyser *a) {
     enumNode = a->inEnums.children.p + i;
     enumName = strGet(enumNode->children.p[1].data);
 
+    printf("Analysing enum %s\n", enumName->data);
+
     if (typeExists(a, enumName)) {
       throwAnalyserError(a, NULL, enumNode->line, "Enum already exists");
     }
@@ -149,7 +151,9 @@ void analyseEnums(Analyser *a) {
     for (int j = 3; j < enumNode->children.len - 1; j += 2) {
       enumChildNode = enumNode->children.p + j;
 
-      if (varExists(a, enumChildNode->data)) {
+      Ident *exists = varExists(a, enumChildNode->data);
+
+      if (exists != NULL) {
         throwAnalyserError(a, NULL, enumChildNode->line,
                            "Enum constant already exists");
       }
@@ -619,6 +623,8 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
 
     return v->type;
   case N_NIL:
+    throwAnalyserError(a, NULL, n->line,
+                       "nil is not implemented because of semantic analysis");
     return a->preDefs.INT;
   case N_MAKE_ARRAY:
     return analyseMakeArray(a, c, n);

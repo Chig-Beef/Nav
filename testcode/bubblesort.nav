@@ -1,5 +1,5 @@
 // Sort an array the worst way possible
-fun bubbleSort(arr int^, len int) {
+fun bubbleSort(^int arr, int len) {
 	for (let int i = 0; i < len; ++i) {
 		for (let int j = 0; j < len-1-i; ++j) {
 			if ([j]arr > [j+1]arr) {

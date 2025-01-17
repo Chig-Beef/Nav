@@ -1,19 +1,19 @@
 struct Node {
-	value any,
-	prev Node^m
+	any value,
+	^Node prev,
 }
 
 struct Stack {
-	tail Node^
-	length int
+	^Node tail,
+	int length,
 }
 
-fun (s Stack^) push(value any) {
-	n Node^ = `new Node(value, nil);
+fun push(^Stack s, any value) {
+	let ^Node n = `new Node(value, nil);
 
 	++s.length;
 
-	if s.length == 1 {
+	if (s.length == 1) {
 		s.tail = n;
 		return;
 	}
@@ -22,27 +22,27 @@ fun (s Stack^) push(value any) {
 	s.tail = n;
 }
 
-fun (s Stack^) pop() any {
-	if s.length == 0 {
+fun pop(^Stack s) any {
+	if (s.length == 0) {
 		return nil;
 	}
 
 	--s.length;
 
-	if s.length == 0 {
-		tail Node^ = s.tail;
+	if (s.length == 0) {
+		^Node tail = s.tail;
 		s.tail = nil;
 		return tail.value;
 	}
 
-	tail Node^ = s.tail;
+	^Node tail = s.tail;
 	s.tail = s.tail.prev;
 	return tail.value;
 }
 
-fun (s Stack^) peek() any {
+fun peek(^Stack s) any {
 	// Length == 0
-	if s.tail == nil {
+	if (s.tail == nil) {
 		return nil;
 	}
 

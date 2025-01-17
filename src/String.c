@@ -1,13 +1,8 @@
+#include "String.h"
 #include "Panic.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef struct String {
-  char *data;
-  unsigned int arc;
-  bool freeable;
-} String;
 
 bool strEql(String *s1, String *s2) {
   // Same string

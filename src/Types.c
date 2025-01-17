@@ -7,7 +7,7 @@ TypeKind kind;
 void typeStackPush(TypeStack *s, TypeKind kind, String *name, TypeModifier mod,
                    Type *parent) {
 
-  Type *n = malloc(sizeof(Type));
+  Type *n = calloc(1, sizeof(Type));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
   }

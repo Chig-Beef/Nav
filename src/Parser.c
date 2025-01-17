@@ -75,6 +75,23 @@ Node parseDefaultBlock(Parser *p);
 Node parseBlock(Parser *p);
 void parse(Parser *p);
 
+bool validUnary(Parser *p) {
+  switch (p->tok.kind) {
+  case T_DEREF:
+  case T_DEC:
+  case T_INC:
+  case T_NOT:
+  case T_REF:
+  case T_ADD:
+  case T_SUB:
+  case T_L_BLOCK:
+    return true;
+  default:
+    // Don't error, let caller handle it
+    return false;
+  }
+}
+
 void nextToken(Parser *p) {
   Token t = {NULL, T_ILLEGAL, 0};
 
@@ -130,6 +147,10 @@ Node parseStruct(Parser *p) {
     APPEND_NODE(N_SEP, NULL, "parseStruct")
     nextToken(p);
 
+    if (p->tok.kind == T_R_SQUIRLY) {
+      break;
+    }
+
     APPEND_STRUCTURE(parseComplexType, "parseStruct");
     nextToken(p);
 
@@ -142,7 +163,7 @@ Node parseStruct(Parser *p) {
     nextToken(p);
   }
 
-  CHECK_APPEND_NEXT(T_R_SQUIRLY, "}", N_R_SQUIRLY, NULL, "parseStruct")
+  CHECK_AND_APPEND(T_R_SQUIRLY, "}", N_R_SQUIRLY, NULL, "parseStruct")
 
   return out;
 }
@@ -160,6 +181,10 @@ Node parseEnum(Parser *p) {
   while (p->tok.kind == T_SEP) {
     APPEND_NODE(N_SEP, NULL, "parseEnum")
     nextToken(p);
+
+    if (p->tok.kind == T_R_SQUIRLY) {
+      break;
+    }
 
     CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
                       strGet(p->tok.data), "parseEnum")
@@ -397,7 +422,7 @@ Node parseBracketedValue(Parser *p) {
 Node parseStructNew(Parser *p) {
   Node out = newNode(N_STRUCT_NEW, strNew("Struct New", false), p->tok.line);
 
-  CHECK_APPEND_NEXT(T_STRUCT, "struct", N_STRUCT, NULL, "parseStructNew")
+  CHECK_APPEND_NEXT(T_NEW, "new", N_STRUCT, NULL, "parseStructNew")
   CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
                     strGet(p->tok.data), "parseStructNew")
 
@@ -427,7 +452,7 @@ Node parseStructNew(Parser *p) {
 Node parseFuncCall(Parser *p) {
   Node out = newNode(N_FUNC_CALL, strNew("Func Call", false), p->tok.line);
 
-  CHECK_APPEND_NEXT(T_FUN, "fun", N_FUN, NULL, "parseFuncCall")
+  CHECK_APPEND_NEXT(T_CALL, "call", N_FUN, NULL, "parseFuncCall")
   CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
                     strGet(p->tok.data), "parseFuncCall")
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseFuncCall")
@@ -475,7 +500,7 @@ Node parseMakeArray(Parser *p) {
     nextToken(p);
   }
 
-  CHECK_APPEND_NEXT(T_R_BLOCK, "]", N_R_BLOCK, NULL, "parseMakeArray")
+  CHECK_AND_APPEND(T_R_BLOCK, "]", N_R_BLOCK, NULL, "parseMakeArray")
 
   return out;
 }
@@ -494,7 +519,9 @@ Node parseLoneCall(Parser *p) {
 Node parseExpression(Parser *p) {
   Node out = newNode(N_EXPRESSION, strNew("Expression", false), p->tok.line);
 
-  if (parseUnary(p).kind == N_ILLEGAL) {
+  // printf("%s\n", tokenCodeString(p->tok.kind));
+
+  if (!validUnary(p)) {
     Node n = parseValue(p);
     if (n.kind == N_ILLEGAL) {
       throwParserError(p, "value");
@@ -514,7 +541,7 @@ Node parseExpression(Parser *p) {
     }
     nextToken(p);
 
-    if (parseUnary(p).kind == N_ILLEGAL) {
+    if (!validUnary(p)) {
       n = parseValue(p);
       if (n.kind == N_ILLEGAL) {
         throwParserError(p, "value");
@@ -629,6 +656,8 @@ Node parseUnary(Parser *p) {
     return newNode(N_ADD, NULL, p->tok.line);
   case T_SUB:
     return newNode(N_SUB, NULL, p->tok.line);
+  case T_L_BLOCK:
+    return parseIndex(p);
 
   default:
     // Don't error, let caller handle it
@@ -639,25 +668,23 @@ Node parseUnary(Parser *p) {
 Node parseUnaryValue(Parser *p) {
   Node out = newNode(N_UNARY_VALUE, strNew("Unary Value", false), p->tok.line);
 
-  Node n = parseUnary(p);
-
-  if (n.kind == N_ILLEGAL) {
+  if (!validUnary(p)) {
     throwParserError(p, "unary");
   }
 
-  if (NodeListAppend(&out.children, n)) {
+  if (NodeListAppend(&out.children, parseUnary(p))) {
     panic("Couldn't append to Node list in parseUnaryValue");
   }
   nextToken(p);
 
-  if (parseUnary(p).kind != N_ILLEGAL) {
+  if (validUnary(p)) {
     APPEND_STRUCTURE(parseUnaryValue, "parseUnaryValue");
   } else {
-    n = parseValue(p);
+    Node n = parseValue(p);
     if (n.kind == N_ILLEGAL) {
       throwParserError(p, "value");
     }
-    if (NodeListAppend(&out.children, n)) {
+    if (NodeListAppend(&out.children, parseValue(p))) {
       panic("Couldn't append to Node list in parseUnaryValue");
     }
   }
@@ -692,6 +719,8 @@ Node parseComplexType(Parser *p) {
 
 Node parseValue(Parser *p) {
   switch (p->tok.kind) {
+  case T_NIL:
+    return newNode(N_NIL, p->tok.data, p->tok.line);
   case T_INT:
     return newNode(N_INT, p->tok.data, p->tok.line);
   case T_FLOAT:
@@ -728,10 +757,6 @@ Node parseSwitchState(Parser *p) {
   CHECK_APPEND_NEXT(T_SWITCH, "switch", N_SWITCH, NULL, "parseSwitchStatement")
   CHECK_APPEND_NEXT(T_L_PAREN, "(", N_L_PAREN, NULL, "parseSwitchStatement")
 
-  if (NodeListAppend(&out.children, parseExpression(p))) {
-    panic("Couldn't append to Node list in "
-          "parseSwitchStatement");
-  }
   APPEND_STRUCTURE(parseExpression, "parseSwitchStatement");
   nextToken(p);
 
@@ -761,10 +786,11 @@ Node parseCaseBlock(Parser *p) {
   APPEND_STRUCTURE(parseExpression, "parseCaseBlock");
   nextToken(p);
 
-  CHECK_APPEND_NEXT(T_COLON, ":", N_COLON, NULL, "parseCaseBlock")
+  CHECK_AND_APPEND(T_COLON, ":", N_COLON, NULL, "parseCaseBlock")
 
-  while (p->tok.kind != T_CASE && p->tok.kind != T_DEFAULT &&
-         p->tok.kind != T_R_SQUIRLY) {
+  while (peekToken(p).kind != T_CASE && peekToken(p).kind != T_DEFAULT &&
+         peekToken(p).kind != T_R_SQUIRLY) {
+    nextToken(p);
     switch (p->tok.kind) {
       // Statements
     case T_CALL:
@@ -799,8 +825,6 @@ Node parseCaseBlock(Parser *p) {
     default:
       throwParserError(p, "Valid start to line");
     }
-
-    nextToken(p);
   }
 
   return out;
@@ -811,34 +835,44 @@ Node parseDefaultBlock(Parser *p) {
       newNode(N_DEFAULT_BLOCK, strNew("Default Block", false), p->tok.line);
 
   CHECK_APPEND_NEXT(T_DEFAULT, "default", N_DEFAULT, NULL, "parseDefaultBlock")
-  CHECK_APPEND_NEXT(T_COLON, ":", N_COLON, NULL, "parseDefaultBlock")
+  CHECK_AND_APPEND(T_COLON, ":", N_COLON, NULL, "parseDefaultBlock")
 
-  while (p->tok.kind != T_R_SQUIRLY) {
+  while (peekToken(p).kind != T_R_SQUIRLY) {
+    nextToken(p);
     switch (p->tok.kind) {
       // Statements
     case T_CALL:
+      APPEND_STRUCTURE(parseLoneCall, "parseCaseBlock");
       break;
     case T_LET:
+      APPEND_STRUCTURE(parseVarDeclaration, "parseCaseBlock");
       break;
+    case T_INC:
+    case T_DEC:
     case T_IDENTIFIER:
+      APPEND_STRUCTURE(parseVarDeclaration, "parseCaseBlock");
       break;
     case T_IF:
+      APPEND_STRUCTURE(parseIfBlock, "parseCaseBlock");
       break;
     case T_FOR:
+      APPEND_STRUCTURE(parseForLoop, "parseCaseBlock");
       break;
     case T_RETURN:
+      APPEND_STRUCTURE(parseRetState, "parseCaseBlock");
       break;
     case T_BREAK:
+      APPEND_STRUCTURE(parseBreakState, "parseCaseBlock");
       break;
     case T_CONTINUE:
+      APPEND_STRUCTURE(parseContinueState, "parseCaseBlock");
       break;
     case T_SWITCH:
+      APPEND_STRUCTURE(parseSwitchState, "parseCaseBlock");
       break;
     default:
       throwParserError(p, "Valid start to line");
     }
-
-    nextToken(p);
   }
 
   return out;
@@ -915,7 +949,7 @@ void parse(Parser *p) {
       // All statements will be in functions (main)
 
     default:
-      throwParserError(p, "Valid start to line");
+      throwParserError(p, "Enumdef, Fundef, or Structdef");
     }
 
     nextToken(p);

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 void identStackPush(IdentStack *s, String *name, Type *type) {
-  Ident *n = malloc(sizeof(Ident));
+  Ident *n = calloc(1, sizeof(Ident));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
   }

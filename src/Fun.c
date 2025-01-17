@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 void funStackPush(FunStack *s, String *name) {
-  Fun *n = malloc(sizeof(Fun));
+  Fun *n = calloc(1, sizeof(Fun));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
   }
