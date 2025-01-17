@@ -153,7 +153,7 @@ void analyseEnums(Analyser *a) {
         throwAnalyserError(a, NULL, 0, "Enum constant already exists");
       }
 
-      identStackPush(&a->vars, enumChildNode->data, enumType, TM_NONE);
+      identStackPush(&a->vars, enumChildNode->data, enumType);
     }
   }
 }
@@ -196,12 +196,10 @@ void analyseStructs(Analyser *a) {
       propNode = structNode->children.p + 4 + (j * 3);
 
       structType->props[j] = (Ident){
-          propNode->data,
-          NULL, // TODO: Get the correct type from propTypeNode
+          propNode->data, analyseComplexType(a, ZERO_CONTEXT, propTypeNode),
 
           NULL, // Next is null, as struct params aren't added to the variable
                 // stack
-          TM_NONE, // TODO: Get the correct type modifier from prop type node
       };
     }
   }
@@ -226,20 +224,13 @@ void analyseFuncs(Analyser *a) {
     funcDec = a->funs.tail;
 
     // Each param of this func
-    if (funcNode->children.p[funcNode->children.len - 2].kind ==
-        N_COMPLEX_TYPE) {
+    if (funcNode->children.p[funcNode->children.len - 2].kind != N_R_PAREN) {
       // We have a return value
       numParams = funcNode->children.len - 5;
 
       Node *retNode = funcNode->children.p + funcNode->children.len - 2;
 
-      funcDec->ret = malloc(sizeof(Ident));
-      *funcDec->ret = (Ident){
-          NULL, // No name
-          NULL, // TODO: get the type correctly
-          NULL, // Not on stack, so no next
-          TM_NONE,
-      };
+      funcDec->ret = analyseComplexType(a, ZERO_CONTEXT, retNode);
 
     } else {
       numParams = funcNode->children.len - 4;
@@ -260,19 +251,16 @@ void analyseFuncs(Analyser *a) {
       paramNode = funcNode->children.p + 4 + (j * 3);
 
       funcDec->params[j] = (Ident){
-          paramNode->data,
-          NULL, // TODO: Get the correct type from paramTypeNode
+          paramNode->data, analyseComplexType(a, ZERO_CONTEXT, paramTypeNode),
 
-          NULL,    // Next is null, as func params aren't added to the variable
-                   // stack (yet)
-          TM_NONE, // TODO: Get the correct type modifier from param type node
+          NULL, // Next is null, as func params aren't added to the variable
+                // stack (yet)
       };
     }
 
     int stackBase = a->vars.len;
 
-    // TODO: Add in return type correctly
-    analyseBlock(a, (Context){false, false, NULL, NULL},
+    analyseBlock(a, (Context){false, false, NULL, funcDec->ret},
                  funcNode->children.p + funcNode->children.len - 1);
 
     // Delete variables used in the function
@@ -414,12 +402,17 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
     throwAnalyserError(a, NULL, 0, "Variable name already exists");
   }
 
-  // TODO: Get type from complexType
+  Type *t = analyseComplexType(a, c, n->children.p + 1);
 
-  // TODO: Expect the correct type from expression
-  // c.expType = ??
+  // Expect the correct type from expression
+  c.expType = t;
 
-  analyseExpression(a, c, n->children.p + n->children.len - 1);
+  if (analyseExpression(a, c, n->children.p + n->children.len - 1) != t) {
+    throwAnalyserError(a, NULL, 0,
+                       "Expression in assignment wasn't correct type");
+  }
+
+  identStackPush(&a->vars, strGet(n->children.p[2].data), t);
 }
 
 void analyseAssignment(Analyser *a, Context c, Node *n) {
@@ -469,10 +462,8 @@ void analyseSwitchState(Analyser *a, Context c, Node *n) {
 }
 
 void analyseCaseBlock(Analyser *a, Context c, Node *n) {
-  c.expType = NULL;
-  // TODO: Expect the type of the arg to the switch
-
-  analyseExpression(a, c, n->children.p + 1);
+  // Expect the type of the arg to the switch
+  c.expType = analyseExpression(a, c, n->children.p + 1);
 
   c.canBreak = true;
 
@@ -538,16 +529,31 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
   case N_CHAR:
     return a->preDefs.CHAR;
   case N_STRING:
-    // TODO: Char array
-    return a->preDefs.CHAR;
+    Type *curType = a->types.tail;
+
+    // Try to find this exact type already on the stack
+    while (curType != NULL) {
+      if (curType->parent == a->preDefs.CHAR && curType->mod == TM_ARRAY) {
+        return curType;
+      }
+      curType = curType->next;
+    }
+
+    // Couldn't find it? Make it
+    typeStackPush(&a->types, TK_COMP, NULL, TM_ARRAY, a->preDefs.CHAR);
+    return a->types.tail;
+
   case N_TRUE:
     return a->preDefs.BOOL;
   case N_FALSE:
     return a->preDefs.BOOL;
   case N_IDENTIFIER:
+    Ident *v = varExists(a, n->data);
+    if (v == NULL) {
+      throwAnalyserError(a, NULL, 0, "Thats variable doesn't exist");
+    }
 
-    // TODO: Get type of identifier
-    return NULL;
+    return v->type;
   case N_MAKE_ARRAY:
     return analyseMakeArray(a, c, n);
   case N_FUNC_CALL:
@@ -573,8 +579,10 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
 
   switch (n->children.p[0].kind) {
   case N_DEREF:
-    // TODO: Check for pointer
-    return NULL;
+    if (type->mod != TM_POINTER) {
+      throwAnalyserError(a, NULL, 0, "Can only deref pointers");
+    }
+    return type->parent;
   case N_DEC:
     if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
       throwAnalyserError(a, NULL, 0, "Can only decrement ints or chars");
@@ -592,8 +600,20 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
     }
     return type;
   case N_REF:
-    // TODO: Return pointer to type
-    return type;
+    Type *curType = a->types.tail;
+
+    // Try to find this exact type already on the stack
+    while (curType != NULL) {
+      if (curType->parent == type && curType->mod == TM_POINTER) {
+        return curType;
+      }
+      curType = curType->next;
+    }
+
+    // Couldn't find it? Make it
+    typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, type);
+    return a->types.tail;
+
   case N_ADD:
     if (type != a->preDefs.INT && type != a->preDefs.CHAR) {
       throwAnalyserError(a, NULL, 0, "Can only positive int or char");
@@ -628,8 +648,8 @@ Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
       throwAnalyserError(a, NULL, 0, "Not enough args for function");
     }
 
-    // TODO: Correct expected type
-    // c.expType = ???
+    // Correct expected type
+    c.expType = fun->params[paramIndex].type;
     analyseExpression(a, c, n->children.p + nodeIndex);
 
     ++paramIndex;
@@ -648,7 +668,9 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
   if (stt == NULL) {
     throwAnalyserError(a, NULL, 0, "Struct doesn't exist");
   }
-  // TODO: Make sure thingy is actually a struct, not primitive or enum
+  if (stt->propsLen == 0) {
+    throwAnalyserError(a, NULL, 0, "Type used in struct new must be struct");
+  }
 
   int propIndex = 0;
   int nodeIndex = 3;
@@ -662,8 +684,8 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
       throwAnalyserError(a, NULL, 0, "Not enough args for struct");
     }
 
-    // TODO: Correct expected type
-    // c.expType = ???
+    // Correct expected type
+    c.expType = stt->props[propIndex].type;
     analyseExpression(a, c, n->children.p + nodeIndex);
 
     ++propIndex;
@@ -678,23 +700,64 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
 }
 
 Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
-  // TODO: Expected type must be array
+  Type *expType = NULL;
+  Type *subType = NULL;
 
-  // TODO: Unwrap type from array
+  if (c.expType == NULL) {
+    // We don't have to worry about array, etc
+  } else {
+    if (c.expType->mod != TM_ARRAY) {
+      throwAnalyserError(a, NULL, 0, "Expected type wasn't array");
+    }
+
+    // Unwrap type from array
+    expType = c.expType;
+    subType = expType->parent;
+  }
 
   int i = 2;
+
+  Type *exprType = NULL;
 
   while (i < n->children.len) {
     if (n->children.p[i].kind != N_EXPRESSION) {
       break;
     }
 
-    analyseExpression(a, c, n->children.p + i);
+    exprType = analyseExpression(a, c, n->children.p + i);
+
+    if (subType == NULL) { // Expect that we get consistent typing
+      subType = exprType;
+    } else if (subType != exprType) {
+      throwAnalyserError(a, NULL, 0,
+                         "Expected correct typing for elements of new array");
+    }
 
     i += 2;
   }
 
-  return NULL;
+  // We need to create the type if it doesn't exist
+  if (expType == NULL) {
+    Type *curType = a->types.tail;
+
+    // Try to find this exact type already on the stack
+    while (curType != NULL) {
+      if (curType->parent == subType && curType->mod == TM_ARRAY) {
+        expType = curType;
+        break;
+      }
+      curType = curType->next;
+    }
+
+    // Couldn't find it?
+    if (expType == NULL) {
+      // Make it
+      typeStackPush(&a->types, TK_COMP, NULL, TM_ARRAY, subType);
+      expType = a->types.tail;
+    }
+  }
+
+  return expType;
 }
 
 // analyseExpression also returns the type of the expression

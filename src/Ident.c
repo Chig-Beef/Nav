@@ -1,10 +1,9 @@
 #include "Ident.h"
 #include "Panic.h"
 #include "String.h"
-#include "TypeModifier.h"
 #include <stdlib.h>
 
-void identStackPush(IdentStack *s, String *name, Type *type, TypeModifier mod) {
+void identStackPush(IdentStack *s, String *name, Type *type) {
   Ident *n = malloc(sizeof(Ident));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");
@@ -12,7 +11,6 @@ void identStackPush(IdentStack *s, String *name, Type *type, TypeModifier mod) {
 
   n->name = name;
   n->type = type;
-  n->mod = mod;
 
   ++s->len;
 

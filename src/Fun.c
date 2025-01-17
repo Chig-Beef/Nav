@@ -11,7 +11,7 @@ typedef struct Fun {
   String *name;
   Fun *next; // Linked list structure (stack)
 
-  Ident *ret;    // If this is of type fun, what this function returns
+  Fun *ret;      // If this is of type fun, what this function returns
   Ident *params; // An array of params, used for functions
   int paramsLen;
 } Fun;

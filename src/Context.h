@@ -2,6 +2,9 @@
 
 #include "Types.h"
 
+#define ZERO_CONTEXT                                                           \
+  (Context) { false, false, NULL, NULL }
+
 typedef struct Context {
   bool canBreak;
   bool canCont;
