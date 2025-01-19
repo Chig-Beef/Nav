@@ -448,8 +448,6 @@ void lex(Lexer *l) {
           token = (Token){NULL, T_STRUCT, l->line};
         } else if (!strcmp(strBuff, "switch")) {
           token = (Token){NULL, T_SWITCH, l->line};
-        } else if (!strcmp(strBuff, "nil")) {
-          token = (Token){NULL, T_NIL, l->line};
         } else if (!strcmp(strBuff, "true")) {
           token = (Token){NULL, T_TRUE, l->line};
         } else if (!strcmp(strBuff, "false")) {

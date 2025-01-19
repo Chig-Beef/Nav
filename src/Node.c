@@ -190,8 +190,6 @@ char *nodeCodeString(NodeCode nc) {
     return "N_TRUE";
   case N_FALSE:
     return "N_FALSE";
-  case N_NIL:
-    return "N_NIL";
 
     // Various symbols
   case N_ACCESS:

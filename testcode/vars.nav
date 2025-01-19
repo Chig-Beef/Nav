@@ -4,9 +4,10 @@ fun main() {
 	let bool c = true;
 	let float d = 3.14;
 	let char e = 'e';
-	let int f = a + 7;
-	let int g = 21 % 3;
-	let bool h = !c;
-	let wah i = (8 + 7) / 5;
-	let char j = '\n';
+	let char f = '\n';
+	let int g = a + 7;
+	let int h = 21 % 3;
+	let ^int i = `7;
+	let bool j = !c;
+	let wah k = (8 + 7) / 5;
 }

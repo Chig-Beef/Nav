@@ -61,7 +61,6 @@ typedef enum NodeCode {
   N_SWITCH,
   N_TRUE,
   N_FALSE,
-  N_NIL,
 
   // Various symbols
   N_ACCESS,

@@ -53,8 +53,6 @@ char *tokenCodeString(TokenCode tc) {
     return "T_TRUE";
   case T_FALSE:
     return "T_FALSE";
-  case T_NIL:
-    return "T_NIL";
 
     // Various symbols
   case T_ACCESS:

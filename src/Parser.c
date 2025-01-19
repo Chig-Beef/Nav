@@ -719,8 +719,6 @@ Node parseComplexType(Parser *p) {
 
 Node parseValue(Parser *p) {
   switch (p->tok.kind) {
-  case T_NIL:
-    return newNode(N_NIL, p->tok.data, p->tok.line);
   case T_INT:
     return newNode(N_INT, p->tok.data, p->tok.line);
   case T_FLOAT:

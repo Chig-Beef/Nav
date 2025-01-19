@@ -27,7 +27,6 @@ typedef enum TokenCode {
   T_SWITCH,
   T_TRUE,
   T_FALSE,
-  T_NIL,
 
   // Various symbols
   T_ACCESS,

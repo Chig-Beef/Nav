@@ -1,5 +1,5 @@
 fun main() {
-	let [3]char x = make [1, 2, 3+4];
+	let [3]int x = make [1, 2, 3+4];
 	let [3][1]char y = make ["a", "b", "c"];
 	let [2]^float z = make [`1.1, `2.2];
 
