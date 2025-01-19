@@ -1,7 +1,6 @@
 #include "Analyser.h"
 #include "Hoister.h"
 #include "Lexer.h"
-#include "Panic.h"
 #include "Parser.h"
 #include <stdbool.h>
 #include <stdio.h>

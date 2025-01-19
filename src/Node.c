@@ -7,14 +7,14 @@
 
 NEW_LIST_TYPE(char, Char)
 
-Node newNode(NodeCode kind, String *data, int line) {
+Node newNode(NodeCode kind, String *data, int line, char *sourceName) {
   NodeList children;
 
   if (NodeListInit(&children, 1)) {
     panic("Couldn't create node (failed to init list)");
   }
 
-  return (Node){kind, children, data, line};
+  return (Node){kind, children, data, line, sourceName};
 }
 
 errno_t NodeListInit(NodeList *l, int initialSize) {

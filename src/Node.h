@@ -121,6 +121,7 @@ struct Node {
   NodeList children;
   String *data;
   int line;
+  char *sourceName;
 };
 
 void nodeDestroy(Node *t);
@@ -130,4 +131,4 @@ char *nodeCodeString(NodeCode tc);
 // Returns a string describing the token. The resulting string must be freed.
 char *nodeString(Node *t);
 
-Node newNode(NodeCode kind, String *data, int line);
+Node newNode(NodeCode kind, String *data, int line, char *sourceName);
