@@ -991,64 +991,56 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
   return exprType;
 }
 
+#define CHECK_TYPE_EQUAL(operator)                                             \
+  if (!typeEqual(left, right)) {                                               \
+    throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,                   \
+                       "Can't use " operator" operator on different types");   \
+  }
+
+#define CHECK_NO_ARRAYS(operator)                                              \
+  if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {                       \
+    throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,                   \
+                       "Can't " operator" arrays");                            \
+  }
+
+#define CHECK_NO_STRUCTS(operator)                                             \
+  if (left->propsLen > 0 || right->propsLen > 0) {                             \
+    throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,                   \
+                       "Can't " operator" structs");                           \
+  }
+
+#define ALLOW_POINTERS                                                         \
+  if (left->mod == TM_POINTER && right->mod == TM_POINTER) {                   \
+    return;                                                                    \
+  }
+
+#define DONT_ALLOW_POINTERS(operator)                                          \
+  if (left->mod == TM_POINTER && right->mod == TM_POINTER) {                   \
+    throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,                   \
+                       "Can't " operator" pointers");                          \
+  }
+
 void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
   char FUNC_NAME[] = "analyseOperator";
 
   switch (n->kind) {
   case N_EQ:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use equal operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare structs");
-    }
+    CHECK_TYPE_EQUAL("equal")
+    CHECK_NO_ARRAYS("equal")
+    CHECK_NO_STRUCTS("equal")
     return;
 
   case N_NEQ:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use not equal operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare structs");
-    }
+    CHECK_TYPE_EQUAL("not equal")
+    CHECK_NO_ARRAYS("not equal")
+    CHECK_NO_STRUCTS("not equal")
     return;
 
   case N_GT:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use greater than operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare structs");
-    }
-
-    // Allow comparison of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("greater than")
+    CHECK_NO_ARRAYS("greater than")
+    CHECK_NO_STRUCTS("greater than")
+    ALLOW_POINTERS
 
     // Can't compare bools in this way
     if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
@@ -1059,26 +1051,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_GTEQ:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(
-          a, n->sourceName, n->line, FUNC_NAME,
-          "Can't use greater than or equal operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare structs");
-    }
-
-    // Allow comparison of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("greater than or equal")
+    CHECK_NO_ARRAYS("greater than or equal")
+    CHECK_NO_STRUCTS("greater than or equal")
+    ALLOW_POINTERS
 
     // Can't compare bools in this way
     if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
@@ -1089,25 +1065,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_LT:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use less than operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare structs");
-    }
-
-    // Allow comparison of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("less than")
+    CHECK_NO_ARRAYS("less than")
+    CHECK_NO_STRUCTS("less than")
+    ALLOW_POINTERS
 
     // Can't compare bools in this way
     if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
@@ -1118,26 +1079,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_LTEQ:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(
-          a, n->sourceName, n->line, FUNC_NAME,
-          "Can't use less than or equal operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't compare structs");
-    }
-
-    // Allow comparison of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("less than or equal")
+    CHECK_NO_ARRAYS("less than or equal")
+    CHECK_NO_STRUCTS("less than or equal")
+    ALLOW_POINTERS
 
     // Can't compare bools in this way
     if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
@@ -1148,26 +1093,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_L_SHIFT:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use left shift operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't left shift arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't left shift structs");
-    }
-
-    // Don't allow shifting of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't left shift pointers");
-    }
+    CHECK_TYPE_EQUAL("left shift")
+    CHECK_NO_ARRAYS("left shift")
+    CHECK_NO_STRUCTS("left shift")
+    DONT_ALLOW_POINTERS("left shift")
 
     if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1187,26 +1116,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_R_SHIFT:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use right shift operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't right shift arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't right shift structs");
-    }
-
-    // Don't allow shifting of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't right shift pointers");
-    }
+    CHECK_TYPE_EQUAL("right shift")
+    CHECK_NO_ARRAYS("right shift")
+    CHECK_NO_STRUCTS("right shift")
+    DONT_ALLOW_POINTERS("right shift")
 
     if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1226,26 +1139,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_ANDAND:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use and and operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't and and arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't and and structs");
-    }
-
-    // Don't allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't and and pointers");
-    }
+    CHECK_TYPE_EQUAL("and and")
+    CHECK_NO_ARRAYS("and and")
+    CHECK_NO_STRUCTS("and and")
+    DONT_ALLOW_POINTERS("and and")
 
     if (left != a->preDefs.BOOL || right != a->preDefs.BOOL) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1255,26 +1152,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_OROR:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use or or operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't or or arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't or or structs");
-    }
-
-    // Don't allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't or or pointers");
-    }
+    CHECK_TYPE_EQUAL("or or")
+    CHECK_NO_ARRAYS("or or")
+    CHECK_NO_STRUCTS("or or")
+    DONT_ALLOW_POINTERS("or or")
 
     if (left != a->preDefs.BOOL || right != a->preDefs.BOOL) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1284,25 +1165,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_AND:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use and operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't and arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't and structs");
-    }
-
-    // Allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("and")
+    CHECK_NO_ARRAYS("and")
+    CHECK_NO_STRUCTS("and")
+    ALLOW_POINTERS
 
     if (left != a->preDefs.INT || right != a->preDefs.INT) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1312,25 +1178,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_OR:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use or operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't or arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't or structs");
-    }
-
-    // Allow or of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("or")
+    CHECK_NO_ARRAYS("or")
+    CHECK_NO_STRUCTS("or")
+    ALLOW_POINTERS
 
     if (left != a->preDefs.INT || right != a->preDefs.INT) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1340,25 +1191,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_XOR:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use xor operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't xor arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't xor structs");
-    }
-
-    // Allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("xor")
+    CHECK_NO_ARRAYS("xor")
+    CHECK_NO_STRUCTS("xor")
+    ALLOW_POINTERS
 
     if (left != a->preDefs.INT || right != a->preDefs.INT) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1368,25 +1204,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_ADD:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use add operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't add arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't add structs");
-    }
-
-    // Allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("add")
+    CHECK_NO_ARRAYS("add")
+    CHECK_NO_STRUCTS("add")
+    ALLOW_POINTERS
 
     if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
         (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
@@ -1397,25 +1218,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_DIV:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use div operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't div arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't div structs");
-    }
-
-    // Allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("div")
+    CHECK_NO_ARRAYS("div")
+    CHECK_NO_STRUCTS("div")
+    ALLOW_POINTERS
 
     if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
         (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
@@ -1426,25 +1232,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_MOD:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use mod operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't mod arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't mod structs");
-    }
-
-    // Allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("mod")
+    CHECK_NO_ARRAYS("mod")
+    CHECK_NO_STRUCTS("mod")
+    ALLOW_POINTERS
 
     if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
         (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
@@ -1455,25 +1246,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_MUL:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use mul operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't mul arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't mul structs");
-    }
-
-    // Allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("mul")
+    CHECK_NO_ARRAYS("mul")
+    CHECK_NO_STRUCTS("mul")
+    ALLOW_POINTERS
 
     if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
         (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
@@ -1484,25 +1260,10 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_SUB:
-    if (!typeEqual(left, right)) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't use sub operator on different types");
-    }
-
-    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't sub arrays");
-    }
-
-    if (left->propsLen > 0 || right->propsLen > 0) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Can't sub structs");
-    }
-
-    // Allow and and of pointers
-    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
-      return;
-    }
+    CHECK_TYPE_EQUAL("sub")
+    CHECK_NO_ARRAYS("sub")
+    CHECK_NO_STRUCTS("sub")
+    ALLOW_POINTERS
 
     if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
         (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
