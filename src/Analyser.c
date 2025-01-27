@@ -1368,15 +1368,150 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
 
   case N_ADD:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use add operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't add arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't add structs");
+    }
+
+    // Allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
+        (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't add anything other than int or float");
+    }
+
     return;
+
   case N_DIV:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use div operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't div arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't div structs");
+    }
+
+    // Allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
+        (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't div anything other than int or float");
+    }
+
     return;
+
   case N_MOD:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use mod operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't mod arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't mod structs");
+    }
+
+    // Allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
+        (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't mod anything other than int or float");
+    }
+
     return;
+
   case N_MUL:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use mul operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't mul arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't mul structs");
+    }
+
+    // Allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
+        (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't mul anything other than int or float");
+    }
+
     return;
+
   case N_SUB:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use sub operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't sub arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't sub structs");
+    }
+
+    // Allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if ((left != a->preDefs.INT || right != a->preDefs.INT) &&
+        (left != a->preDefs.FLOAT || right != a->preDefs.FLOAT)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't sub anything other than int or float");
+    }
+
     return;
+
   default:
     throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                        "This shouldn't occur, invalid operator");
