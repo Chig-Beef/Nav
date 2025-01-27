@@ -994,8 +994,6 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
 void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
   char FUNC_NAME[] = "analyseOperator";
 
-  // INT BOOL CHAR FLOAT FUN VOIDPTR
-
   switch (n->kind) {
   case N_EQ:
     if (!typeEqual(left, right)) {
@@ -1132,6 +1130,84 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
 
     return;
 
+  case N_L_SHIFT:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use left shift operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't left shift arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't left shift structs");
+    }
+
+    // Don't allow shifting of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't left shift pointers");
+    }
+
+    if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't left shift booleans");
+    }
+
+    if (left == a->preDefs.CHAR || right == a->preDefs.CHAR) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't left shift characters");
+    }
+
+    if (left == a->preDefs.FLOAT || right == a->preDefs.FLOAT) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't left shift floats");
+    }
+
+    return;
+
+  case N_R_SHIFT:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use right shift operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't right shift arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't right shift structs");
+    }
+
+    // Don't allow shifting of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't right shift pointers");
+    }
+
+    if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't right shift booleans");
+    }
+
+    if (left == a->preDefs.CHAR || right == a->preDefs.CHAR) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't right shift characters");
+    }
+
+    if (left == a->preDefs.FLOAT || right == a->preDefs.FLOAT) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't right shift floats");
+    }
+
+    return;
+
   case N_ADD:
     return;
   case N_AND:
@@ -1153,10 +1229,6 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
   case N_SUB:
     return;
   case N_XOR:
-    return;
-  case N_L_SHIFT:
-    return;
-  case N_R_SHIFT:
     return;
   default:
     throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
