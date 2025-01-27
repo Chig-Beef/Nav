@@ -1012,6 +1012,8 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Can't compare structs");
     }
+    return;
+
   case N_GT:
     if (!typeEqual(left, right)) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1027,6 +1029,20 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Can't compare structs");
     }
+
+    // Allow comparison of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    // Can't compare bools in this way
+    if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use less than operator on different types");
+    }
+
+    return;
+
   case N_GTEQ:
     if (!typeEqual(left, right)) {
       throwAnalyserError(
@@ -1043,6 +1059,20 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Can't compare structs");
     }
+
+    // Allow comparison of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    // Can't compare bools in this way
+    if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use less than operator on different types");
+    }
+
+    return;
+
   case N_LT:
     if (!typeEqual(left, right)) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1058,6 +1088,20 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Can't compare structs");
     }
+
+    // Allow comparison of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    // Can't compare bools in this way
+    if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use less than operator on different types");
+    }
+
+    return;
+
   case N_LTEQ:
     if (!typeEqual(left, right)) {
       throwAnalyserError(
@@ -1074,19 +1118,46 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Can't compare structs");
     }
+
+    // Allow comparison of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    // Can't compare bools in this way
+    if (left == a->preDefs.BOOL || right == a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use less than operator on different types");
+    }
+
+    return;
+
   case N_ADD:
+    return;
   case N_AND:
+    return;
   case N_ANDAND:
+    return;
   case N_DIV:
+    return;
   case N_MOD:
+    return;
   case N_MUL:
+    return;
   case N_NEQ:
+    return;
   case N_OR:
+    return;
   case N_OROR:
+    return;
   case N_SUB:
+    return;
   case N_XOR:
+    return;
   case N_L_SHIFT:
+    return;
   case N_R_SHIFT:
+    return;
   default:
     throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                        "This shouldn't occur, invalid operator");
