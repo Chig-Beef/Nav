@@ -3,6 +3,7 @@
 #include "Ident.h"
 #include "Node.h"
 #include "String.h"
+#include "TypeModifier.h"
 #include "Types.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,6 +93,7 @@ void analyseSwitchState(Analyser *a, Context c, Node *n);
 void analyseCaseBlock(Analyser *a, Context c, Node *n);
 void analyseDefaultBlock(Analyser *a, Context c, Node *n);
 void analyseBlock(Analyser *a, Context c, Node *n);
+void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right);
 
 Ident *varExists(Analyser *a, String *name) {
   Ident *curIdent = a->vars.tail;
@@ -987,6 +989,108 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
   }
 
   return exprType;
+}
+
+void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
+  char FUNC_NAME[] = "analyseOperator";
+
+  // INT BOOL CHAR FLOAT FUN VOIDPTR
+
+  switch (n->kind) {
+  case N_EQ:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use equal operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare structs");
+    }
+  case N_GT:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use greater than operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare structs");
+    }
+  case N_GTEQ:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(
+          a, n->sourceName, n->line, FUNC_NAME,
+          "Can't use greater than or equal operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare structs");
+    }
+  case N_LT:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use less than operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare structs");
+    }
+  case N_LTEQ:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(
+          a, n->sourceName, n->line, FUNC_NAME,
+          "Can't use less than or equal operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare structs");
+    }
+  case N_ADD:
+  case N_AND:
+  case N_ANDAND:
+  case N_DIV:
+  case N_MOD:
+  case N_MUL:
+  case N_NEQ:
+  case N_OR:
+  case N_OROR:
+  case N_SUB:
+  case N_XOR:
+  case N_L_SHIFT:
+  case N_R_SHIFT:
+  default:
+    throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                       "This shouldn't occur, invalid operator");
+  }
 }
 
 Type *analyseComplexType(Analyser *a, Context c, Node *n) {

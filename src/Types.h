@@ -7,8 +7,6 @@ typedef struct Type Type;
 #define ZERO_TYPE                                                              \
   (Type) { TK_ABS, NULL, NULL, 0, TM_NONE, NULL, NULL }
 
-typedef struct ComplexType ComplexType;
-
 typedef enum TypeKind {
   TK_ABS,
   TK_COMP,
