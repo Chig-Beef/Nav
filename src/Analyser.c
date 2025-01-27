@@ -1012,6 +1012,23 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     }
     return;
 
+  case N_NEQ:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use not equal operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't compare structs");
+    }
+    return;
+
   case N_GT:
     if (!typeEqual(left, right)) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
@@ -1208,11 +1225,67 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
 
     return;
 
+  case N_ANDAND:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use and and operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't and and arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't and and structs");
+    }
+
+    // Don't allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't and and pointers");
+    }
+
+    if (left != a->preDefs.BOOL || right != a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't and and anything other than booleans");
+    }
+
+    return;
+
+  case N_OROR:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use or or operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't or or arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't or or structs");
+    }
+
+    // Don't allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't or or pointers");
+    }
+
+    if (left != a->preDefs.BOOL || right != a->preDefs.BOOL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't or or anything other than booleans");
+    }
+
+    return;
+
   case N_ADD:
     return;
   case N_AND:
-    return;
-  case N_ANDAND:
     return;
   case N_DIV:
     return;
@@ -1220,11 +1293,7 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
   case N_MUL:
     return;
-  case N_NEQ:
-    return;
   case N_OR:
-    return;
-  case N_OROR:
     return;
   case N_SUB:
     return;
