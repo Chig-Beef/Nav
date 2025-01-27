@@ -1283,9 +1283,91 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
 
     return;
 
-  case N_ADD:
-    return;
   case N_AND:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use and operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't and arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't and structs");
+    }
+
+    // Allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if (left != a->preDefs.INT || right != a->preDefs.INT) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't and anything other than int");
+    }
+
+    return;
+
+  case N_OR:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use or operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't or arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't or structs");
+    }
+
+    // Allow or of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if (left != a->preDefs.INT || right != a->preDefs.INT) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't or anything other than int");
+    }
+
+    return;
+
+  case N_XOR:
+    if (!typeEqual(left, right)) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't use xor operator on different types");
+    }
+
+    if (left->mod == TM_ARRAY || right->mod == TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't xor arrays");
+    }
+
+    if (left->propsLen > 0 || right->propsLen > 0) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't xor structs");
+    }
+
+    // Allow and and of pointers
+    if (left->mod == TM_POINTER && right->mod == TM_POINTER) {
+      return;
+    }
+
+    if (left != a->preDefs.INT || right != a->preDefs.INT) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Can't xor anything other than int");
+    }
+
+    return;
+
+  case N_ADD:
     return;
   case N_DIV:
     return;
@@ -1293,11 +1375,7 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
     return;
   case N_MUL:
     return;
-  case N_OR:
-    return;
   case N_SUB:
-    return;
-  case N_XOR:
     return;
   default:
     throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
