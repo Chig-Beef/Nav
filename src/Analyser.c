@@ -974,6 +974,7 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
     exprType = analyseValue(a, c, n->children.p);
   }
 
+  // Check all the values are the same
   for (int i = 2; i < n->children.len; i += 2) {
     if (n->children.p[i].kind == N_UNARY_VALUE) {
       if (!typeEqual(analyseUnaryValue(a, c, n->children.p + i), exprType)) {
@@ -986,6 +987,11 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
                            "Unexpected type in expression");
       }
     }
+  }
+
+  // Check the operators make sense
+  for (int i = 1; i < n->children.len - 1; i += 2) {
+    analyseOperator(a, c, n->children.p + i, exprType, exprType);
   }
 
   return exprType;
@@ -1280,7 +1286,7 @@ void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right) {
 }
 
 Type *analyseComplexType(Analyser *a, Context c, Node *n) {
-  char FUNC_NAME[] = "analyseExpression";
+  char FUNC_NAME[] = "analyseComplexType";
 
   // printf("ComplexType %s\n", nodeCodeString(n->kind));
 
