@@ -39,6 +39,7 @@ typedef enum NodeCode {
   N_SWITCH_STATE,
   N_CASE_BLOCK,
   N_DEFAULT_BLOCK,
+  N_ACCESS,
 
   // Keywords
   N_BREAK,

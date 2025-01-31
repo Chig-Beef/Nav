@@ -73,6 +73,7 @@ Node parseSwitchState(Parser *p);
 Node parseCaseBlock(Parser *p);
 Node parseDefaultBlock(Parser *p);
 Node parseBlock(Parser *p);
+Node parseAccess(Parser *p);
 void parse(Parser *p);
 
 bool validUnary(Parser *p) {
@@ -746,6 +747,9 @@ Node parseValue(Parser *p) {
   case T_STRING:
     return newNode(N_STRING, p->tok.data, p->tok.line, p->sourceName);
   case T_IDENTIFIER:
+    if (peekToken(p).kind == T_ACCESSOR) {
+      return parseAccess(p);
+    }
     return newNode(N_IDENTIFIER, p->tok.data, p->tok.line, p->sourceName);
   case T_TRUE:
     return newNode(N_TRUE, NULL, p->tok.line, p->sourceName);
@@ -764,6 +768,25 @@ Node parseValue(Parser *p) {
     throwParserError(p, "value");
     return ZERO_NODE;
   }
+}
+
+Node parseAccess(Parser *p) {
+  Node out =
+      newNode(N_ACCESS, strNew("Access", false), p->tok.line, p->sourceName);
+
+  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
+                    "parseAccess")
+  CHECK_APPEND_NEXT(T_ACCESSOR, "accessor", N_ACCESSOR, NULL, "parseAccess")
+
+  if (peekToken(p).kind == T_ACCESSOR) {
+    APPEND_STRUCTURE(parseAccess, "parseAccess")
+    return out;
+  }
+
+  CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
+                   "parseAccess")
+
+  return out;
 }
 
 Node parseSwitchState(Parser *p) {

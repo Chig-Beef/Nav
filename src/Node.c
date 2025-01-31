@@ -148,6 +148,8 @@ char *nodeCodeString(NodeCode nc) {
     return "N_CASE_BLOCK";
   case N_DEFAULT_BLOCK:
     return "N_DEFAULT_BLOCK";
+  case N_ACCESS:
+    return "N_ACCESS";
 
     // Keywords
   case N_BREAK:
