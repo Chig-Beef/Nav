@@ -192,8 +192,8 @@ char *nodeCodeString(NodeCode nc) {
     return "N_FALSE";
 
     // Various symbols
-  case N_ACCESS:
-    return "N_ACCESS";
+  case N_ACCESSOR:
+    return "N_ACCESSOR";
   case N_ASSIGN:
     return "N_ASSIGN";
   case N_COLON:

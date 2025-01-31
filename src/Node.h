@@ -63,7 +63,7 @@ typedef enum NodeCode {
   N_FALSE,
 
   // Various symbols
-  N_ACCESS,
+  N_ACCESSOR,
   N_ASSIGN,
   N_COLON,
   N_SEMICOLON,

@@ -78,7 +78,7 @@ void lex(Lexer *l) {
 
     // Single character
     case '.':
-      token = (Token){NULL, T_ACCESS, l->line};
+      token = (Token){NULL, T_ACCESSOR, l->line};
       break;
     case ':':
       token = (Token){NULL, T_COLON, l->line};
