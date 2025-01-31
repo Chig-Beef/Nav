@@ -30,12 +30,12 @@ fun pop(^Stack s) any {
 	--s.length;
 
 	if (s.length == 0) {
-		^Node tail = s.tail;
+		let ^Node tail = s.tail;
 		s.tail = nil;
 		return tail.value;
 	}
 
-	^Node tail = s.tail;
+	let ^Node tail = s.tail;
 	s.tail = s.tail.prev;
 	return tail.value;
 }

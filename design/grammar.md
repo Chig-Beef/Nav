@@ -19,8 +19,8 @@ funcCall = 'call', IDENTIFIER, '(', [expression, {',', expression,} [',',]] ')';
 structNew = 'new', IDENTIFIER, '(', [expression, {',', expression,} [',',]] ')';
 variableDeclaration -> (assignment | newassignment), ';'
 newassignment -> 'let', complexType, IDENTIFIER, '=', expression ;
-crement -> '++' | '--', IDENTIFIER;
-assignment -> (IDENTIFIER, [index,] '=', expression) | crement;
+crement -> '++' | '--', (IDENTIFIER | access), [index];
+assignment -> ((IDENTIFIER | access), [index,] '=', expression) | crement;
 ifBlock -> 'if', '(', expression, ')', block, ['elif', '(', expression, ')', block,] ['else', block];
 forLoop -> 'for', [assignment | newassignment,] ';', [expression,] ';', [assignment,] block;
 retStatement -> 'return', [expression], ';';

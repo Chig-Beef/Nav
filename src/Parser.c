@@ -383,7 +383,7 @@ Node parseRetState(Parser *p) {
 
   CHECK_APPEND_NEXT(T_RETURN, "return", N_RETURN, NULL, "parseRetState")
 
-  if (p->tok.kind != ';') {
+  if (p->tok.kind != T_SEMICOLON) {
     APPEND_STRUCTURE(parseExpression, "parseRetState")
     nextToken(p);
   }
@@ -533,8 +533,6 @@ Node parseExpression(Parser *p) {
   Node out = newNode(N_EXPRESSION, strNew("Expression", false), p->tok.line,
                      p->sourceName);
 
-  // printf("%s\n", tokenCodeString(p->tok.kind));
-
   if (!validUnary(p)) {
     Node n = parseValue(p);
     if (n.kind == N_ILLEGAL) {
@@ -589,8 +587,16 @@ Node parseCrement(Parser *p) {
   }
   nextToken(p);
 
-  CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER,
-                   strGet(p->tok.data), "parseCrement")
+  if (peekToken(p).kind == T_ACCESSOR) {
+    APPEND_STRUCTURE(parseAccess, "parseCrement")
+  } else {
+    CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                     strGet(p->tok.data), "parseCrement")
+  }
+
+  if (p->tok.kind == T_L_BLOCK) {
+    APPEND_STRUCTURE(parseIndex, "parseCrement")
+  }
 
   return out;
 }
@@ -605,8 +611,13 @@ Node parseAssignment(Parser *p) {
     return out;
   }
 
-  CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
-                    strGet(p->tok.data), "parseAssignment")
+  if (peekToken(p).kind == T_ACCESSOR) {
+    APPEND_STRUCTURE(parseAccess, "parseAssignment")
+    nextToken(p);
+  } else {
+    CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER,
+                      strGet(p->tok.data), "parseAssignment")
+  }
 
   // Assigning to element in array?
   if (p->tok.kind == T_L_BLOCK) {
@@ -698,13 +709,7 @@ Node parseUnaryValue(Parser *p) {
   if (validUnary(p)) {
     APPEND_STRUCTURE(parseUnaryValue, "parseUnaryValue");
   } else {
-    Node n = parseValue(p);
-    if (n.kind == N_ILLEGAL) {
-      throwParserError(p, "value");
-    }
-    if (NodeListAppend(&out.children, parseValue(p))) {
-      panic("Couldn't append to Node list in parseUnaryValue");
-    }
+    APPEND_STRUCTURE(parseExpression, "parseUnaryValue");
   }
 
   return out;
