@@ -78,98 +78,98 @@ void lex(Lexer *l) {
 
     // Single character
     case '.':
-      token = (Token){NULL, T_ACCESSOR, l->line};
+      token = NEW_TOKEN(T_ACCESSOR);
       break;
     case ':':
-      token = (Token){NULL, T_COLON, l->line};
+      token = NEW_TOKEN(T_COLON);
       break;
     case ';':
-      token = (Token){NULL, T_SEMICOLON, l->line};
+      token = NEW_TOKEN(T_SEMICOLON);
       break;
     case ',':
-      token = (Token){NULL, T_SEP, l->line};
+      token = NEW_TOKEN(T_SEP);
       break;
     case '%':
-      token = (Token){NULL, T_MOD, l->line};
+      token = NEW_TOKEN(T_MOD);
       break;
     case '*':
-      token = (Token){NULL, T_MUL, l->line};
+      token = NEW_TOKEN(T_MUL);
       break;
     case '~':
-      token = (Token){NULL, T_XOR, l->line};
+      token = NEW_TOKEN(T_XOR);
       break;
     case '^':
-      token = (Token){NULL, T_DEREF, l->line};
+      token = NEW_TOKEN(T_DEREF);
       break;
     case '`':
-      token = (Token){NULL, T_REF, l->line};
+      token = NEW_TOKEN(T_REF);
       break;
     case '[':
-      token = (Token){NULL, T_L_BLOCK, l->line};
+      token = NEW_TOKEN(T_L_BLOCK);
       break;
     case ']':
-      token = (Token){NULL, T_R_BLOCK, l->line};
+      token = NEW_TOKEN(T_R_BLOCK);
       break;
     case '{':
-      token = (Token){NULL, T_L_SQUIRLY, l->line};
+      token = NEW_TOKEN(T_L_SQUIRLY);
       break;
     case '}':
-      token = (Token){NULL, T_R_SQUIRLY, l->line};
+      token = NEW_TOKEN(T_R_SQUIRLY);
       break;
     case '(':
-      token = (Token){NULL, T_L_PAREN, l->line};
+      token = NEW_TOKEN(T_L_PAREN);
       break;
     case ')':
-      token = (Token){NULL, T_R_PAREN, l->line};
+      token = NEW_TOKEN(T_R_PAREN);
       break;
 
       // Could be double
     case '=':
       if (l->peekChar == '=') {
         nextChar(l);
-        token = (Token){NULL, T_EQ, l->line};
+        token = NEW_TOKEN(T_EQ);
       } else {
-        token = (Token){NULL, T_ASSIGN, l->line};
+        token = NEW_TOKEN(T_ASSIGN);
       }
       break;
     case '+':
       if (l->peekChar == '+') {
         nextChar(l);
-        token = (Token){NULL, T_INC, l->line};
+        token = NEW_TOKEN(T_INC);
       } else {
-        token = (Token){NULL, T_ADD, l->line};
+        token = NEW_TOKEN(T_ADD);
       }
       break;
     case '&':
       if (l->peekChar == '&') {
         nextChar(l);
-        token = (Token){NULL, T_ANDAND, l->line};
+        token = NEW_TOKEN(T_ANDAND);
       } else {
-        token = (Token){NULL, T_AND, l->line};
+        token = NEW_TOKEN(T_AND);
       }
       break;
     case '!':
       if (l->peekChar == '=') {
         nextChar(l);
-        token = (Token){NULL, T_NEQ, l->line};
+        token = NEW_TOKEN(T_NEQ);
       } else {
-        token = (Token){NULL, T_NOT, l->line};
+        token = NEW_TOKEN(T_NOT);
       }
       break;
     case '|':
       if (l->peekChar == '|') {
         nextChar(l);
-        token = (Token){NULL, T_OROR, l->line};
+        token = NEW_TOKEN(T_OROR);
       } else {
-        token = (Token){NULL, T_OR, l->line};
+        token = NEW_TOKEN(T_OR);
       }
       break;
     case '-':
       if (l->peekChar == '-') {
         nextChar(l);
-        token = (Token){NULL, T_DEC, l->line};
+        token = NEW_TOKEN(T_DEC);
       } else {
-        token = (Token){NULL, T_SUB, l->line};
+        token = NEW_TOKEN(T_SUB);
       }
       break;
 
@@ -177,23 +177,23 @@ void lex(Lexer *l) {
     case '>':
       if (l->peekChar == '>') {
         nextChar(l);
-        token = (Token){NULL, T_R_SHIFT, l->line};
+        token = NEW_TOKEN(T_R_SHIFT);
       } else if (l->peekChar == '=') {
         nextChar(l);
-        token = (Token){NULL, T_GTEQ, l->line};
+        token = NEW_TOKEN(T_GTEQ);
       } else {
-        token = (Token){NULL, T_GT, l->line};
+        token = NEW_TOKEN(T_GT);
       }
       break;
     case '<':
       if (l->peekChar == '<') {
         nextChar(l);
-        token = (Token){NULL, T_L_SHIFT, l->line};
+        token = NEW_TOKEN(T_L_SHIFT);
       } else if (l->peekChar == '=') {
         nextChar(l);
-        token = (Token){NULL, T_LTEQ, l->line};
+        token = NEW_TOKEN(T_LTEQ);
       } else {
-        token = (Token){NULL, T_LT, l->line};
+        token = NEW_TOKEN(T_LT);
       }
       break;
 
@@ -217,7 +217,7 @@ void lex(Lexer *l) {
         nextChar(l);
         goto NO_TOKEN;
       } else {
-        token = (Token){NULL, T_DIV, l->line};
+        token = NEW_TOKEN(T_DIV);
         break;
       }
 
@@ -413,45 +413,45 @@ void lex(Lexer *l) {
         // NOTE: All of these keywords are known ahead of time, therefore no
         // dynamic allocation is needed
         if (!strcmp(strBuff, "break")) {
-          token = (Token){NULL, T_BREAK, l->line};
+          token = NEW_TOKEN(T_BREAK);
         } else if (!strcmp(strBuff, "call")) {
-          token = (Token){NULL, T_CALL, l->line};
+          token = NEW_TOKEN(T_CALL);
         } else if (!strcmp(strBuff, "case")) {
-          token = (Token){NULL, T_CASE, l->line};
+          token = NEW_TOKEN(T_CASE);
         } else if (!strcmp(strBuff, "const")) {
-          token = (Token){NULL, T_CONST, l->line};
+          token = NEW_TOKEN(T_CONST);
         } else if (!strcmp(strBuff, "continue")) {
-          token = (Token){NULL, T_CONTINUE, l->line};
+          token = NEW_TOKEN(T_CONTINUE);
         } else if (!strcmp(strBuff, "default")) {
-          token = (Token){NULL, T_DEFAULT, l->line};
+          token = NEW_TOKEN(T_DEFAULT);
         } else if (!strcmp(strBuff, "elif")) {
-          token = (Token){NULL, T_ELIF, l->line};
+          token = NEW_TOKEN(T_ELIF);
         } else if (!strcmp(strBuff, "else")) {
-          token = (Token){NULL, T_ELSE, l->line};
+          token = NEW_TOKEN(T_ELSE);
         } else if (!strcmp(strBuff, "enum")) {
-          token = (Token){NULL, T_ENUM, l->line};
+          token = NEW_TOKEN(T_ENUM);
         } else if (!strcmp(strBuff, "for")) {
-          token = (Token){NULL, T_FOR, l->line};
+          token = NEW_TOKEN(T_FOR);
         } else if (!strcmp(strBuff, "fun")) {
-          token = (Token){NULL, T_FUN, l->line};
+          token = NEW_TOKEN(T_FUN);
         } else if (!strcmp(strBuff, "if")) {
-          token = (Token){NULL, T_IF, l->line};
+          token = NEW_TOKEN(T_IF);
         } else if (!strcmp(strBuff, "let")) {
-          token = (Token){NULL, T_LET, l->line};
+          token = NEW_TOKEN(T_LET);
         } else if (!strcmp(strBuff, "make")) {
-          token = (Token){NULL, T_MAKE, l->line};
+          token = NEW_TOKEN(T_MAKE);
         } else if (!strcmp(strBuff, "new")) {
-          token = (Token){NULL, T_NEW, l->line};
+          token = NEW_TOKEN(T_NEW);
         } else if (!strcmp(strBuff, "return")) {
-          token = (Token){NULL, T_RETURN, l->line};
+          token = NEW_TOKEN(T_RETURN);
         } else if (!strcmp(strBuff, "struct")) {
-          token = (Token){NULL, T_STRUCT, l->line};
+          token = NEW_TOKEN(T_STRUCT);
         } else if (!strcmp(strBuff, "switch")) {
-          token = (Token){NULL, T_SWITCH, l->line};
+          token = NEW_TOKEN(T_SWITCH);
         } else if (!strcmp(strBuff, "true")) {
-          token = (Token){NULL, T_TRUE, l->line};
+          token = NEW_TOKEN(T_TRUE);
         } else if (!strcmp(strBuff, "false")) {
-          token = (Token){NULL, T_FALSE, l->line};
+          token = NEW_TOKEN(T_FALSE);
         } else {
           // Copy over to dynamic allocation, freeing up strBuff for next char,
           // string, etc
@@ -480,7 +480,7 @@ void lex(Lexer *l) {
     }
 
     // Clear the token
-    token = (Token){NULL, T_ILLEGAL, 0};
+    token = ZERO_TOKEN;
 
   NO_TOKEN:
 

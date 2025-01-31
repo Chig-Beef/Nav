@@ -78,6 +78,10 @@ typedef enum TokenCode {
   T_STRING,
 } TokenCode;
 
+#define ZERO_TOKEN (Token){NULL, T_ILLEGAL, 0}
+#define NEW_TOKEN(tokenType)                                                   \
+  (Token) { NULL, (tokenType), l->line }
+
 typedef struct Token {
   String *data; // If the token has a constant data, it's NULL, and can always
                 // be decided
