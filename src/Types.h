@@ -42,3 +42,5 @@ void typeStackPush(TypeStack *s, TypeKind kind, String *name, TypeModifier mod,
 Type typeStackPop(TypeStack *s);
 
 void typeStackClear(TypeStack *s);
+
+char *typeString(Type *t);

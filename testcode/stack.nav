@@ -1,5 +1,7 @@
+// Before implementing any, this will be an int stack
+
 struct Node {
-	any value,
+	int value,
 	^Node prev,
 }
 
@@ -8,7 +10,7 @@ struct Stack {
 	int length,
 }
 
-fun push(^Stack s, any value) {
+fun push(^Stack s, int value) {
 	let ^Node n = `new Node(value, nil);
 
 	++s.length;
@@ -22,7 +24,7 @@ fun push(^Stack s, any value) {
 	s.tail = n;
 }
 
-fun pop(^Stack s) any {
+fun pop(^Stack s) int {
 	if (s.length == 0) {
 		return nil;
 	}
@@ -40,7 +42,7 @@ fun pop(^Stack s) any {
 	return tail.value;
 }
 
-fun peek(^Stack s) any {
+fun peek(^Stack s) int {
 	// Length == 0
 	if (s.tail == nil) {
 		return nil;

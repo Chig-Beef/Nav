@@ -1,8 +1,76 @@
 #include "Types.h"
 #include "Panic.h"
+#include "TypeModifier.h"
+#include "list.h"
+#include <stdio.h>
 #include <stdlib.h>
 
-TypeKind kind;
+NEW_LIST_TYPE_HEADER(char, Char)
+
+char *typeString(Type *t) {
+  CharList out;
+  if (CharListInit(&out, 1)) {
+    panic("Couldn't initialise charlist");
+  }
+
+  Type *cur = t;
+
+  while (cur != NULL) {
+    switch (cur->mod) {
+    case TM_POINTER:
+      if (CharListAppend(&out, '^')) {
+        panic("Couldn't append to charlist");
+      }
+      break;
+
+    case TM_ARRAY:
+      if (CharListAppend(&out, '[')) {
+        panic("Couldn't append to charlist");
+      }
+      if (CharListAppend(&out, ']')) {
+        panic("Couldn't append to charlist");
+      }
+      break;
+
+    case TM_NONE:
+      String *name = t->name;
+
+      // Null case
+      if (name == NULL) {
+        if (CharListAppend(&out, 'N')) {
+          panic("Couldn't append to charlist");
+        }
+        if (CharListAppend(&out, 'U')) {
+          panic("Couldn't append to charlist");
+        }
+        if (CharListAppend(&out, 'L')) {
+          panic("Couldn't append to charlist");
+        }
+        if (CharListAppend(&out, 'L')) {
+          panic("Couldn't append to charlist");
+        }
+
+        break;
+      }
+
+      int i = 0;
+
+      while (name->data[i]) {
+        if (CharListAppend(&out, name->data[i])) {
+          panic("Couldn't append to charlist");
+        }
+        ++i;
+      }
+
+      break;
+    }
+
+    // printf("%s\n", out.p);
+    cur = cur->parent;
+  }
+
+  return out.p;
+}
 
 void typeStackPush(TypeStack *s, TypeKind kind, String *name, TypeModifier mod,
                    Type *parent) {

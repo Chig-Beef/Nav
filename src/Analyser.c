@@ -10,7 +10,7 @@
 
 typedef struct PreDefs {
   // Primitive types
-  Type *INT, *BOOL, *CHAR, *FLOAT, *FUN, *VOIDPTR;
+  Type *INT, *BOOL, *CHAR, *FLOAT, *FUN, *VOIDPTR, *STRING;
 
   // Functions
   Fun *PRINT;
@@ -60,7 +60,10 @@ void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   typeStackPush(&a->types, TK_ABS, strNew("float", false), TM_NONE, NULL);
   a->preDefs.FLOAT = a->types.tail;
 
-  typeStackPush(&a->types, TK_ABS, NULL, TM_POINTER, NULL);
+  typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, NULL);
+  a->preDefs.VOIDPTR = a->types.tail;
+
+  typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, a->preDefs.CHAR);
   a->preDefs.VOIDPTR = a->types.tail;
 
   funStackPush(&a->funs, strNew("print", false));
@@ -89,6 +92,7 @@ void analyseVarDeclaration(Analyser *a, Context c, Node *n);
 Type *analyseUnaryValue(Analyser *a, Context c, Node *n);
 Type *analyseComplexType(Analyser *a, Context c, Node *n);
 Type *analyseValue(Analyser *a, Context c, Node *n);
+Type *analyseAccess(Analyser *a, Context c, Node *n);
 void analyseSwitchState(Analyser *a, Context c, Node *n);
 void analyseCaseBlock(Analyser *a, Context c, Node *n);
 void analyseDefaultBlock(Analyser *a, Context c, Node *n);
@@ -494,7 +498,10 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
 
   // printf("Got new var type\n");
 
-  if (analyseExpression(a, c, n->children.p + n->children.len - 1) != t) {
+  Type *exprType = analyseExpression(a, c, n->children.p + n->children.len - 1);
+  if (exprType != t) {
+    printf("\nExpected type %s\n", typeString(t));
+    printf("Recieved type %s\n\n", typeString(exprType));
     throwAnalyserError(a, n->sourceName,
                        n->children.p[n->children.len - 1].line, FUNC_NAME,
                        "Expression in assignment wasn't correct type");
@@ -515,22 +522,29 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
     return;
   }
 
-  String *varName = n->children.p[0].data;
-  Ident *var = varExists(a, varName);
-  if (var == NULL) {
-    throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
-                       "Variable does not exists");
+  Type *varType = NULL;
+
+  if (n->children.p[0].kind == N_IDENTIFIER) {
+    String *varName = n->children.p[0].data;
+    Ident *var = varExists(a, varName);
+    if (var == NULL) {
+      throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
+                         "Variable does not exists");
+    }
+    varType = var->type;
+  } else { // Access
+    varType = analyseAccess(a, c, n->children.p);
   }
 
   if (n->children.p[1].kind == N_INDEX) {
-    if (var->type->mod != TM_ARRAY) {
+    if (varType->mod != TM_ARRAY) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Can't index non-array");
     }
     analyseIndex(a, c, n->children.p + 1);
   }
 
-  c.expType = var->type;
+  c.expType = varType;
   analyseExpression(a, c, n->children.p + n->children.len - 1);
 }
 
@@ -664,20 +678,7 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
   case N_CHAR:
     return a->preDefs.CHAR;
   case N_STRING:
-    Type *curType = a->types.tail;
-
-    // Try to find this exact type already on the stack
-    while (curType != NULL) {
-      if (curType->parent == a->preDefs.CHAR && curType->mod == TM_ARRAY) {
-        return curType;
-      }
-      curType = curType->next;
-    }
-
-    // Couldn't find it? Make it
-    typeStackPush(&a->types, TK_COMP, NULL, TM_ARRAY, a->preDefs.CHAR);
-    return a->types.tail;
-
+    return a->preDefs.STRING;
   case N_TRUE:
     return a->preDefs.BOOL;
   case N_FALSE:
@@ -685,8 +686,9 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
   case N_IDENTIFIER:
     Ident *v = varExists(a, n->data);
     if (v == NULL) {
+      printf("%s\n", n->data->data);
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Thats variable doesn't exist");
+                         "That variable doesn't exist");
     }
 
     return v->type;
@@ -698,11 +700,66 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
     return analyseStructNew(a, c, n);
   case N_BRACKETED_VALUE:
     return analyseBracketedValue(a, c, n);
+  case N_ACCESS:
+    return analyseAccess(a, c, n);
 
   default:
+    printf("%s\n", nodeCodeString(n->kind));
     throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME, "Invalid value?");
     return NULL;
   }
+}
+
+Type *analyseAccess(Analyser *a, Context c, Node *n) {
+  char FUNC_NAME[] = "analyseAccess";
+
+  String *propName;
+
+  Node *parentNode = n;
+  Ident *parent = varExists(a, n->children.p[0].data);
+  Type *parentType = parent->type;
+
+  while (parentNode->children.p[2].kind == N_ACCESS) {
+    propName = parentNode->children.p[2].children.p[0].data;
+
+    Ident *child = NULL;
+
+    // Search through the properties of the parent for a match
+    for (int i = 0; i < parentType->propsLen; ++i) {
+      if (strEql(parentType->props[i].name, propName)) {
+        child = parentType->props + i;
+      }
+    }
+
+    if (child == NULL) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Tried to acces a non-existant property");
+    }
+
+    // Next recursion
+    parentNode = parentNode->children.p + 2;
+    parentType = child->type;
+  }
+
+  if (parentNode->children.p[2].kind != N_IDENTIFIER) {
+    throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                       "Expected an access chain to end in an identifier");
+  }
+
+  propName = parentNode->children.p[2].data;
+
+  // Search through the properties of the parent for a match
+  for (int i = 0; i < parentType->propsLen; ++i) {
+    if (strEql(parentType->props[i].name, propName)) {
+      return parentType->props[i].type;
+    }
+  }
+
+  // We didn't find a matching prop
+  throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                     "Tried to acces a non-existant property");
+
+  return NULL;
 }
 
 Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
@@ -715,7 +772,7 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
   if (n->children.p[1].kind == N_UNARY_VALUE) {
     type = analyseUnaryValue(a, c, n->children.p + 1);
   } else {
-    type = analyseValue(a, c, n->children.p + 1);
+    type = analyseExpression(a, c, n->children.p + 1);
   }
 
   switch (n->children.p[0].kind) {
@@ -865,7 +922,7 @@ Type *analyseStructNew(Analyser *a, Context c, Node *n) {
                        "Too many args for struct");
   }
 
-  return NULL;
+  return stt;
 }
 
 Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
@@ -962,6 +1019,8 @@ Type *analyseExpression(Analyser *a, Context c, Node *n) {
     } else if (typeEqual(c.expType, exprType)) { // We got the right type
       return exprType;
     } else { // bad type
+      printf("\nExpected type %s\n", typeString(c.expType));
+      printf("Recieved type %s\n\n", typeString(exprType));
       throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
                          "Expression did not have the correct type");
     }
