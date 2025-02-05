@@ -190,8 +190,56 @@ void emitLoneCall(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
 }
 
-void emitVarDec(Emitter *e, CharList *out, Node n) {
+void emitCrement(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
+}
+
+void emitAccess(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitAssignment(Emitter *e, CharList *out, Node n) {
+  if (n.kind == N_CREMENT) {
+    emitCrement(e, out, n);
+    return;
+  }
+
+  if (n.children.p[0].kind == N_ACCESS) {
+    emitAccess(e, out, n.children.p[0]);
+  } else {
+    emitIdentifier(e, out, n.children.p[0]);
+  }
+
+  if (n.children.p[1].kind == N_INDEX) {
+    emitIndex(e, out, n.children.p[1]);
+  }
+
+  PUSH_CHAR(' ')
+  PUSH_CHAR('=')
+  PUSH_CHAR(' ')
+
+  emitExpression(e, out, n.children.p[n.children.len - 1]);
+}
+
+void emitNewAssignment(Emitter *e, CharList *out, Node n) {
+  emitComplexType(e, out, n.children.p[1]);
+  PUSH_CHAR(' ')
+  emitIdentifier(e, out, n.children.p[2]);
+  PUSH_CHAR(' ')
+  PUSH_CHAR('=')
+  PUSH_CHAR(' ')
+  emitExpression(e, out, n.children.p[4]);
+}
+
+void emitVarDec(Emitter *e, CharList *out, Node n) {
+  if (n.children.p[0].kind == N_ASSIGNMENT) {
+    emitAssignment(e, out, n.children.p[0]);
+  } else {
+    emitNewAssignment(e, out, n.children.p[0]);
+  }
+
+  PUSH_CHAR(';');
+  PUSH_CHAR('\n');
 }
 
 void emitIfBlock(Emitter *e, CharList *out, Node n) {
