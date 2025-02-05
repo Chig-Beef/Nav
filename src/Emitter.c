@@ -186,8 +186,28 @@ void emitStructs(Emitter *e, CharList *out) {
   }
 }
 
+void emitFuncCall(Emitter *e, CharList *out, Node n) {
+  emitIdentifier(e, out, n.children.p[1]);
+  PUSH_CHAR('(')
+
+  for (int i = 3; i < n.children.len - 1; ++i) {
+    Node node = n.children.p[i];
+
+    if (node.kind == N_EXPRESSION) {
+      emitExpression(e, out, node);
+    } else { // Sep
+      PUSH_CHAR(',')
+      PUSH_CHAR('\n')
+    }
+  }
+
+  PUSH_CHAR(')')
+}
+
 void emitLoneCall(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  emitFuncCall(e, out, n.children.p[0]);
+  PUSH_CHAR(';')
+  PUSH_CHAR('\n')
 }
 
 void emitAccess(Emitter *e, CharList *out, Node n) {
