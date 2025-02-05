@@ -97,7 +97,26 @@ void emitIdentifier(Emitter *e, CharList *out, Node n) {
   }
 }
 
-void emitComplexType(Emitter *e, CharList *out, Node n) {}
+void emitIndex(Emitter *e, CharList *out, Node n) {
+  PUSH_CHAR('[')
+  // TODO: Emit expression
+  PUSH_CHAR(']')
+}
+
+void emitComplexType(Emitter *e, CharList *out, Node n) {
+  if (n.kind == N_IDENTIFIER) {
+    emitIdentifier(e, out, n);
+    return;
+  }
+
+  if (n.children.p[0].kind == N_INDEX) {
+    emitComplexType(e, out, n.children.p[1]);
+    emitIndex(e, out, n);
+  } else { // Pointer
+    emitComplexType(e, out, n.children.p[1]);
+    PUSH_CHAR('*')
+  }
+}
 
 void emitStruct(Emitter *e, CharList *out, Node n) {
   char *structName = n.children.p[1].data->data;
