@@ -17,6 +17,8 @@ void emitterInit(Emitter *e, Node enums, Node structs, Node funs) {
   e->inFuns = funs;
 }
 
+void emitBlock(Emitter *e, CharList *out, Node n);
+
 void emitEnum(Emitter *e, CharList *out, Node n) {
   char *enumName = n.children.p[1].data->data;
 
@@ -283,7 +285,67 @@ void emitVarDec(Emitter *e, CharList *out, Node n) {
 }
 
 void emitIfBlock(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('i')
+  PUSH_CHAR('f')
+  PUSH_CHAR(' ')
+  PUSH_CHAR('(')
+
+  emitExpression(e, out, n.children.p[2]);
+
+  PUSH_CHAR(')')
+  PUSH_CHAR(' ')
+
+  emitBlock(e, out, n.children.p[4]);
+
+  int i = 5;
+
+  if (i == n.children.len) {
+    PUSH_CHAR('\n')
+    PUSH_CHAR('\n')
+    return;
+  }
+
+  while (n.children.p[i].kind == N_ELIF) {
+    PUSH_CHAR(' ')
+    PUSH_CHAR('e')
+    PUSH_CHAR('l')
+    PUSH_CHAR('s')
+    PUSH_CHAR('e')
+    PUSH_CHAR(' ')
+    PUSH_CHAR('i')
+    PUSH_CHAR('f')
+    PUSH_CHAR(' ')
+    PUSH_CHAR('(')
+
+    emitExpression(e, out, n.children.p[i + 2]);
+
+    PUSH_CHAR(')')
+    PUSH_CHAR(' ')
+
+    emitBlock(e, out, n.children.p[i + 4]);
+
+    i += 5;
+
+    if (i == n.children.len) {
+      PUSH_CHAR('\n')
+      PUSH_CHAR('\n')
+      return;
+    }
+  }
+
+  if (n.children.p[i].kind == N_ELSE) {
+    PUSH_CHAR(' ')
+    PUSH_CHAR('e')
+    PUSH_CHAR('l')
+    PUSH_CHAR('s')
+    PUSH_CHAR('e')
+    PUSH_CHAR(' ')
+
+    emitBlock(e, out, n.children.p[i + 1]);
+  }
+
+  PUSH_CHAR('\n')
+  PUSH_CHAR('\n')
 }
 
 void emitForLoop(Emitter *e, CharList *out, Node n) {
