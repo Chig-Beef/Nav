@@ -72,8 +72,6 @@ void emitEnum(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR(' ')
 
   // typedef enum Test { } Test;
-
-  // typedef enum Test
   i = 0;
   while (enumName[i]) {
     PUSH_CHAR(enumName[i])
@@ -90,8 +88,79 @@ void emitEnums(Emitter *e, CharList *out) {
   }
 }
 
+void emitIdentifier(Emitter *e, CharList *out, Node n) {
+  char *name = n.data->data;
+  int i = 0;
+  while (name[i]) {
+    PUSH_CHAR(name[i])
+    ++i;
+  }
+}
+
+void emitComplexType(Emitter *e, CharList *out, Node n) {}
+
+void emitStruct(Emitter *e, CharList *out, Node n) {
+  char *structName = n.children.p[1].data->data;
+
+  // typedef
+  PUSH_CHAR('t')
+  PUSH_CHAR('y')
+  PUSH_CHAR('p')
+  PUSH_CHAR('e')
+  PUSH_CHAR('d')
+  PUSH_CHAR('e')
+  PUSH_CHAR('f')
+  PUSH_CHAR(' ')
+
+  // typedef struct
+  PUSH_CHAR('s')
+  PUSH_CHAR('t')
+  PUSH_CHAR('r')
+  PUSH_CHAR('u')
+  PUSH_CHAR('c')
+  PUSH_CHAR('t')
+  PUSH_CHAR(' ')
+
+  // typedef struct Point
+  int i = 0;
+  while (structName[i]) {
+    PUSH_CHAR(structName[i])
+    ++i;
+  }
+  PUSH_CHAR(' ')
+
+  // typedef struct Point {
+  PUSH_CHAR('{')
+  PUSH_CHAR('\n')
+  PUSH_CHAR('\t')
+
+  // typedef struct Point { int x; int y;
+  for (int i = 3; i < n.children.len - 1; ++i) {
+    Node node = n.children.p[i];
+    if (node.kind == N_IDENTIFIER) {
+      PUSH_CHAR(' ')
+      emitIdentifier(e, out, node);
+      PUSH_CHAR(' ')
+    } else if (node.kind == N_COMPLEX_TYPE) {
+      emitComplexType(e, out, node);
+    } else if (node.kind == N_SEP) {
+      PUSH_CHAR(';')
+      PUSH_CHAR('\n')
+      PUSH_CHAR('\t')
+    }
+  }
+
+  // typedef struct Point { int x; int y; }
+  PUSH_CHAR('\n')
+  PUSH_CHAR('}')
+  PUSH_CHAR('\n')
+  PUSH_CHAR('\n')
+}
+
 void emitStructs(Emitter *e, CharList *out) {
-  // char *enumName = n.children.p[1].data->data;
+  for (int i = 0; i < e->inStructs.children.len; i++) {
+    emitStruct(e, out, e->inStructs.children.p[i]);
+  }
 }
 
 void emitFuns(Emitter *e, CharList *out) {}
