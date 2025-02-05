@@ -175,9 +175,18 @@ void emitStruct(Emitter *e, CharList *out, Node n) {
     }
   }
 
-  // typedef struct Point { int x; int y; }
+  // typedef struct Point { int x; int y; } Point;
   PUSH_CHAR('\n')
   PUSH_CHAR('}')
+
+  PUSH_CHAR(' ')
+  i = 0;
+  while (structName[i]) {
+    PUSH_CHAR(structName[i])
+    ++i;
+  }
+  PUSH_CHAR(';')
+
   PUSH_CHAR('\n')
   PUSH_CHAR('\n')
 }
@@ -349,7 +358,34 @@ void emitIfBlock(Emitter *e, CharList *out, Node n) {
 }
 
 void emitForLoop(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+
+  PUSH_CHAR('f')
+  PUSH_CHAR('o')
+  PUSH_CHAR('r')
+  PUSH_CHAR(' ')
+  PUSH_CHAR('(')
+  PUSH_CHAR(' ')
+
+  for (int i = 1; i < n.children.len - 1; ++i) {
+    Node node = n.children.p[i];
+
+    if (node.kind == N_ASSIGNMENT) {
+      emitAssignment(e, out, node);
+    } else if (node.kind == N_NEW_ASSIGNMENT) {
+      emitNewAssignment(e, out, node);
+    } else if (node.kind == N_EXPRESSION) {
+      emitExpression(e, out, node);
+    } else if (node.kind == N_SEMICOLON) {
+      PUSH_CHAR(';')
+      PUSH_CHAR(' ')
+    }
+  }
+
+  PUSH_CHAR(')')
+  PUSH_CHAR(' ')
+  emitBlock(e, out, n.children.p[n.children.len - 1]);
+  PUSH_CHAR('\n')
+  PUSH_CHAR('\n')
 }
 
 void emitRetState(Emitter *e, CharList *out, Node n) {
@@ -402,6 +438,7 @@ void emitBlock(Emitter *e, CharList *out, Node n) {
       break;
     default:
       panic("Invalid statement in block");
+      break;
     }
   }
 
