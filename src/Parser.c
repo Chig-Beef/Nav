@@ -661,7 +661,7 @@ Node parseCrement(Parser *p) {
   }
   nextToken(p);
 
-  if (peekToken(p).kind == T_ACCESSOR) {
+  if (peekToken(p).kind == T_ACCESSOR || peekToken(p).kind == T_P_ACCESSOR) {
     APPEND_STRUCTURE(parseAccess, "parseCrement")
   } else {
     CHECK_AND_APPEND(T_IDENTIFIER, "identifier", N_IDENTIFIER,
@@ -685,7 +685,7 @@ Node parseAssignment(Parser *p) {
     return out;
   }
 
-  if (peekToken(p).kind == T_ACCESSOR) {
+  if (peekToken(p).kind == T_ACCESSOR || peekToken(p).kind == T_P_ACCESSOR) {
     APPEND_STRUCTURE(parseAccess, "parseAssignment")
     nextToken(p);
   } else {
@@ -826,7 +826,7 @@ Node parseValue(Parser *p) {
   case T_STRING:
     return newNode(N_STRING, p->tok.data, p->tok.line, p->sourceName);
   case T_IDENTIFIER:
-    if (peekToken(p).kind == T_ACCESSOR) {
+    if (peekToken(p).kind == T_ACCESSOR || peekToken(p).kind == T_P_ACCESSOR) {
       return parseAccess(p);
     }
     return newNode(N_IDENTIFIER, p->tok.data, p->tok.line, p->sourceName);
@@ -855,9 +855,26 @@ Node parseAccess(Parser *p) {
 
   CHECK_APPEND_NEXT(T_IDENTIFIER, "identifier", N_IDENTIFIER, p->tok.data,
                     "parseAccess")
-  CHECK_APPEND_NEXT(T_ACCESSOR, "accessor", N_ACCESSOR, NULL, "parseAccess")
 
-  if (peekToken(p).kind == T_ACCESSOR) {
+  if (p->tok.kind == T_ACCESSOR) {
+    if (NodeListAppend(&out.children,
+                       newNode(N_ACCESSOR, NULL, p->tok.line, p->sourceName))) {
+      panic("Couldn't append to Node list in "
+            "parseAccess");
+    }
+  } else if (p->tok.kind == T_P_ACCESSOR) {
+    if (NodeListAppend(&out.children, newNode(N_P_ACCESSOR, NULL, p->tok.line,
+                                              p->sourceName))) {
+      panic("Couldn't append to Node list in "
+            "parseAccess");
+    }
+  } else {
+    throwParserError(p, "accessor or p_accessor");
+  }
+
+  nextToken(p);
+
+  if (peekToken(p).kind == T_ACCESSOR || peekToken(p).kind == T_P_ACCESSOR) {
     APPEND_STRUCTURE(parseAccess, "parseAccess")
     return out;
   }

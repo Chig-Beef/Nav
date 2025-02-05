@@ -13,40 +13,40 @@ struct Stack {
 fun push(^Stack s, int value) {
 	let ^Node n = `new Node(value, nil);
 
-	++s.length;
+	++s->length;
 
-	if (s.length == 1) {
-		s.tail = n;
+	if (s->length == 1) {
+		s->tail = n;
 		return;
 	}
 
-	n.prev = s.tail;
-	s.tail = n;
+	n->prev = s->tail;
+	s->tail = n;
 }
 
 fun pop(^Stack s) int {
-	if (s.length == 0) {
+	if (s->length == 0) {
 		return nil;
 	}
 
-	--s.length;
+	--s->length;
 
-	if (s.length == 0) {
-		let ^Node tail = s.tail;
-		s.tail = nil;
-		return tail.value;
+	if (s->length == 0) {
+		let ^Node tail = s->tail;
+		s->tail = nil;
+		return tail->value;
 	}
 
-	let ^Node tail = s.tail;
-	s.tail = s.tail.prev;
-	return tail.value;
+	let ^Node tail = s->tail;
+	s->tail = s->tail->prev;
+	return tail->value;
 }
 
 fun peek(^Stack s) int {
 	// Length == 0
-	if (s.tail == nil) {
+	if (s->tail == nil) {
 		return nil;
 	}
 
-	return s.tail.value;
+	return s->tail->value;
 }

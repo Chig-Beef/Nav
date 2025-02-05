@@ -30,6 +30,7 @@ typedef enum TokenCode {
 
   // Various symbols
   T_ACCESSOR,
+  T_P_ACCESSOR,
   T_ASSIGN,
   T_COLON,
   T_SEMICOLON,

@@ -746,6 +746,13 @@ Type *analyseAccess(Analyser *a, Context c, Node *n) {
   Node *parentNode = n;
   Ident *parent = varExists(a, n->children.p[0].data);
   Type *parentType = parent->type;
+  if (n->children.p[1].kind == N_P_ACCESSOR) {
+    if (parentType->mod != TM_POINTER) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Attempted to use pointer access on non-pointer type");
+    }
+    parentType = parentType->parent;
+  }
 
   while (parentNode->children.p[2].kind == N_ACCESS) {
     propName = parentNode->children.p[2].children.p[0].data;
@@ -767,6 +774,14 @@ Type *analyseAccess(Analyser *a, Context c, Node *n) {
     // Next recursion
     parentNode = parentNode->children.p + 2;
     parentType = child->type;
+
+  if (parentNode->children.p[1].kind == N_P_ACCESSOR) {
+    if (parentType->mod != TM_POINTER) {
+      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
+                         "Attempted to use pointer access on non-pointer type");
+    }
+    parentType = parentType->parent;
+  }
   }
 
   if (parentNode->children.p[2].kind != N_IDENTIFIER) {

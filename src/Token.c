@@ -57,6 +57,8 @@ char *tokenCodeString(TokenCode tc) {
     // Various symbols
   case T_ACCESSOR:
     return "T_ACCESSOR";
+  case T_P_ACCESSOR:
+    return "T_P_ACCESSOR";
   case T_ASSIGN:
     return "T_ASSIGN";
   case T_COLON:

@@ -168,6 +168,9 @@ void lex(Lexer *l) {
       if (l->peekChar == '-') {
         nextChar(l);
         token = NEW_TOKEN(T_DEC);
+      } else if (l->peekChar == '>') {
+        nextChar(l);
+        token = NEW_TOKEN(T_P_ACCESSOR);
       } else {
         token = NEW_TOKEN(T_SUB);
       }

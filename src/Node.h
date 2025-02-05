@@ -65,6 +65,7 @@ typedef enum NodeCode {
 
   // Various symbols
   N_ACCESSOR,
+  N_P_ACCESSOR,
   N_ASSIGN,
   N_COLON,
   N_SEMICOLON,
