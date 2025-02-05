@@ -186,8 +186,76 @@ void emitStructs(Emitter *e, CharList *out) {
   }
 }
 
-void emitBlock(Emitter *e, CharList *out, Node n) {
+void emitLoneCall(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
+}
+
+void emitVarDec(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitIfBlock(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitForLoop(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitRetState(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitBreakState(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitContinueState(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitSwitchState(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitBlock(Emitter *e, CharList *out, Node n) {
+  PUSH_CHAR('{')
+  PUSH_CHAR('\n')
+
+  for (int i = 1; i < n.children.len - 1; ++i) {
+    Node node = n.children.p[i];
+
+    switch (node.kind) {
+    case N_LONE_CALL:
+      emitLoneCall(e, out, node);
+      break;
+    case N_VAR_DEC:
+      emitVarDec(e, out, node);
+      break;
+    case N_IF_BLOCK:
+      emitIfBlock(e, out, node);
+      break;
+    case N_FOR_LOOP:
+      emitForLoop(e, out, node);
+      break;
+    case N_RET_STATE:
+      emitRetState(e, out, node);
+      break;
+    case N_BREAK_STATE:
+      emitBreakState(e, out, node);
+      break;
+    case N_CONTINUE_STATE:
+      emitContinueState(e, out, node);
+      break;
+    case N_SWITCH_STATE:
+      emitSwitchState(e, out, node);
+      break;
+    default:
+      panic("Invalid statement in block");
+    }
+  }
+
+  PUSH_CHAR('}')
 }
 
 void emitFun(Emitter *e, CharList *out, Node n) {
