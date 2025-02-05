@@ -389,15 +389,43 @@ void emitForLoop(Emitter *e, CharList *out, Node n) {
 }
 
 void emitRetState(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('r')
+  PUSH_CHAR('e')
+  PUSH_CHAR('t')
+  PUSH_CHAR('u')
+  PUSH_CHAR('r')
+  PUSH_CHAR('n')
+  PUSH_CHAR(' ')
+
+  if (n.children.p[1].kind == N_EXPRESSION) {
+    emitExpression(e, out, n.children.p[1]);
+  }
+
+  PUSH_CHAR(';')
+  PUSH_CHAR('\n')
 }
 
 void emitBreakState(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('b')
+  PUSH_CHAR('r')
+  PUSH_CHAR('e')
+  PUSH_CHAR('a')
+  PUSH_CHAR('k')
+  PUSH_CHAR(';')
+  PUSH_CHAR('\n')
 }
 
 void emitContinueState(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('c')
+  PUSH_CHAR('o')
+  PUSH_CHAR('n')
+  PUSH_CHAR('t')
+  PUSH_CHAR('i')
+  PUSH_CHAR('n')
+  PUSH_CHAR('u')
+  PUSH_CHAR('e')
+  PUSH_CHAR(';')
+  PUSH_CHAR('\n')
 }
 
 void emitSwitchState(Emitter *e, CharList *out, Node n) {
