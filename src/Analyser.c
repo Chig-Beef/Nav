@@ -292,6 +292,21 @@ void analyseFuncs(Analyser *a) {
 
     // printf("Got function params\n");
 
+    // Add params to the stack
+    for (int i = 0; i < funcDec->paramsLen; ++i) {
+      ++a->vars.len;
+
+      if (a->vars.len == 1) {
+        a->vars.tail = funcDec->params + i;
+        return;
+      }
+
+      funcDec->params[i].next = a->vars.tail;
+      a->vars.tail = funcDec->params + i;
+    }
+
+    printf("Added params to stack\n");
+
     int stackBase = a->vars.len;
 
     analyseBlock(a, (Context){false, false, NULL, funcDec->ret},
@@ -300,6 +315,12 @@ void analyseFuncs(Analyser *a) {
     // Delete variables used in the function
     while (a->vars.len > stackBase) {
       identStackPop(&a->vars);
+    }
+
+    // Remove all params
+    for (int i = 0; i < funcDec->paramsLen; ++i) {
+      --a->vars.len;
+      a->vars.tail = a->vars.tail->next;
     }
   }
 }
@@ -454,13 +475,20 @@ void analyseCrement(Analyser *a, Context c, Node *n) {
 
   // printf("Crement %s\n", nodeCodeString(n->kind));
 
-  Ident *var = varExists(a, n->children.p[1].data);
-  if (var == NULL) {
-    throwAnalyserError(a, n->sourceName, n->children.p[1].line, FUNC_NAME,
-                       "Variable doesn't exist");
+  Type *type = NULL;
+
+  if (n->children.p[1].kind == N_IDENTIFIER) {
+    Ident *var = varExists(a, n->children.p[1].data);
+    if (var == NULL) {
+      printf("\nVariable name: %s\n\n", n->children.p[1].data->data);
+      throwAnalyserError(a, n->sourceName, n->children.p[1].line, FUNC_NAME,
+                         "Variable doesn't exist");
+    }
+    type = var->type;
+  } else { // Access
+    type = analyseAccess(a, c, n->children.p + 1);
   }
 
-  Type *type = var->type;
   if (type != a->preDefs.INT) {
     throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                        "Can only use -- and ++ operators on integers");
