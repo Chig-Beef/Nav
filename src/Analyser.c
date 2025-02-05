@@ -774,15 +774,35 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
 
   switch (n->children.p[0].kind) {
   case N_DEREF:
-    // TODO: Implement
-    throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
-                       "Not implemented");
+    Type *curType = a->types.tail;
+
+    bool found = false;
+
+    // Try to find this exact type already on the stack
+    while (curType != NULL) {
+      if (curType->parent == c.expType && curType->mod == TM_POINTER) {
+        c.expType = curType;
+        found = true;
+        break;
+      }
+      curType = curType->next;
+    }
+
+    if (!found) {
+      // Couldn't find it? Make it
+      typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, c.expType);
+      c.expType = a->types.tail;
+    }
+
+    break;
+
   case N_REF:
     if (c.expType->mod != TM_POINTER) {
       throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
                          "Expected type wasn't a pointer, but got one");
     }
     c.expType = c.expType->parent;
+    break;
   default:
     break;
   }
