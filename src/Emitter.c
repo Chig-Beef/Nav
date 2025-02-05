@@ -190,17 +190,37 @@ void emitLoneCall(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
 }
 
-void emitCrement(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
-}
-
 void emitAccess(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
 }
 
+void emitCrement(Emitter *e, CharList *out, Node n) {
+  Node node = n.children.p[0];
+
+  if (node.kind == N_INC) {
+    PUSH_CHAR('+')
+    PUSH_CHAR('+')
+  } else {
+    PUSH_CHAR('-')
+    PUSH_CHAR('-')
+  }
+
+  node = n.children.p[1];
+
+  if (node.kind == N_ACCESS) {
+    emitAccess(e, out, node);
+  } else {
+    emitIdentifier(e, out, node);
+  }
+
+  if (n.children.len == 3) {
+    emitIndex(e, out, n.children.p[2]);
+  }
+}
+
 void emitAssignment(Emitter *e, CharList *out, Node n) {
-  if (n.kind == N_CREMENT) {
-    emitCrement(e, out, n);
+  if (n.children.p[0].kind == N_CREMENT) {
+    emitCrement(e, out, n.children.p[0]);
     return;
   }
 
