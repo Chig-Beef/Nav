@@ -428,8 +428,135 @@ void emitContinueState(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR('\n')
 }
 
+void emitSwitchState(Emitter *e, CharList *out, Node n);
+
+void emitCaseBlock(Emitter *e, CharList *out, Node n) {
+  PUSH_CHAR('c')
+  PUSH_CHAR('a')
+  PUSH_CHAR('s')
+  PUSH_CHAR('e')
+  PUSH_CHAR(' ')
+
+  emitExpression(e, out, n.children.p[1]);
+
+  PUSH_CHAR(':')
+  PUSH_CHAR('\n')
+
+  for (int i = 3; i < n.children.len; ++i) {
+    Node node = n.children.p[i];
+
+    switch (node.kind) {
+    case N_LONE_CALL:
+      emitLoneCall(e, out, node);
+      break;
+    case N_VAR_DEC:
+      emitVarDec(e, out, node);
+      break;
+    case N_IF_BLOCK:
+      emitIfBlock(e, out, node);
+      break;
+    case N_FOR_LOOP:
+      emitForLoop(e, out, node);
+      break;
+    case N_RET_STATE:
+      emitRetState(e, out, node);
+      break;
+    case N_BREAK_STATE:
+      emitBreakState(e, out, node);
+      break;
+    case N_CONTINUE_STATE:
+      emitContinueState(e, out, node);
+      break;
+    case N_SWITCH_STATE:
+      emitSwitchState(e, out, node);
+      break;
+    default:
+      panic("Invalid statement in case block");
+      break;
+    }
+  }
+
+  PUSH_CHAR('\n')
+}
+
+void emitDefaultBlock(Emitter *e, CharList *out, Node n) {
+  PUSH_CHAR('d')
+  PUSH_CHAR('e')
+  PUSH_CHAR('f')
+  PUSH_CHAR('a')
+  PUSH_CHAR('u')
+  PUSH_CHAR('l')
+  PUSH_CHAR('t')
+  PUSH_CHAR(' ')
+  PUSH_CHAR(':')
+  PUSH_CHAR('\n')
+
+  for (int i = 2; i < n.children.len; ++i) {
+    Node node = n.children.p[i];
+
+    switch (node.kind) {
+    case N_LONE_CALL:
+      emitLoneCall(e, out, node);
+      break;
+    case N_VAR_DEC:
+      emitVarDec(e, out, node);
+      break;
+    case N_IF_BLOCK:
+      emitIfBlock(e, out, node);
+      break;
+    case N_FOR_LOOP:
+      emitForLoop(e, out, node);
+      break;
+    case N_RET_STATE:
+      emitRetState(e, out, node);
+      break;
+    case N_BREAK_STATE:
+      emitBreakState(e, out, node);
+      break;
+    case N_CONTINUE_STATE:
+      emitContinueState(e, out, node);
+      break;
+    case N_SWITCH_STATE:
+      emitSwitchState(e, out, node);
+      break;
+    default:
+      panic("Invalid statement in default block");
+      break;
+    }
+  }
+
+  PUSH_CHAR('\n')
+}
+
 void emitSwitchState(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('s')
+  PUSH_CHAR('w')
+  PUSH_CHAR('i')
+  PUSH_CHAR('t')
+  PUSH_CHAR('c')
+  PUSH_CHAR('h')
+  PUSH_CHAR(' ')
+  PUSH_CHAR('(')
+
+  emitExpression(e, out, n.children.p[2]);
+
+  PUSH_CHAR(')')
+
+  PUSH_CHAR('{')
+  PUSH_CHAR('\n')
+
+  for (int i = 5; i < n.children.len - 1; ++i) {
+    Node node = n.children.p[i];
+    if (node.kind == N_CASE_BLOCK) {
+      emitCaseBlock(e, out, node);
+    } else if (node.kind == N_DEFAULT_BLOCK) {
+      emitDefaultBlock(e, out, node);
+    }
+  }
+
+  PUSH_CHAR('}')
+  PUSH_CHAR('\n')
+  PUSH_CHAR('\n')
 }
 
 void emitBlock(Emitter *e, CharList *out, Node n) {
