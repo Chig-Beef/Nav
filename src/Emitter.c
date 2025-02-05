@@ -97,9 +97,13 @@ void emitIdentifier(Emitter *e, CharList *out, Node n) {
   }
 }
 
+void emitExpression(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
 void emitIndex(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR('[')
-  // TODO: Emit expression
+  emitExpression(e, out, n.children.p[1]);
   PUSH_CHAR(']')
 }
 
@@ -182,7 +186,60 @@ void emitStructs(Emitter *e, CharList *out) {
   }
 }
 
-void emitFuns(Emitter *e, CharList *out) {}
+void emitBlock(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitFun(Emitter *e, CharList *out, Node n) {
+  int sub = 1;
+  // Return type
+  Node returnNode = n.children.p[n.children.len - 2];
+  if (returnNode.kind == N_IDENTIFIER || returnNode.kind == N_COMPLEX_TYPE) {
+    emitComplexType(e, out, n.children.p[n.children.len - 2]);
+    sub++;
+  } else {
+    PUSH_CHAR('v')
+    PUSH_CHAR('o')
+    PUSH_CHAR('i')
+    PUSH_CHAR('d')
+  }
+
+  // Name
+  PUSH_CHAR(' ')
+  emitIdentifier(e, out, n.children.p[1]);
+
+  // l brace
+  PUSH_CHAR('(')
+
+  // Params
+  for (int i = 3; i < n.children.len - sub; ++i) {
+    Node node = n.children.p[i];
+
+    if (node.kind == N_COMPLEX_TYPE) {
+      PUSH_CHAR(' ')
+      emitComplexType(e, out, node);
+    } else if (node.kind == N_IDENTIFIER) {
+      PUSH_CHAR(' ')
+      emitIdentifier(e, out, node);
+    } else if (node.kind == N_SEP) {
+      PUSH_CHAR(',')
+    }
+  }
+
+  // r brace
+  PUSH_CHAR(')')
+
+  // block
+  emitBlock(e, out, n.children.p[n.children.len - 1]);
+  PUSH_CHAR('\n')
+  PUSH_CHAR('\n')
+}
+
+void emitFuns(Emitter *e, CharList *out) {
+  for (int i = 0; i < e->inFuns.children.len; i++) {
+    emitFun(e, out, e->inFuns.children.p[i]);
+  }
+}
 
 char *emit(Emitter *e) {
   CharList out;
