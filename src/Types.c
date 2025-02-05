@@ -33,7 +33,7 @@ char *typeString(Type *t) {
       break;
 
     case TM_NONE:
-      String *name = t->name;
+      String *name = cur->name;
 
       // Null case
       if (name == NULL) {

@@ -1,6 +1,6 @@
 fun main() {
 	let int a = 0;
-	let [5]char b = "hello";
+	let ^char b = "hello";
 	let bool c = true;
 	let float d = 3.14;
 	let char e = 'e';

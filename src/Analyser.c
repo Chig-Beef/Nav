@@ -64,7 +64,7 @@ void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   a->preDefs.VOIDPTR = a->types.tail;
 
   typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, a->preDefs.CHAR);
-  a->preDefs.VOIDPTR = a->types.tail;
+  a->preDefs.STRING = a->types.tail;
 
   funStackPush(&a->funs, strNew("print", false));
   a->preDefs.PRINT = a->funs.tail;
@@ -769,6 +769,24 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
 
   Type *type;
 
+  // Get the new expected type for the value inside
+  Type *recType = c.expType;
+
+  switch (n->children.p[0].kind) {
+  case N_DEREF:
+    // TODO: Implement
+    throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
+                       "Not implemented");
+  case N_REF:
+    if (c.expType->mod != TM_POINTER) {
+      throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
+                         "Expected type wasn't a pointer, but got one");
+    }
+    c.expType = c.expType->parent;
+  default:
+    break;
+  }
+
   if (n->children.p[1].kind == N_UNARY_VALUE) {
     type = analyseUnaryValue(a, c, n->children.p + 1);
   } else {
@@ -818,6 +836,7 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
 
     // Couldn't find it? Make it
     typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, type);
+
     return a->types.tail;
 
   case N_ADD:
@@ -1356,6 +1375,7 @@ Type *analyseComplexType(Analyser *a, Context c, Node *n) {
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Couldn't find type");
     }
+
     return t;
   }
 
@@ -1376,7 +1396,7 @@ Type *analyseComplexType(Analyser *a, Context c, Node *n) {
 
   // Try to find this exact type already on the stack
   while (curType != NULL) {
-    if (curType->parent == t && curType->mod == mod) {
+    if ((curType->parent == t) && (curType->mod == mod)) {
       finalType = curType;
       break;
     }

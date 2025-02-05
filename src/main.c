@@ -98,9 +98,9 @@ int main(int argc, char *argv[]) {
     parserInit(&parsers[i - 1], argv[i], lexers[i - 1].out);
     parse(&parsers[i - 1]);
 
-    // char *out = nodeString(&parsers[i - 1].out);
-    // printf("%s\n", out);
-    // free(out);
+    char *out = nodeString(&parsers[i - 1].out);
+    printf("%s\n", out);
+    free(out);
   }
 
   // Destroy the tokens

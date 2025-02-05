@@ -529,6 +529,80 @@ Node parseLoneCall(Parser *p) {
   return out;
 }
 
+typedef enum Precedence {
+  P_OROR,
+  P_ANDAND,
+  P_OR,
+  P_XOR,
+  P_AND,
+  P_COMP, // EQ, NEQ
+  P_REL,  // GT, GTEQ, LT, LTEQ
+  P_SHIFT,
+  P_ADD_SUB,
+  P_MUL_DIV, // Also MOD
+} Precedence;
+
+#define CLEAN_UP                                                               \
+  if (NodeListRemoveAt(&n.children, i)) {                                      \
+    panic("Couldn't remove from list in precedenceExpression");                \
+  }                                                                            \
+  if (NodeListRemoveAt(&n.children, i)) {                                      \
+    panic("Couldn't remove from list in precedenceExpression");                \
+  }
+
+#define UPDATE_LEN                                                             \
+  exprLen -= 2;                                                                \
+  i -= 2;
+
+#define PREC_APPEND(node)                                                      \
+  if (NodeListAppend(&expr.children, (node))) {                                \
+    panic("Couldn't append to list in precedenceExpression");                  \
+  }
+
+#define CREATE_INNER_EXPR                                                      \
+  Node expr =                                                                  \
+      newNode(N_BRACKETED_VALUE, NULL, n.children.p[i].line, n.sourceName);    \
+  PREC_APPEND(lParen)                                                          \
+  PREC_APPEND(n.children.p[i - 1])                                             \
+  PREC_APPEND(n.children.p[i])                                                 \
+  PREC_APPEND(n.children.p[i + 1])                                             \
+  PREC_APPEND(rParen)                                                          \
+  CLEAN_UP                                                                     \
+  n.children.p[i - 1] = expr;                                                  \
+  UPDATE_LEN
+
+#define PREC_OP(operator_expr)                                                 \
+  for (int i = 1; i < n.children.len - 1; i += 2) {                            \
+    NodeCode kind = n.children.p[i].kind;                                      \
+    if ((operator_expr)) {                                                     \
+      CREATE_INNER_EXPR                                                        \
+    }                                                                          \
+  }
+
+Node precedenceExpression(Node n) {
+  int exprLen = n.children.len;
+
+  // Not enough in this expression to have complicated precedence
+  if (exprLen <= 3) {
+    return n;
+  }
+
+  Node lParen = (Node){N_L_PAREN, ZERO_LIST, NULL, n.line, n.sourceName};
+  Node rParen = (Node){N_R_PAREN, ZERO_LIST, NULL, n.line, n.sourceName};
+
+  PREC_OP(kind == N_MUL || kind == N_DIV || kind == N_MOD)
+  PREC_OP(kind == N_ADD || kind == N_SUB)
+  PREC_OP(kind == N_L_SHIFT || kind == N_R_SHIFT)
+  PREC_OP(kind == N_LT || kind == N_LTEQ || kind == N_GT || kind == N_GTEQ)
+  PREC_OP(kind == N_EQ || kind == N_NEQ)
+  PREC_OP(kind == N_AND)
+  PREC_OP(kind == N_XOR)
+  PREC_OP(kind == N_OR)
+  PREC_OP(kind == N_ANDAND)
+
+  return n;
+}
+
 Node parseExpression(Parser *p) {
   Node out = newNode(N_EXPRESSION, strNew("Expression", false), p->tok.line,
                      p->sourceName);
@@ -571,7 +645,7 @@ Node parseExpression(Parser *p) {
 
   prevToken(p);
 
-  return out;
+  return precedenceExpression(out);
 }
 
 Node parseCrement(Parser *p) {
