@@ -1,4 +1,5 @@
 #include "Analyser.h"
+#include "Emitter.h"
 #include "Hoister.h"
 #include "Lexer.h"
 #include "Parser.h"
@@ -144,6 +145,12 @@ int main(int argc, char *argv[]) {
   // Optimize
 
   // Emit to C
+  printf("Emitting\n");
+  Emitter e;
+  emitterInit(&e, a.inEnums, a.inStructs, a.inFuns);
+  printf("Emitter initialised\n");
+  emit(&e);
+  printf("End emitting\n\n");
 
   printf("Finished\n");
 
