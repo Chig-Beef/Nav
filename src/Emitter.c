@@ -169,12 +169,112 @@ void emitOperator(Emitter *e, CharList *out, Node n) {
   }
 }
 
-void emitValue(Emitter *e, CharList *out, Node n) {
+void emitExpression(Emitter *e, CharList *out, Node n);
+
+void emitBracketedValue(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
 }
 
-void emitUnaryValue(Emitter *e, CharList *out, Node n) {
+void emitMakeArray(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
+}
+
+void emitStructNew(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitAccess(Emitter *e, CharList *out, Node n);
+void emitFuncCall(Emitter *e, CharList *out, Node n);
+
+void emitValue(Emitter *e, CharList *out, Node n) {
+  // NOTE: emitIdentifier works on anything that just emits its data, such as
+  // numbers
+
+  switch (n.kind) {
+  case N_INT:
+    emitIdentifier(e, out, n);
+    break;
+  case N_CHAR:
+    emitIdentifier(e, out, n);
+    break;
+  case N_STRING:
+    emitIdentifier(e, out, n);
+    break;
+  case N_BRACKETED_VALUE:
+    emitBracketedValue(e, out, n);
+    break;
+  case N_MAKE_ARRAY:
+    emitMakeArray(e, out, n);
+    break;
+  case N_FUNC_CALL:
+    emitFuncCall(e, out, n);
+    break;
+  case N_STRUCT_NEW:
+    emitStructNew(e, out, n);
+    break;
+  case N_IDENTIFIER:
+    emitIdentifier(e, out, n);
+    break;
+  case N_ACCESS:
+    emitAccess(e, out, n);
+    break;
+  case N_TRUE:
+    PUSH_CHAR('t');
+    PUSH_CHAR('r');
+    PUSH_CHAR('u');
+    PUSH_CHAR('e');
+  case N_FALSE:
+    PUSH_CHAR('f');
+    PUSH_CHAR('a');
+    PUSH_CHAR('l');
+    PUSH_CHAR('s');
+    PUSH_CHAR('e');
+  default:
+    printf("%s\n", nodeCodeString(n.kind));
+    panic("Invalid value");
+  }
+}
+
+void emitUnary(Emitter *e, CharList *out, Node n) {
+  switch (n.kind) {
+  case N_DEREF:
+    PUSH_CHAR('^')
+    break;
+  case N_DEC:
+    PUSH_CHAR('-')
+    PUSH_CHAR('-')
+    break;
+  case N_INC:
+    PUSH_CHAR('+')
+    PUSH_CHAR('+')
+    break;
+  case N_NOT:
+    PUSH_CHAR('!')
+    break;
+  case N_REF:
+    PUSH_CHAR('`')
+    break;
+  case N_ADD:
+    PUSH_CHAR('+')
+    break;
+  case N_SUB:
+    PUSH_CHAR('-')
+    break;
+  default:
+    printf("%s\n", nodeCodeString(n.kind));
+    panic("Invalid operator");
+  }
+}
+
+void emitUnaryValue(Emitter *e, CharList *out, Node n) {
+  emitUnary(e, out, n.children.p[0]);
+
+  Node node = n.children.p[1];
+  if (node.kind == N_EXPRESSION) {
+    emitExpression(e, out, node);
+  } else { // Unary value
+    emitUnaryValue(e, out, node);
+  }
 }
 
 void emitExpression(Emitter *e, CharList *out, Node n) {
