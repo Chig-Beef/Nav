@@ -406,7 +406,10 @@ void analyseRetState(Analyser *a, Context c, Node *n) {
 
   // Now check the return value, and expect a type
   c.expType = c.retType;
-  analyseExpression(a, c, n->children.p + 1);
+
+  if (n->children.p[1].kind == N_EXPRESSION) {
+    analyseExpression(a, c, n->children.p + 1);
+  }
 }
 
 void analyseBreakState(Analyser *a, Context c, Node *n) {
@@ -570,6 +573,7 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
                          "Can't index non-array");
     }
     analyseIndex(a, c, n->children.p + 1);
+    varType = varType->parent;
   }
 
   c.expType = varType;
@@ -621,28 +625,28 @@ void analyseCaseBlock(Analyser *a, Context c, Node *n) {
   for (int i = 3; i < n->children.len; ++i) {
     switch (n->children.p[i].kind) {
     case N_LONE_CALL:
-      analyseLoneCall(a, c, n);
+      analyseLoneCall(a, c, n->children.p + i);
       break;
     case N_VAR_DEC:
-      analyseVarDeclaration(a, c, n);
+      analyseVarDeclaration(a, c, n->children.p + i);
       break;
     case N_IF_BLOCK:
-      analyseIfBlock(a, c, n);
+      analyseIfBlock(a, c, n->children.p + i);
       break;
     case N_FOR_LOOP:
-      analyseForLoop(a, c, n);
+      analyseForLoop(a, c, n->children.p + i);
       break;
     case N_RET_STATE:
-      analyseRetState(a, c, n);
+      analyseRetState(a, c, n->children.p + i);
       break;
     case N_BREAK_STATE:
-      analyseBreakState(a, c, n);
+      analyseBreakState(a, c, n->children.p + i);
       break;
     case N_CONTINUE_STATE:
-      analyseContinueState(a, c, n);
+      analyseContinueState(a, c, n->children.p + i);
       break;
     case N_SWITCH_STATE:
-      analyseSwitchState(a, c, n);
+      analyseSwitchState(a, c, n->children.p + i);
       break;
 
     default:
@@ -662,28 +666,28 @@ void analyseDefaultBlock(Analyser *a, Context c, Node *n) {
   for (int i = 2; i < n->children.len; ++i) {
     switch (n->children.p[i].kind) {
     case N_LONE_CALL:
-      analyseLoneCall(a, c, n);
+      analyseLoneCall(a, c, n->children.p + i);
       break;
     case N_VAR_DEC:
-      analyseVarDeclaration(a, c, n);
+      analyseVarDeclaration(a, c, n->children.p + i);
       break;
     case N_IF_BLOCK:
-      analyseIfBlock(a, c, n);
+      analyseIfBlock(a, c, n->children.p + i);
       break;
     case N_FOR_LOOP:
-      analyseForLoop(a, c, n);
+      analyseForLoop(a, c, n->children.p + i);
       break;
     case N_RET_STATE:
-      analyseRetState(a, c, n);
+      analyseRetState(a, c, n->children.p + i);
       break;
     case N_BREAK_STATE:
-      analyseBreakState(a, c, n);
+      analyseBreakState(a, c, n->children.p + i);
       break;
     case N_CONTINUE_STATE:
-      analyseContinueState(a, c, n);
+      analyseContinueState(a, c, n->children.p + i);
       break;
     case N_SWITCH_STATE:
-      analyseSwitchState(a, c, n);
+      analyseSwitchState(a, c, n->children.p + i);
       break;
 
     default:
@@ -816,11 +820,13 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
   // Get the new expected type for the value inside
   Type *recType = c.expType;
 
+  Type *curType;
+  bool found;
+
   switch (n->children.p[0].kind) {
   case N_DEREF:
-    Type *curType = a->types.tail;
-
-    bool found = false;
+    curType = a->types.tail;
+    found = false;
 
     // Try to find this exact type already on the stack
     while (curType != NULL) {
@@ -835,6 +841,28 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
     if (!found) {
       // Couldn't find it? Make it
       typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, c.expType);
+      c.expType = a->types.tail;
+    }
+
+    break;
+
+  case N_INDEX:
+    curType = a->types.tail;
+    found = false;
+
+    // Try to find this exact type already on the stack
+    while (curType != NULL) {
+      if (curType->parent == c.expType && curType->mod == TM_ARRAY) {
+        c.expType = curType;
+        found = true;
+        break;
+      }
+      curType = curType->next;
+    }
+
+    if (!found) {
+      // Couldn't find it? Make it
+      typeStackPush(&a->types, TK_COMP, NULL, TM_ARRAY, c.expType);
       c.expType = a->types.tail;
     }
 
@@ -858,6 +886,12 @@ Type *analyseUnaryValue(Analyser *a, Context c, Node *n) {
   }
 
   switch (n->children.p[0].kind) {
+  case N_INDEX:
+    if (type->mod != TM_ARRAY) {
+      throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
+                         "Can only index arrays");
+    }
+    return type->parent;
   case N_DEREF:
     if (type->mod != TM_POINTER) {
       throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
@@ -929,8 +963,14 @@ Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
 
   Fun *fun = funExists(a, n->children.p[1].data);
   if (fun == NULL) {
+    printf("Function name %s\n", n->children.p[1].data->data);
     throwAnalyserError(a, n->sourceName, n->children.p[1].line, FUNC_NAME,
                        "Function doesn't exist");
+  }
+
+  // Print has weird params
+  if (fun == a->preDefs.PRINT) {
+    return fun->ret;
   }
 
   int paramIndex = 0;
@@ -1080,6 +1120,10 @@ Type *analyseMakeArray(Analyser *a, Context c, Node *n) {
 
 // analyseExpression also returns the type of the expression
 Type *analyseExpression(Analyser *a, Context c, Node *n) {
+  // char *out = nodeString(n);
+  // printf("%s\n", out);
+  // free(out);
+
   char FUNC_NAME[] = "analyseExpression";
 
   // printf("Expr %s\n", nodeCodeString(n->kind));

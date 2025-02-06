@@ -45,7 +45,7 @@ fun pop(^Stack s) int {
 fun peek(^Stack s) int {
 	// Length == 0
 	if (s->tail == nil) {
-		return nil;
+		return 0;
 	}
 
 	return s->tail->value;

@@ -20,7 +20,8 @@ void emitterInit(Emitter *e, Node enums, Node structs, Node funs) {
 
 void emitTabs(Emitter *e, CharList *out) {
   for (int i = 0; i < e->tabs; ++i) {
-    PUSH_CHAR('\t')
+    PUSH_CHAR(' ')
+    PUSH_CHAR(' ')
   }
 }
 
@@ -814,12 +815,15 @@ void emitSwitchState(Emitter *e, CharList *out, Node n) {
   for (int i = 5; i < n.children.len - 1; ++i) {
     Node node = n.children.p[i];
     if (node.kind == N_CASE_BLOCK) {
+      emitTabs(e, out);
       emitCaseBlock(e, out, node);
     } else if (node.kind == N_DEFAULT_BLOCK) {
+      emitTabs(e, out);
       emitDefaultBlock(e, out, node);
     }
   }
 
+  emitTabs(e, out);
   PUSH_CHAR('}')
   PUSH_CHAR('\n')
   PUSH_CHAR('\n')

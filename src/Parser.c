@@ -563,9 +563,18 @@ typedef enum Precedence {
   Node expr =                                                                  \
       newNode(N_BRACKETED_VALUE, NULL, n.children.p[i].line, n.sourceName);    \
   PREC_APPEND(lParen)                                                          \
-  PREC_APPEND(n.children.p[i - 1])                                             \
-  PREC_APPEND(n.children.p[i])                                                 \
-  PREC_APPEND(n.children.p[i + 1])                                             \
+  Node child =                                                                 \
+      newNode(N_EXPRESSION, NULL, n.children.p[i].line, n.sourceName);         \
+  if (NodeListAppend(&child.children, n.children.p[i - 1])) {                  \
+    panic("Couldn't append to list in precedenceExpression");                  \
+  }                                                                            \
+  if (NodeListAppend(&child.children, n.children.p[i])) {                      \
+    panic("Couldn't append to list in precedenceExpression");                  \
+  }                                                                            \
+  if (NodeListAppend(&child.children, n.children.p[i + 1])) {                  \
+    panic("Couldn't append to list in precedenceExpression");                  \
+  }                                                                            \
+  PREC_APPEND(child)                                                           \
   PREC_APPEND(rParen)                                                          \
   CLEAN_UP                                                                     \
   n.children.p[i - 1] = expr;                                                  \
@@ -645,7 +654,9 @@ Node parseExpression(Parser *p) {
 
   prevToken(p);
 
-  return precedenceExpression(out);
+  out = precedenceExpression(out);
+
+  return out;
 }
 
 Node parseCrement(Parser *p) {
