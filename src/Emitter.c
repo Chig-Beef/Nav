@@ -172,15 +172,44 @@ void emitOperator(Emitter *e, CharList *out, Node n) {
 void emitExpression(Emitter *e, CharList *out, Node n);
 
 void emitBracketedValue(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('(')
+  emitExpression(e, out, n.children.p[1]);
+  PUSH_CHAR(')')
 }
 
 void emitMakeArray(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('{')
+
+  for (int i = 2; i < n.children.len - 1; ++i) {
+    Node node = n.children.p[i];
+    if (node.kind == N_EXPRESSION) {
+      emitExpression(e, out, node);
+    } else { // Sep
+      PUSH_CHAR(',')
+      PUSH_CHAR(' ')
+    }
+  }
+
+  PUSH_CHAR('}')
 }
 
 void emitStructNew(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  PUSH_CHAR('(')
+  emitIdentifier(e, out, n.children.p[1]);
+  PUSH_CHAR(')')
+  PUSH_CHAR('{')
+
+  for (int i = 3; i < n.children.len - 1; ++i) {
+    Node node = n.children.p[i];
+    if (node.kind == N_EXPRESSION) {
+      emitExpression(e, out, node);
+    } else { // Sep
+      PUSH_CHAR(',')
+      PUSH_CHAR(' ')
+    }
+  }
+
+  PUSH_CHAR('}')
 }
 
 void emitAccess(Emitter *e, CharList *out, Node n);
@@ -191,6 +220,9 @@ void emitValue(Emitter *e, CharList *out, Node n) {
   // numbers
 
   switch (n.kind) {
+  case N_FLOAT:
+    emitIdentifier(e, out, n);
+    break;
   case N_INT:
     emitIdentifier(e, out, n);
     break;
@@ -223,12 +255,14 @@ void emitValue(Emitter *e, CharList *out, Node n) {
     PUSH_CHAR('r');
     PUSH_CHAR('u');
     PUSH_CHAR('e');
+    break;
   case N_FALSE:
     PUSH_CHAR('f');
     PUSH_CHAR('a');
     PUSH_CHAR('l');
     PUSH_CHAR('s');
     PUSH_CHAR('e');
+    break;
   default:
     printf("%s\n", nodeCodeString(n.kind));
     panic("Invalid value");
