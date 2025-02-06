@@ -222,7 +222,24 @@ void emitLoneCall(Emitter *e, CharList *out, Node n) {
 }
 
 void emitAccess(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  emitIdentifier(e, out, n.children.p[0]);
+
+  Node node = n.children.p[1];
+
+  if (node.kind == N_ACCESSOR) {
+    PUSH_CHAR('.')
+  } else { // P accessor
+    PUSH_CHAR('-')
+    PUSH_CHAR('>')
+  }
+
+  node = n.children.p[2];
+
+  if (node.kind == N_ACCESS) {
+    emitAccess(e, out, node);
+  } else {
+    emitIdentifier(e, out, node);
+  }
 }
 
 void emitCrement(Emitter *e, CharList *out, Node n) {
