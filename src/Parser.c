@@ -1059,9 +1059,9 @@ Node parseBlock(Parser *p) {
     nextToken(p);
   }
 
-  return out;
-
   CHECK_AND_APPEND(T_R_SQUIRLY, "}", N_R_SQUIRLY, NULL, "parseBlock")
+
+  return out;
 }
 
 // The main program

@@ -15,6 +15,13 @@ void emitterInit(Emitter *e, Node enums, Node structs, Node funs) {
   e->inEnums = enums;
   e->inStructs = structs;
   e->inFuns = funs;
+  e->tabs = 0;
+}
+
+void emitTabs(Emitter *e, CharList *out) {
+  for (int i = 0; i < e->tabs; ++i) {
+    PUSH_CHAR('\t')
+  }
 }
 
 void emitBlock(Emitter *e, CharList *out, Node n);
@@ -689,8 +696,12 @@ void emitCaseBlock(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR(':')
   PUSH_CHAR('\n')
 
+  ++e->tabs;
+
   for (int i = 3; i < n.children.len; ++i) {
     Node node = n.children.p[i];
+
+    emitTabs(e, out);
 
     switch (node.kind) {
     case N_LONE_CALL:
@@ -723,6 +734,8 @@ void emitCaseBlock(Emitter *e, CharList *out, Node n) {
     }
   }
 
+  --e->tabs;
+
   PUSH_CHAR('\n')
 }
 
@@ -738,8 +751,12 @@ void emitDefaultBlock(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR(':')
   PUSH_CHAR('\n')
 
+  ++e->tabs;
+
   for (int i = 2; i < n.children.len; ++i) {
     Node node = n.children.p[i];
+
+    emitTabs(e, out);
 
     switch (node.kind) {
     case N_LONE_CALL:
@@ -771,6 +788,8 @@ void emitDefaultBlock(Emitter *e, CharList *out, Node n) {
       break;
     }
   }
+
+  --e->tabs;
 
   PUSH_CHAR('\n')
 }
@@ -807,11 +826,20 @@ void emitSwitchState(Emitter *e, CharList *out, Node n) {
 }
 
 void emitBlock(Emitter *e, CharList *out, Node n) {
+
+  // char *p = nodeString(&n);
+  // printf("%s\n", p);
+  // free(p);
+
   PUSH_CHAR('{')
   PUSH_CHAR('\n')
 
+  ++e->tabs;
+
   for (int i = 1; i < n.children.len - 1; ++i) {
     Node node = n.children.p[i];
+
+    emitTabs(e, out);
 
     switch (node.kind) {
     case N_LONE_CALL:
@@ -843,6 +871,10 @@ void emitBlock(Emitter *e, CharList *out, Node n) {
       break;
     }
   }
+
+  --e->tabs;
+
+  emitTabs(e, out);
 
   PUSH_CHAR('}')
 }

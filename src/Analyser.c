@@ -775,13 +775,14 @@ Type *analyseAccess(Analyser *a, Context c, Node *n) {
     parentNode = parentNode->children.p + 2;
     parentType = child->type;
 
-  if (parentNode->children.p[1].kind == N_P_ACCESSOR) {
-    if (parentType->mod != TM_POINTER) {
-      throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
-                         "Attempted to use pointer access on non-pointer type");
+    if (parentNode->children.p[1].kind == N_P_ACCESSOR) {
+      if (parentType->mod != TM_POINTER) {
+        throwAnalyserError(
+            a, n->sourceName, n->line, FUNC_NAME,
+            "Attempted to use pointer access on non-pointer type");
+      }
+      parentType = parentType->parent;
     }
-    parentType = parentType->parent;
-  }
   }
 
   if (parentNode->children.p[2].kind != N_IDENTIFIER) {
@@ -1435,6 +1436,7 @@ Type *analyseComplexType(Analyser *a, Context c, Node *n) {
   if (n->kind == N_IDENTIFIER) {
     Type *t = typeExists(a, n->data);
     if (t == NULL) {
+      printf("\nRecieved Type: %s\n\n", n->data->data);
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Couldn't find type");
     }
