@@ -100,7 +100,73 @@ void emitIdentifier(Emitter *e, CharList *out, Node n) {
 }
 
 void emitOperator(Emitter *e, CharList *out, Node n) {
-  // TODO: Implement
+  switch (n.kind) {
+  case N_ADD:
+    PUSH_CHAR('+')
+    break;
+  case N_SUB:
+    PUSH_CHAR('-')
+    break;
+  case N_MUL:
+    PUSH_CHAR('*')
+    break;
+  case N_DIV:
+    PUSH_CHAR('/')
+    break;
+  case N_MOD:
+    PUSH_CHAR('%')
+    break;
+  case N_AND:
+    PUSH_CHAR('&')
+    break;
+  case N_OR:
+    PUSH_CHAR('|')
+    break;
+  case N_XOR:
+    PUSH_CHAR('^')
+    break;
+  case N_ANDAND:
+    PUSH_CHAR('&')
+    PUSH_CHAR('&')
+    break;
+  case N_OROR:
+    PUSH_CHAR('|')
+    PUSH_CHAR('|')
+    break;
+  case N_EQ:
+    PUSH_CHAR('=')
+    PUSH_CHAR('=')
+    break;
+  case N_NEQ:
+    PUSH_CHAR('!')
+    PUSH_CHAR('=')
+    break;
+  case N_GT:
+    PUSH_CHAR('>')
+    break;
+  case N_GTEQ:
+    PUSH_CHAR('>')
+    PUSH_CHAR('=')
+    break;
+  case N_LT:
+    PUSH_CHAR('<')
+    break;
+  case N_LTEQ:
+    PUSH_CHAR('<')
+    PUSH_CHAR('=')
+    break;
+  case N_L_SHIFT:
+    PUSH_CHAR('<')
+    PUSH_CHAR('<')
+    break;
+  case N_R_SHIFT:
+    PUSH_CHAR('>')
+    PUSH_CHAR('>')
+    break;
+  default:
+    printf("%s\n", nodeCodeString(n.kind));
+    panic("Invalid operator");
+  }
 }
 
 void emitValue(Emitter *e, CharList *out, Node n) {
