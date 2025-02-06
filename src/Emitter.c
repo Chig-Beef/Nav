@@ -99,8 +99,38 @@ void emitIdentifier(Emitter *e, CharList *out, Node n) {
   }
 }
 
-void emitExpression(Emitter *e, CharList *out, Node n) {
+void emitOperator(Emitter *e, CharList *out, Node n) {
   // TODO: Implement
+}
+
+void emitValue(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitUnaryValue(Emitter *e, CharList *out, Node n) {
+  // TODO: Implement
+}
+
+void emitExpression(Emitter *e, CharList *out, Node n) {
+  Node node = n.children.p[0];
+
+  if (node.kind == N_UNARY_VALUE) {
+    emitUnaryValue(e, out, node);
+  } else {
+    emitValue(e, out, node);
+  }
+
+  for (int i = 1; i < n.children.len - 1; i += 2) {
+    node = n.children.p[i];
+    emitOperator(e, out, node);
+
+    node = n.children.p[i + 1];
+    if (node.kind == N_UNARY_VALUE) {
+      emitUnaryValue(e, out, node);
+    } else {
+      emitValue(e, out, node);
+    }
+  }
 }
 
 void emitIndex(Emitter *e, CharList *out, Node n) {
