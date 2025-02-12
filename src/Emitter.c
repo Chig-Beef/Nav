@@ -25,6 +25,10 @@ void emitTabs(Emitter *e, CharList *out) {
 }
 
 void emitBlock(Emitter *e, CharList *out, Node n);
+void emitExpression(Emitter *e, CharList *out, Node n);
+void emitAccess(Emitter *e, CharList *out, Node n);
+void emitFuncCall(Emitter *e, CharList *out, Node n);
+void emitSwitchState(Emitter *e, CharList *out, Node n);
 
 void emitEnum(Emitter *e, CharList *out, Node n) {
   char *enumName = n.children.p[1].data->data;
@@ -184,8 +188,6 @@ void emitOperator(Emitter *e, CharList *out, Node n) {
   }
 }
 
-void emitExpression(Emitter *e, CharList *out, Node n);
-
 void emitBracketedValue(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR('(')
   emitExpression(e, out, n.children.p[1]);
@@ -226,9 +228,6 @@ void emitStructNew(Emitter *e, CharList *out, Node n) {
 
   PUSH_CHAR('}')
 }
-
-void emitAccess(Emitter *e, CharList *out, Node n);
-void emitFuncCall(Emitter *e, CharList *out, Node n);
 
 void emitValue(Emitter *e, CharList *out, Node n) {
   // NOTE: emitIdentifier works on anything that just emits its data, such as
@@ -719,8 +718,6 @@ void emitContinueState(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR(';')
   PUSH_CHAR('\n')
 }
-
-void emitSwitchState(Emitter *e, CharList *out, Node n);
 
 void emitCaseBlock(Emitter *e, CharList *out, Node n) {
   PUSH_CHAR('c')
