@@ -1,10 +1,7 @@
 #include "Emitter.h"
 #include "Node.h"
 #include "Panic.h"
-#include "list.h"
 #include <stdio.h>
-
-NEW_LIST_TYPE_HEADER(char, Char)
 
 #define PUSH_CHAR(character)                                                   \
   if (CharListAppend(out, (character))) {                                      \
@@ -253,6 +250,7 @@ void emitValue(Emitter *e, CharList *out, Node n) {
     emitStructNew(e, out, n);
     break;
   case N_IDENTIFIER:
+    // TODO: If it's nil, turn it to NULL
     emitIdentifier(e, out, n);
     break;
   case N_ACCESS:
@@ -294,7 +292,7 @@ void emitUnary(Emitter *e, CharList *out, Node n) {
     PUSH_CHAR('!')
     break;
   case N_REF:
-    PUSH_CHAR('`')
+    PUSH_CHAR('&')
     break;
   case N_ADD:
     PUSH_CHAR('+')
@@ -320,6 +318,7 @@ void emitUnaryValue(Emitter *e, CharList *out, Node n) {
 }
 
 void emitExpression(Emitter *e, CharList *out, Node n) {
+
   Node node = n.children.p[0];
 
   if (node.kind == N_UNARY_VALUE) {
@@ -348,6 +347,9 @@ void emitIndex(Emitter *e, CharList *out, Node n) {
 }
 
 void emitComplexType(Emitter *e, CharList *out, Node n) {
+  // printf("CompType: %s\n", nodeCodeString(n.kind));
+  // printf("CompType: %i\n", n.line);
+
   if (n.kind == N_IDENTIFIER) {
     emitIdentifier(e, out, n);
     return;
@@ -355,7 +357,7 @@ void emitComplexType(Emitter *e, CharList *out, Node n) {
 
   if (n.children.p[0].kind == N_INDEX) {
     emitComplexType(e, out, n.children.p[1]);
-    emitIndex(e, out, n);
+    emitIndex(e, out, n.children.p[0]);
   } else { // Pointer
     emitComplexType(e, out, n.children.p[1]);
     PUSH_CHAR('*')
@@ -921,6 +923,7 @@ void emitFun(Emitter *e, CharList *out, Node n) {
 
   // r brace
   PUSH_CHAR(')')
+  PUSH_CHAR(' ')
 
   // block
   emitBlock(e, out, n.children.p[n.children.len - 1]);
@@ -934,7 +937,7 @@ void emitFuns(Emitter *e, CharList *out) {
   }
 }
 
-char *emit(Emitter *e) {
+CharList emit(Emitter *e) {
   CharList out;
 
   if (CharListInit(&out, 1)) {
@@ -945,7 +948,5 @@ char *emit(Emitter *e) {
   emitStructs(e, &out);
   emitFuns(e, &out);
 
-  printf("%s\n", out.p);
-
-  return out.p;
+  return out;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CharList.h"
 #include "Node.h"
 
 typedef struct Emitter {
@@ -12,4 +13,4 @@ typedef struct Emitter {
 
 void emitterInit(Emitter *e, Node enums, Node structs, Node funs);
 
-char *emit(Emitter *e);
+CharList emit(Emitter *e);

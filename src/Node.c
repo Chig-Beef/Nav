@@ -1,11 +1,9 @@
 #include "Node.h"
+#include "CharList.h"
 #include "Panic.h"
 #include "String.h"
-#include "list.h"
 #include <stdio.h>
 #include <string.h>
-
-NEW_LIST_TYPE(char, Char)
 
 Node newNode(NodeCode kind, String *data, int line, char *sourceName) {
   NodeList children;

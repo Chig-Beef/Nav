@@ -100,9 +100,12 @@ void analyseBlock(Analyser *a, Context c, Node *n);
 void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right);
 
 Ident *varExists(Analyser *a, String *name) {
+  // printf("Start\n");
+
   Ident *curIdent = a->vars.tail;
 
   while (curIdent != NULL) {
+    // printf("%s\n", curIdent->name->data);
     if (strEql(curIdent->name, name)) {
       return curIdent;
     }
@@ -305,8 +308,6 @@ void analyseFuncs(Analyser *a) {
       a->vars.tail = funcDec->params + i;
     }
 
-    printf("Added params to stack\n");
-
     int stackBase = a->vars.len;
 
     analyseBlock(a, (Context){false, false, NULL, funcDec->ret},
@@ -353,11 +354,16 @@ bool typeEqual(Type *t1, Type *t2) {
 
 void analyseForLoop(Analyser *a, Context c, Node *n) {
   // printf("ForLoop %s\n", nodeCodeString(n->kind));
+
+  // char *out = nodeString(n);
+  // printf("%s\n", out);
+  // free(out);
+
   // To get rid of all vars defined in the loop, including the one defined in
   // the loop header
   int stackBase = a->vars.len;
 
-  int i = 1;
+  int i = 2;
 
   // Assignment
   if (n->children.p[i].kind == N_ASSIGNMENT) {
@@ -514,6 +520,10 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
   char FUNC_NAME[] = "analyseNewAssignment";
 
   // printf("NewAssign %s\n", nodeCodeString(n->kind));
+
+  // char *out = nodeString(n);
+  // printf("%s\n", out);
+  // free(out);
 
   String *varName = n->children.p[2].data;
 
@@ -1573,5 +1583,4 @@ void analyse(Analyser *a) {
   identStackClear(&a->vars);
   funStackClear(&a->funs);
   typeStackClear(&a->types);
-  printf("Cleared stacks\n");
 }

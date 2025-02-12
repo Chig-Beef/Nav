@@ -138,7 +138,6 @@ int main(int argc, char *argv[]) {
   printf("Analysing\n");
   Analyser a;
   analyserInit(&a, h.enums, h.structs, h.funcs);
-  printf("Analyser initialised\n");
   analyse(&a);
   printf("End anlysis\n\n");
 
@@ -149,8 +148,15 @@ int main(int argc, char *argv[]) {
   Emitter e;
   emitterInit(&e, a.inEnums, a.inStructs, a.inFuns);
   printf("Emitter initialised\n");
-  emit(&e);
+  CharList finalOutput = emit(&e);
   printf("End emitting\n\n");
+
+  printf("Saving to file\n");
+  FILE *fptr;
+  fopen_s(&fptr, "../output/main.c", "w");
+  fwrite(finalOutput.p, sizeof(char), finalOutput.len, fptr);
+  fclose(fptr);
+  printf("Saved\n\n");
 
   printf("Finished\n");
 
