@@ -13,6 +13,8 @@ void emitterInit(Emitter *e, Node enums, Node structs, Node funs) {
   e->inStructs = structs;
   e->inFuns = funs;
   e->tabs = 0;
+
+  e->nil = strNew("nil", false);
 }
 
 void emitTabs(Emitter *e, CharList *out) {
@@ -96,6 +98,14 @@ void emitEnums(Emitter *e, CharList *out) {
 }
 
 void emitIdentifier(Emitter *e, CharList *out, Node n) {
+  if (strEql(n.data, e->nil)) {
+    PUSH_CHAR('N')
+    PUSH_CHAR('U')
+    PUSH_CHAR('L')
+    PUSH_CHAR('L')
+    return;
+  }
+
   char *name = n.data->data;
   int i = 0;
   while (name[i]) {
@@ -250,7 +260,6 @@ void emitValue(Emitter *e, CharList *out, Node n) {
     emitStructNew(e, out, n);
     break;
   case N_IDENTIFIER:
-    // TODO: If it's nil, turn it to NULL
     emitIdentifier(e, out, n);
     break;
   case N_ACCESS:
@@ -366,6 +375,32 @@ void emitComplexType(Emitter *e, CharList *out, Node n) {
 
 void emitStruct(Emitter *e, CharList *out, Node n) {
   char *structName = n.children.p[1].data->data;
+
+  // typedef
+  PUSH_CHAR('t')
+  PUSH_CHAR('y')
+  PUSH_CHAR('p')
+  PUSH_CHAR('e')
+  PUSH_CHAR('d')
+  PUSH_CHAR('e')
+  PUSH_CHAR('f')
+  PUSH_CHAR(' ')
+
+  // typedef struct
+  PUSH_CHAR('s')
+  PUSH_CHAR('t')
+  PUSH_CHAR('r')
+  PUSH_CHAR('u')
+  PUSH_CHAR('c')
+  PUSH_CHAR('t')
+  PUSH_CHAR(' ')
+
+  emitIdentifier(e, out, n.children.p[1]);
+  PUSH_CHAR(' ')
+  emitIdentifier(e, out, n.children.p[1]);
+
+  PUSH_CHAR(';')
+  PUSH_CHAR('\n')
 
   // typedef
   PUSH_CHAR('t')
@@ -937,12 +972,22 @@ void emitFuns(Emitter *e, CharList *out) {
   }
 }
 
+void emitHeaders(Emitter *e, CharList *out){
+    PUSH_CHAR('#') PUSH_CHAR('i') PUSH_CHAR('n') PUSH_CHAR('c') PUSH_CHAR('l')
+        PUSH_CHAR('u') PUSH_CHAR('d') PUSH_CHAR('e') PUSH_CHAR(' ')
+            PUSH_CHAR('<') PUSH_CHAR('s') PUSH_CHAR('t') PUSH_CHAR('r')
+                PUSH_CHAR('i') PUSH_CHAR('n') PUSH_CHAR('g') PUSH_CHAR('.')
+                    PUSH_CHAR('h') PUSH_CHAR('>') PUSH_CHAR('\n')
+                        PUSH_CHAR('\n')}
+
 CharList emit(Emitter *e) {
   CharList out;
 
   if (CharListInit(&out, 1)) {
     panic("Couldn't initialise output list");
   }
+
+  emitHeaders(e, &out);
 
   emitEnums(e, &out);
   emitStructs(e, &out);

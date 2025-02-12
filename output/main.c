@@ -1,9 +1,13 @@
+#include <string.h>
+
+typedef struct Node Node;
 typedef struct Node {
 	 int  value ;
 	Node* prev ;
 	
 } Node;
 
+typedef struct Stack Stack;
 typedef struct Stack {
 	Node* tail ;
 	 int  length ;
@@ -11,7 +15,7 @@ typedef struct Stack {
 } Stack;
 
 void push( Stack* s, int value) {
-  Node* n = &(Node){value, nil};
+  Node* n = &(Node){value, NULL};
   ++s->length;
   if (s->length==1) {
     s->tail = n;
@@ -30,7 +34,7 @@ int pop( Stack* s) {
   --s->length;
   if (s->length==0) {
     Node* tail = s->tail;
-    s->tail = nil;
+    s->tail = NULL;
     return tail->value;
   }
 
@@ -40,7 +44,7 @@ int pop( Stack* s) {
 }
 
 int peek( Stack* s) {
-  if (s->tail==nil) {
+  if (s->tail==NULL) {
     return 0;
   }
 
