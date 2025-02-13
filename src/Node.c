@@ -126,12 +126,6 @@ char *nodeCodeString(NodeCode nc) {
     return "N_ASSIGNMENT";
   case N_IF_BLOCK:
     return "N_IF_BLOCK";
-  case N_IF_SEC:
-    return "N_IF_SEC";
-  case N_ELIF_SEC:
-    return "N_ELIF_SEC";
-  case N_ELSE_SEC:
-    return "N_ELSE_SEC";
   case N_FOR_LOOP:
     return "N_FOR_LOOP";
   case N_RET_STATE:
