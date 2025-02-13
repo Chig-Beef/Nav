@@ -507,7 +507,7 @@ typedef struct Const {
 } Const;
 
 Const getConstFromExpr(Optimiser *o, Node *expr) {
-  Const out = {N_ILLEGAL, NULL};
+  Const out = {N_ILLEGAL};
 
   if (expr->children.len != 1) {
     return out;
@@ -544,6 +544,15 @@ bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
 
   switch (state->kind) {
   case N_FOR_LOOP:
+    // Empty block
+    if (state->children.p[state->children.len - 1].children.len == 2) {
+      changed = true;
+
+      // Remove the loop
+      if (NodeListRemoveAt(&block->children, i)) {
+        panic("Couldn't remove from nodelist\n");
+      }
+    }
     break;
   case N_IF_BLOCK:
     break;
