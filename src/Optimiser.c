@@ -4,6 +4,7 @@
 #include "String.h"
 #include "list.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 void optimiserInit(Optimiser *o, Node funs) { o->src = funs; }
 
@@ -432,16 +433,8 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
     break;
 
-  case N_BREAK_STATE:
-    // Do nothing
-    break;
-
-  case N_CONTINUE_STATE:
-    // Do nothing
-    break;
-
   default:
-    panic("Invalid statement in block");
+    break;
   }
 
   return changed;
@@ -501,7 +494,96 @@ bool variableElimination(Optimiser *o) {
   return changed;
 }
 
-bool branchElimination(Optimiser *o) { return false; }
+union ConstVal {
+  char c;
+  float f;
+  int i;
+  char *s;
+};
+
+typedef struct Const {
+  NodeCode type;
+  union ConstVal val;
+} Const;
+
+Const getConstFromExpr(Optimiser *o, Node *expr) {
+  Const out = {N_ILLEGAL, NULL};
+
+  if (expr->children.len != 1) {
+    return out;
+  }
+
+  Node *val = expr->children.p;
+
+  switch (val->kind) {
+  case N_CHAR:
+    // TODO: Implement getting the value from the char
+    break;
+  case N_FLOAT:
+    // TODO: Implement getting the value from the float
+    break;
+  case N_INT:
+    out.type = N_INT;
+    out.val.i = atoi(val->data->data);
+    break;
+  case N_STRING:
+    out.type = N_STRING;
+    out.val.s = val->data->data;
+    break;
+  default:
+    break;
+  }
+
+  return out;
+}
+
+bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
+  // printf("Eliminating branches (statement) %s\n",
+  // nodeCodeString(state->kind));
+  bool changed = false;
+
+  switch (state->kind) {
+  case N_FOR_LOOP:
+    break;
+  case N_IF_BLOCK:
+    break;
+  case N_SWITCH_STATE:
+    break;
+  default:
+    break;
+  }
+
+  return changed;
+}
+
+bool branchEliminationBlock(Optimiser *o, Node *block) {
+  // printf("Eliminating branch (block) %s\n", nodeCodeString(block->kind));
+
+  bool changed = false;
+
+  // For every statement
+  for (int i = 1; i < block->children.len - 1; ++i) {
+    Node *state = block->children.p + i;
+    changed |= branchEliminationStatement(o, state, block, i);
+  }
+
+  return changed;
+}
+
+bool branchElimination(Optimiser *o) {
+  printf("Eliminating branches\n");
+  bool changed = false;
+
+  // For every function
+  for (int i = 0; i < o->src.children.len; ++i) {
+    Node *fn = o->src.children.p + i;
+
+    // Optimise the block
+    changed |= branchEliminationBlock(o, fn->children.p + fn->children.len - 1);
+  }
+
+  return changed;
+}
 
 bool constantFolding(Optimiser *o) { return false; }
 
