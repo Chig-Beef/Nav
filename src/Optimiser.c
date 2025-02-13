@@ -44,13 +44,15 @@ bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars) {
 
   int varLen = vars->len;
 
+  Node *assignment;
+
   // For every statement
   for (int i = 0; i < block->children.len; ++i) {
     Node *n = block->children.p + i;
 
     switch (n->kind) {
     case N_VAR_DEC:
-      Node *assignment = n->children.p;
+      assignment = n->children.p;
       if (assignment->kind == N_NEW_ASSIGNMENT) {
         // Check expression
         changed =
@@ -59,7 +61,7 @@ bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars) {
                 o, assignment->children.p + assignment->children.len - 1, vars);
 
         // Add new variable
-        Variable v = {assignment->children.p[3].data, false, n, i};
+        Variable v = {assignment->children.p[3].data, false, block, i};
         if (VarListAppend(vars, v)) {
           panic("Couldn't append to varlist\n");
         }
@@ -84,14 +86,88 @@ bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars) {
 
     case N_LONE_CALL:
       // Check each arg
-      break;
-
-    case N_IF_BLOCK:
-      // Check condition and block, and repeat for each other case
+      Node *fn = n->children.p;
+      for (int j = 3; j < fn->children.len; j += 2) {
+        variableEliminationExpression(o, fn->children.p + j, vars);
+      }
       break;
 
     case N_FOR_LOOP:
       // Check first assignment, condition, second assignment, and block
+      int j = 1;
+      assignment = n->children.p + j;
+
+      if (assignment->kind == N_NEW_ASSIGNMENT) {
+        // Check expression
+        changed =
+            changed |
+            variableEliminationExpression(
+                o, assignment->children.p + assignment->children.len - 1, vars);
+
+        // Add new variable
+        Variable v = {assignment->children.p[3].data, false, n, j};
+        if (VarListAppend(vars, v)) {
+          panic("Couldn't append to varlist\n");
+        }
+        j += 2;
+      } else if (assignment->kind == N_ASSIGNMENT) {
+        if (assignment->children.p[0].kind != N_CREMENT) {
+          // First check the index if there is one
+          if (assignment->children.p[1].kind == N_INDEX) {
+            Node *index = assignment->children.p + 1;
+            changed = changed | variableEliminationExpression(
+                                    o, index->children.p + 1, vars);
+          }
+
+          // Then check the expression
+          changed =
+              changed |
+              variableEliminationExpression(
+                  o, assignment->children.p + assignment->children.len - 1,
+                  vars);
+        } else { // Crement
+                 // Do nothing, doesn't count as using the variable
+        }
+        j += 2;
+      } else {
+        ++j;
+      }
+
+      Node *expr = n->children.p + j;
+      if (expr->kind == N_EXPRESSION) {
+        changed = changed | variableEliminationExpression(o, expr, vars);
+        j += 2;
+      } else {
+        ++j;
+      }
+
+      assignment = n->children.p + j;
+      if (assignment->kind == N_ASSIGNMENT) {
+        if (assignment->children.p[0].kind != N_CREMENT) {
+          // First check the index if there is one
+          if (assignment->children.p[1].kind == N_INDEX) {
+            Node *index = assignment->children.p + 1;
+            changed = changed | variableEliminationExpression(
+                                    o, index->children.p + 1, vars);
+          }
+
+          // Then check the expression
+          changed =
+              changed |
+              variableEliminationExpression(
+                  o, assignment->children.p + assignment->children.len - 1,
+                  vars);
+        } else { // Crement
+                 // Do nothing, doesn't count as using the variable
+        }
+      }
+
+      variableEliminationBlock(o, n->children.p + n->children.len - 1, vars);
+
+      break;
+
+    case N_IF_BLOCK:
+      // Check condition and block, and repeat for each other case
       break;
 
     case N_RET_STATE:
