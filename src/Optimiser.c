@@ -355,7 +355,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
     break;
 
   case N_RET_STATE:
-    if (assignment->children.p[1].kind == N_EXPRESSION) {
+    if (state->children.p[1].kind == N_EXPRESSION) {
       variableEliminationExpression(o, state->children.p + 1, vars);
     }
     break;
