@@ -141,12 +141,77 @@ void removeVariable(Optimiser *o, Variable v) {
   }
 }
 
-bool variableEliminationExpression(Optimiser *o, Node *expr, VarList *vars) {
+void variableEliminationExpression(Optimiser *o, Node *expr, VarList *vars);
+
+void variableEliminationValue(Optimiser *o, Node *val, VarList *vars) {
+  switch (val->kind) {
+  case N_UNARY_VALUE: // If we're actually a unary value, check the actual value
+                      // inside
+    if (val->children.p[0].kind == N_INDEX) {
+      // Also check inside of the index
+      variableEliminationExpression(o, val->children.p[0].children.p + 1, vars);
+    }
+    variableEliminationValue(o, val->children.p + 1, vars);
+    return;
+
+  case N_BRACKETED_VALUE:
+    variableEliminationExpression(o, val->children.p + 1, vars);
+    return;
+
+  case N_FUNC_CALL:
+    for (int i = 3; i < val->children.len - 1; i += 2) {
+      variableEliminationExpression(o, val->children.p + i, vars);
+    }
+    return;
+
+  case N_MAKE_ARRAY:
+    for (int i = 2; i < val->children.len - 1; i += 2) {
+      variableEliminationExpression(o, val->children.p + i, vars);
+    }
+    return;
+
+  case N_STRUCT_NEW:
+    for (int i = 3; i < val->children.len - 1; i += 2) {
+      variableEliminationExpression(o, val->children.p + i, vars);
+    }
+    return;
+
+  case N_ACCESS:
+    variableEliminationValue(o, val->children.p, vars);
+    return;
+
+  case N_IDENTIFIER:
+    String *name = val->data;
+
+    for (int i = 0; i < vars->len; ++i) {
+      Variable *v = vars->p + i;
+
+      if (strEql(name, v->name)) {
+        v->used = true;
+      }
+    }
+    return;
+
+  default:
+    return;
+  }
+}
+
+void variableEliminationExpression(Optimiser *o, Node *expr, VarList *vars) {
   // printf("Eliminating variables (expression) %s\n",
   // nodeCodeString(expr->kind));
-  bool changed = false;
 
-  return changed;
+  // NOTE: Due to precedence implementation there are 2 forms of expression,
+  // either a single value, or 2 values. Also note these values can be unary
+  // values
+
+  // Check first operand
+  variableEliminationValue(o, expr->children.p, vars);
+
+  // Check second operand (if any)
+  if (expr->children.len == 3) {
+    variableEliminationValue(o, expr->children.p + 2, vars);
+  }
 }
 
 bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars);
@@ -166,7 +231,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
     assignment = state->children.p;
     if (assignment->kind == N_NEW_ASSIGNMENT) {
       // Check expression
-      changed |= variableEliminationExpression(
+      variableEliminationExpression(
           o, assignment->children.p + assignment->children.len - 1, vars);
 
       // Add new variable
@@ -179,12 +244,12 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
       // First check the index if there is one
       if (assignment->children.p[1].kind == N_INDEX) {
         index = assignment->children.p + 1;
-        changed |=
-            variableEliminationExpression(o, index->children.p + 1, vars);
+
+        variableEliminationExpression(o, index->children.p + 1, vars);
       }
 
       // Then check the expression
-      changed |= variableEliminationExpression(
+      variableEliminationExpression(
           o, assignment->children.p + assignment->children.len - 1, vars);
     } else { // Crement
              // Do nothing, doesn't count as using the variable
@@ -195,7 +260,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
     // Check each arg
     fn = state->children.p;
     for (j = 3; j < fn->children.len; j += 2) {
-      changed |= variableEliminationExpression(o, fn->children.p + j, vars);
+      variableEliminationExpression(o, fn->children.p + j, vars);
     }
     break;
 
@@ -206,7 +271,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
     if (assignment->kind == N_NEW_ASSIGNMENT) {
       // Check expression
-      changed |= variableEliminationExpression(
+      variableEliminationExpression(
           o, assignment->children.p + assignment->children.len - 1, vars);
 
       // Add new variable
@@ -220,12 +285,12 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
         // First check the index if there is one
         if (assignment->children.p[1].kind == N_INDEX) {
           index = assignment->children.p + 1;
-          changed |=
-              variableEliminationExpression(o, index->children.p + 1, vars);
+
+          variableEliminationExpression(o, index->children.p + 1, vars);
         }
 
         // Then check the expression
-        changed |= variableEliminationExpression(
+        variableEliminationExpression(
             o, assignment->children.p + assignment->children.len - 1, vars);
       } else { // Crement
                // Do nothing, doesn't count as using the variable
@@ -237,7 +302,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
     expr = state->children.p + j;
     if (expr->kind == N_EXPRESSION) {
-      changed |= variableEliminationExpression(o, expr, vars);
+      variableEliminationExpression(o, expr, vars);
       j += 2;
     } else {
       ++j;
@@ -249,12 +314,12 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
         // First check the index if there is one
         if (assignment->children.p[1].kind == N_INDEX) {
           index = assignment->children.p + 1;
-          changed |=
-              variableEliminationExpression(o, index->children.p + 1, vars);
+
+          variableEliminationExpression(o, index->children.p + 1, vars);
         }
 
         // Then check the expression
-        changed |= variableEliminationExpression(
+        variableEliminationExpression(
             o, assignment->children.p + assignment->children.len - 1, vars);
       } else { // Crement
                // Do nothing, doesn't count as using the variable
@@ -268,7 +333,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
   case N_IF_BLOCK:
     // Check condition and block, and repeat for each other case
-    changed |= variableEliminationExpression(o, state->children.p + 2, vars);
+    variableEliminationExpression(o, state->children.p + 2, vars);
 
     changed |= variableEliminationBlock(o, state->children.p + 4, vars);
 
@@ -276,8 +341,8 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
     while (j < state->children.len) {
       if (state->children.p[j].kind == N_ELIF) {
-        changed |=
-            variableEliminationExpression(o, state->children.p + j + 2, vars);
+
+        variableEliminationExpression(o, state->children.p + j + 2, vars);
 
         changed |= variableEliminationBlock(o, state->children.p + j + 4, vars);
 
@@ -291,13 +356,13 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
   case N_RET_STATE:
     if (assignment->children.p[1].kind == N_EXPRESSION) {
-      changed |= variableEliminationExpression(o, state->children.p + 1, vars);
+      variableEliminationExpression(o, state->children.p + 1, vars);
     }
     break;
 
   case N_SWITCH_STATE:
     // Check item, and all cases + default.
-    changed |= variableEliminationExpression(o, state->children.p + 2, vars);
+    variableEliminationExpression(o, state->children.p + 2, vars);
 
     j = 5;
 
@@ -306,8 +371,8 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
     Node *caseBlock = state->children.p + j;
     while (caseBlock->kind == N_CASE_BLOCK) {
-      changed |=
-          variableEliminationExpression(o, caseBlock->children.p + 1, vars);
+
+      variableEliminationExpression(o, caseBlock->children.p + 1, vars);
 
       int varLen = vars->len;
 
@@ -324,6 +389,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
 
         // Remove from code
         if (!v.used) {
+          changed = true;
           removeVariable(o, v);
         }
 
@@ -354,6 +420,7 @@ bool variableEliminationStatement(Optimiser *o, Node *state, Node *block, int i,
         // Remove from code
         if (!v.used) {
           removeVariable(o, v);
+          changed = true;
         }
 
         // Remove from vars
@@ -401,6 +468,7 @@ bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars) {
     // Remove from code
     if (!v.used) {
       removeVariable(o, v);
+      changed = true;
     }
 
     // Remove from vars
