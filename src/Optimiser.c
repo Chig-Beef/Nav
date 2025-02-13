@@ -27,6 +27,12 @@ NEW_LIST_TYPE(Variable, Var)
     }                                                                          \
   }
 
+bool variableEliminationExpression(Optimiser *o, Node *block, VarList *vars) {
+  bool changed = false;
+
+  return changed;
+}
+
 bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars) {
   bool changed = false;
 
@@ -43,64 +49,84 @@ bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars) {
     Node *n = block->children.p + i;
 
     switch (n->kind) {
-    case N_LONE_CALL:
-      break;
-
     case N_VAR_DEC:
       Node *assignment = n->children.p;
       if (assignment->kind == N_NEW_ASSIGNMENT) {
+        // Check expression
+        changed =
+            changed |
+            variableEliminationExpression(
+                o, assignment->children.p + assignment->children.len - 1, vars);
+
+        // Add new variable
         Variable v = {assignment->children.p[3].data, false, n, i};
         if (VarListAppend(vars, v)) {
           panic("Couldn't append to varlist\n");
         }
 
-      } else if (assignment->children.p[0].kind == N_CREMENT) {
-        assignment = assignment->children.p;
-
-        String *varName;
-
-        if (assignment->children.p[1].kind == N_IDENTIFIER) {
-          varName = assignment->children.p[1].data;
-        } else { // Access
-          varName = assignment->children.p[1].children.p[0].data;
+      } else if (assignment->children.p[0].kind != N_CREMENT) {
+        // First check the index if there is one
+        if (assignment->children.p[1].kind == N_INDEX) {
+          Node *index = assignment->children.p + 1;
+          changed = changed | variableEliminationExpression(
+                                  o, index->children.p + 1, vars);
         }
 
-        SET_VAR_CHANGED
-
-      } else { // Regular assignment
-
-        String *varName;
-
-        if (assignment->children.p[0].kind == N_IDENTIFIER) {
-          varName = assignment->children.p[0].data;
-        } else { // Access
-          varName = assignment->children.p[0].children.p[0].data;
-        }
-
-        SET_VAR_CHANGED
+        // Then check the expression
+        changed =
+            changed |
+            variableEliminationExpression(
+                o, assignment->children.p + assignment->children.len - 1, vars);
+      } else { // Crement
+               // Do nothing, doesn't count as using the variable
       }
       break;
 
+    case N_LONE_CALL:
+      // Check each arg
+      break;
+
     case N_IF_BLOCK:
+      // Check condition and block, and repeat for each other case
       break;
 
     case N_FOR_LOOP:
+      // Check first assignment, condition, second assignment, and block
       break;
 
     case N_RET_STATE:
-      break;
-
-    case N_BREAK_STATE:
-      break;
-
-    case N_CONTINUE_STATE:
+      if (assignment->children.p[1].kind == N_EXPRESSION) {
+        changed = changed | variableEliminationExpression(
+                                o, assignment->children.p + 1, vars);
+      }
       break;
 
     case N_SWITCH_STATE:
+      // Check item, and all cases + default.
+      break;
+
+    case N_BREAK_STATE:
+      // Do nothing
+      break;
+
+    case N_CONTINUE_STATE:
+      // Do nothing
       break;
 
     default:
       panic("Invalid statement in block");
+    }
+  }
+
+  // Check for dead vars
+  for (int i = varLen; i < vars->len; ++i) {
+    Variable v = vars->p[i];
+    if (v.used) {
+      continue;
+    }
+
+    if (NodeListRemoveAt(&v.decBlock->children, v.decIndex)) {
+      panic("Couldn't remove from nodelist\n");
     }
   }
 
