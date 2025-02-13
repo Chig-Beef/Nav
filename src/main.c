@@ -2,6 +2,7 @@
 #include "Emitter.h"
 #include "Hoister.h"
 #include "Lexer.h"
+#include "Optimiser.h"
 #include "Parser.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -141,7 +142,13 @@ int main(int argc, char *argv[]) {
   analyse(&a);
   printf("End anlysis\n\n");
 
-  // Optimize
+  // Optimise
+  printf("Optimising\n");
+  Optimiser o;
+  optimiserInit(&o, a.inFuns);
+  printf("Optimiser init\n");
+  optimise(&o);
+  printf("End optimisation\n\n");
 
   // Emit to C
   printf("Emitting\n");
