@@ -498,6 +498,7 @@ union ConstVal {
   char c;
   float f;
   int i;
+  bool b;
   char *s;
 };
 
@@ -530,6 +531,14 @@ Const getConstFromExpr(Optimiser *o, Node *expr) {
     out.type = N_STRING;
     out.val.s = val->data->data;
     break;
+  case N_TRUE:
+    out.type = N_TRUE;
+    out.val.b = true;
+    break;
+  case N_FALSE:
+    out.type = N_FALSE;
+    out.val.b = false;
+    break;
   default:
     break;
   }
@@ -540,7 +549,8 @@ Const getConstFromExpr(Optimiser *o, Node *expr) {
 bool branchEliminationBlock(Optimiser *o, Node *block);
 
 bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
-  printf("Eliminating branches (statement) %s\n", nodeCodeString(state->kind));
+  // printf("Eliminating branches (statement) %s\n",
+  // nodeCodeString(state->kind));
   bool changed = false;
 
   Node *recBlock;
@@ -615,6 +625,46 @@ bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
         if (NodeListRemoveAt(&block->children, i)) {
           panic("Couldn't remove from nodelist\n");
         }
+      } else {
+        // Try to eliminate based on constant value
+        Const c = getConstFromExpr(o, state->children.p + 2);
+
+        bool isTrue = false;
+
+        switch (c.type) {
+        case N_CHAR:
+          isTrue = c.val.c != 0;
+          break;
+        case N_FLOAT:
+          isTrue = c.val.f != 0.0;
+          break;
+        case N_INT:
+          isTrue = c.val.i != 0;
+          break;
+        case N_STRING:
+          isTrue = c.val.s != NULL;
+          break;
+        case N_TRUE:
+          isTrue = true;
+          break;
+        case N_FALSE:
+          isTrue = false;
+          break;
+        default:
+          return changed;
+        }
+
+        if (isTrue) { // The branch always happens
+
+        } else { // The branch never happens
+          changed = true;
+          printf("Removing if statement\n");
+
+          // Remove the loop
+          if (NodeListRemoveAt(&block->children, i)) {
+            panic("Couldn't remove from nodelist\n");
+          }
+        }
       }
     }
 
@@ -629,7 +679,7 @@ bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
 }
 
 bool branchEliminationBlock(Optimiser *o, Node *block) {
-  printf("Eliminating branch (block) %s\n", nodeCodeString(block->kind));
+  // printf("Eliminating branch (block) %s\n", nodeCodeString(block->kind));
 
   bool changed = false;
 

@@ -9,6 +9,22 @@ fun main() {
 		y = 0;
 	}
 
+	if (true) {
+		x = 7;
+	}
+
+	if (false) {
+		x = 7;
+	}
+
+	if (x == 7) {
+		x = 7;
+	}
+
+	if (x != 7) {
+		x = 7;
+	}
+
 	for (let int i = 0; i < 7; ++i) {
 		x = 7;
 		if (x == 7) {

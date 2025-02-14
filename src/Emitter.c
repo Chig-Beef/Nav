@@ -4,9 +4,8 @@
 #include <stdio.h>
 
 #define PUSH_CHAR(character)                                                   \
-  if (CharListAppend(out, (character))) {                                      \
-    panic("Couldn't append to output");                                        \
-  }
+  if (CharListAppend(out, (character)))                                        \
+    panic("Couldn't append to output");
 
 void emitterInit(Emitter *e, Node enums, Node structs, Node funs) {
   e->inEnums = enums;
@@ -969,13 +968,52 @@ void emitFuns(Emitter *e, CharList *out) {
   }
 }
 
-void emitHeaders(Emitter *e, CharList *out){
-    PUSH_CHAR('#') PUSH_CHAR('i') PUSH_CHAR('n') PUSH_CHAR('c') PUSH_CHAR('l')
-        PUSH_CHAR('u') PUSH_CHAR('d') PUSH_CHAR('e') PUSH_CHAR(' ')
-            PUSH_CHAR('<') PUSH_CHAR('s') PUSH_CHAR('t') PUSH_CHAR('r')
-                PUSH_CHAR('i') PUSH_CHAR('n') PUSH_CHAR('g') PUSH_CHAR('.')
-                    PUSH_CHAR('h') PUSH_CHAR('>') PUSH_CHAR('\n')
-                        PUSH_CHAR('\n')}
+void emitHeaders(Emitter *e, CharList *out) {
+  PUSH_CHAR('#');
+  PUSH_CHAR('i');
+  PUSH_CHAR('n');
+  PUSH_CHAR('c');
+  PUSH_CHAR('l');
+  PUSH_CHAR('u');
+  PUSH_CHAR('d');
+  PUSH_CHAR('e');
+  PUSH_CHAR(' ');
+  PUSH_CHAR('<');
+  PUSH_CHAR('s');
+  PUSH_CHAR('t');
+  PUSH_CHAR('r');
+  PUSH_CHAR('i');
+  PUSH_CHAR('n');
+  PUSH_CHAR('g')
+  PUSH_CHAR('.');
+  PUSH_CHAR('h');
+  PUSH_CHAR('>');
+  PUSH_CHAR('\n');
+
+  PUSH_CHAR('#');
+  PUSH_CHAR('i');
+  PUSH_CHAR('n');
+  PUSH_CHAR('c');
+  PUSH_CHAR('l');
+  PUSH_CHAR('u');
+  PUSH_CHAR('d');
+  PUSH_CHAR('e');
+  PUSH_CHAR(' ');
+  PUSH_CHAR('<');
+  PUSH_CHAR('s');
+  PUSH_CHAR('t');
+  PUSH_CHAR('d');
+  PUSH_CHAR('b');
+  PUSH_CHAR('o');
+  PUSH_CHAR('o');
+  PUSH_CHAR('l');
+  PUSH_CHAR('.');
+  PUSH_CHAR('h');
+  PUSH_CHAR('>');
+  PUSH_CHAR('\n');
+
+  PUSH_CHAR('\n');
+}
 
 CharList emit(Emitter *e) {
   CharList out;
