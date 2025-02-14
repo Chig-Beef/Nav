@@ -3,10 +3,7 @@
 
 void main() {
   int x = 7;
-  if (true) {
-    x = 7;
-  }
-
+  x = 7;
   if (x==7) {
     x = 7;
   }

@@ -18,7 +18,8 @@
   void TYPE_NAME##ListDestroy(TYPE_NAME##List *l);                             \
   errno_t TYPE_NAME##ListAppend(TYPE_NAME##List *l, T item);                   \
   TYPE_NAME##List TYPE_NAME##ListCopy(TYPE_NAME##List *src);                   \
-  errno_t TYPE_NAME##ListRemoveAt(TYPE_NAME##List *l, int index);
+  errno_t TYPE_NAME##ListRemoveAt(TYPE_NAME##List *l, int index);              \
+  errno_t TYPE_NAME##ListInsertAt(TYPE_NAME##List *l, T item, int index);
 
 #define NEW_LIST_TYPE(T, TYPE_NAME)                                            \
   typedef struct TYPE_NAME##List {                                             \
@@ -74,5 +75,18 @@
     for (int i = index; i < l->len; ++i) {                                     \
       l->p[i] = l->p[i + 1];                                                   \
     }                                                                          \
+    return 0;                                                                  \
+  }                                                                            \
+  errno_t TYPE_NAME##ListInsertAt(TYPE_NAME##List *l, T item, int index) {     \
+    if (index < 0 || index > l->len) {                                         \
+      return 1;                                                                \
+    }                                                                          \
+    if (TYPE_NAME##ListAppend(l, l->p[l->len - 1])) {                          \
+      return 1;                                                                \
+    }                                                                          \
+    for (int i = l->len - 2; i > index; --i) {                                 \
+      l->p[i] = l->p[i - 1];                                                   \
+    }                                                                          \
+    l->p[index] = item;                                                        \
     return 0;                                                                  \
   }

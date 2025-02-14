@@ -65,6 +65,19 @@ errno_t NodeListRemoveAt(NodeList *l, int index) {
   }
   return 0;
 }
+errno_t NodeListInsertAt(NodeList *l, Node item, int index) {
+  if (index < 0 || index > l->len) {
+    return 1;
+  }
+  if (NodeListAppend(l, l->p[l->len - 1])) {
+    return 1;
+  }
+  for (int i = l->len - 2; i > index; --i) {
+    l->p[i] = l->p[i - 1];
+  }
+  l->p[index] = item;
+  return 0;
+}
 
 // Recursively frees all children
 void nodeDestroy(Node *n) {

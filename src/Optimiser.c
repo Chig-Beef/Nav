@@ -619,7 +619,7 @@ bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
       // Empty block
       if (recBlock->children.len == 2) {
         changed = true;
-        printf("Removing if statement\n");
+        printf("Removing empty if statement\n");
 
         // Remove the loop
         if (NodeListRemoveAt(&block->children, i)) {
@@ -655,10 +655,24 @@ bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
         }
 
         if (isTrue) { // The branch always happens
+          changed = true;
+          printf("Removing true if statement\n");
+
+          // Remove the loop
+          if (NodeListRemoveAt(&block->children, i)) {
+            panic("Couldn't remove from nodelist\n");
+          }
+
+          for (int j = 1; j < recBlock->children.len - 1; ++j) {
+            if (NodeListInsertAt(&block->children, recBlock->children.p[j],
+                                 i)) {
+              panic("Couldn't insert in nodelist\n");
+            }
+          }
 
         } else { // The branch never happens
           changed = true;
-          printf("Removing if statement\n");
+          printf("Removing false if statement\n");
 
           // Remove the loop
           if (NodeListRemoveAt(&block->children, i)) {
