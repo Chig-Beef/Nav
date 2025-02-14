@@ -1,0 +1,21 @@
+fun main() {
+	// 1 [x] Inside of brackets should be set to 7
+	// 2 [x] Brackets should be taken out around the 7
+	// 3 [x] 7 * 3 should be evaluated to 21
+	// 4 [x] x==x should be evaluated to true
+	// 5 [x] Second if statement should be inlined
+	// 6 [x] x should be propogated to first if statement condition
+	// 7 [x] x != 21 should be evaluated to false
+	// 8 [x] first if statement should be deleted
+	// 9 [x] x should be deleted
+
+	let int x = (3 + 4) * 3;
+
+	if (x != 21) {
+		++x;
+	}
+
+	if (x == x) {
+		++x;
+	}
+}
