@@ -22,7 +22,7 @@ newassignment -> 'let', complexType, IDENTIFIER, '=', expression ;
 crement -> '++' | '--', (IDENTIFIER | access), [index];
 assignment -> ((IDENTIFIER | access), [index,] '=', expression) | crement;
 ifBlock -> 'if', '(', expression, ')', block, ['elif', '(', expression, ')', block,] ['else', block];
-forLoop -> 'for', [assignment | newassignment,] ';', [expression,] ';', [assignment,] block;
+forLoop -> 'for', '(', [assignment | newassignment,] ';', [expression,] ';', [assignment,] ')', block;
 retStatement -> 'return', [expression], ';';
 breakStatement -> 'break', ';';
 contStatement -> 'continue', ';';

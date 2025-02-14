@@ -474,7 +474,7 @@ bool variableEliminationBlock(Optimiser *o, Node *block, VarList *vars) {
 }
 
 bool variableElimination(Optimiser *o) {
-  printf("Eliminating variables\n");
+  // printf("Eliminating variables\n");
   bool changed = false;
 
   VarList vars;
@@ -537,10 +537,13 @@ Const getConstFromExpr(Optimiser *o, Node *expr) {
   return out;
 }
 
+bool branchEliminationBlock(Optimiser *o, Node *block);
+
 bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
-  // printf("Eliminating branches (statement) %s\n",
-  // nodeCodeString(state->kind));
+  printf("Eliminating branches (statement) %s\n", nodeCodeString(state->kind));
   bool changed = false;
+
+  Node *recBlock;
 
   switch (state->kind) {
   case N_FOR_LOOP:
@@ -552,9 +555,69 @@ bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
       if (NodeListRemoveAt(&block->children, i)) {
         panic("Couldn't remove from nodelist\n");
       }
+    } else {
+      // Check child block
+      changed |= branchEliminationBlock(o, state->children.p +
+                                               state->children.len - 1);
     }
     break;
   case N_IF_BLOCK:
+    // NOTE: Since the next elifs and elses depend on the previous ones, we can
+    // only delete the last one at a time
+
+    // char *out = nodeString(state);
+    // printf("If statement\n%s\n", out);
+    // free(out);
+
+    recBlock = state->children.p + state->children.len - 1;
+    if (state->children.p[state->children.len - 2].kind == N_ELSE) {
+      // Check child block
+      changed |= branchEliminationBlock(o, recBlock);
+
+      // Empty block
+      if (recBlock->children.len == 2) {
+        changed = true;
+        printf("Removing else statement\n");
+
+        // Remove the loop
+        for (int j = 0; j < 2; j++) {
+          if (NodeListRemoveAt(&state->children, state->children.len - 1)) {
+            panic("Couldn't remove from nodelist\n");
+          }
+        }
+      }
+    } else if (state->children.p[state->children.len - 5].kind == N_ELIF) {
+      // Check child block
+      changed |= branchEliminationBlock(o, recBlock);
+
+      // Empty block
+      if (recBlock->children.len == 2) {
+        changed = true;
+        printf("Removing elif statement\n");
+
+        // Remove the loop
+        for (int j = 0; j < 5; j++) {
+          if (NodeListRemoveAt(&state->children, state->children.len - 1)) {
+            panic("Couldn't remove from nodelist\n");
+          }
+        }
+      }
+    } else { // Single if statement
+      // Check child block
+      changed |= branchEliminationBlock(o, recBlock);
+
+      // Empty block
+      if (recBlock->children.len == 2) {
+        changed = true;
+        printf("Removing if statement\n");
+
+        // Remove the loop
+        if (NodeListRemoveAt(&block->children, i)) {
+          panic("Couldn't remove from nodelist\n");
+        }
+      }
+    }
+
     break;
   case N_SWITCH_STATE:
     break;
@@ -566,7 +629,7 @@ bool branchEliminationStatement(Optimiser *o, Node *state, Node *block, int i) {
 }
 
 bool branchEliminationBlock(Optimiser *o, Node *block) {
-  // printf("Eliminating branch (block) %s\n", nodeCodeString(block->kind));
+  printf("Eliminating branch (block) %s\n", nodeCodeString(block->kind));
 
   bool changed = false;
 
@@ -580,7 +643,7 @@ bool branchEliminationBlock(Optimiser *o, Node *block) {
 }
 
 bool branchElimination(Optimiser *o) {
-  printf("Eliminating branches\n");
+  // printf("Eliminating branches\n");
   bool changed = false;
 
   // For every function
