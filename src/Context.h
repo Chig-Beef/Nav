@@ -2,6 +2,8 @@
 
 #include "Types.h"
 
+#include <stdbool.h>
+
 #define ZERO_CONTEXT                                                           \
   (Context) { false, false, NULL, NULL }
 

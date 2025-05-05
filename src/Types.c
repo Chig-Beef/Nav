@@ -2,7 +2,6 @@
 #include "Panic.h"
 #include "TypeModifier.h"
 #include "list.h"
-#include <stdio.h>
 #include <stdlib.h>
 
 NEW_LIST_TYPE_HEADER(char, Char)
@@ -33,7 +32,7 @@ char *typeString(Type *t) {
       break;
 
     case TM_NONE:
-      String *name = cur->name;
+      char *name = cur->name;
 
       // Null case
       if (name == NULL) {
@@ -55,8 +54,8 @@ char *typeString(Type *t) {
 
       int i = 0;
 
-      while (name->data[i]) {
-        if (CharListAppend(&out, name->data[i])) {
+      while (name[i]) {
+        if (CharListAppend(&out, name[i])) {
           panic("Couldn't append to charlist");
         }
         ++i;
@@ -72,7 +71,7 @@ char *typeString(Type *t) {
   return out.p;
 }
 
-void typeStackPush(TypeStack *s, TypeKind kind, String *name, TypeModifier mod,
+void typeStackPush(TypeStack *s, TypeKind kind, char *name, TypeModifier mod,
                    Type *parent) {
 
   Type *n = calloc(1, sizeof(Type));

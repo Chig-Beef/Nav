@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Node.h"
+#include "StringManager.h"
 #include "Token.h"
 
 typedef struct Parser {
@@ -9,7 +10,9 @@ typedef struct Parser {
   Token tok;
   int index;
   Node out;
+  StringManager *sm;
 } Parser;
 
 void parse(Parser *p);
-void parserInit(Parser *p, char *sourceName, TokenList source);
+void parserInit(Parser *p, char *sourceName, TokenList source,
+                StringManager *sm);

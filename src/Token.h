@@ -1,6 +1,5 @@
 #pragma once
 
-#include "String.h"
 #include "list.h"
 
 typedef enum TokenCode {
@@ -84,13 +83,11 @@ typedef enum TokenCode {
   (Token) { NULL, (tokenType), l->line }
 
 typedef struct Token {
-  String *data; // If the token has a constant data, it's NULL, and can always
-                // be decided
+  char *data; // If the token has a constant data, it's NULL, and can always
+              // be decided
   TokenCode kind;
   int line; // The line this token came from
 } Token;
-
-void tokenDestroy(Token *t);
 
 char *tokenCodeString(TokenCode tc);
 

@@ -1,11 +1,8 @@
 #include "Node.h"
 #include "CharList.h"
 #include "Panic.h"
-#include "String.h"
-#include <stdio.h>
-#include <string.h>
 
-Node newNode(NodeCode kind, String *data, int line, char *sourceName) {
+Node newNode(NodeCode kind, char *data, int line, char *sourceName) {
   NodeList children;
 
   if (NodeListInit(&children, 1)) {
@@ -81,9 +78,6 @@ errno_t NodeListInsertAt(NodeList *l, Node item, int index) {
 
 // Recursively frees all children
 void nodeDestroy(Node *n) {
-  // Remove the data
-  strFree(n->data);
-
   // Free all children
   for (int i = 0; i < n->children.len; ++i) {
     nodeDestroy(n->children.p + i);
@@ -331,8 +325,8 @@ errno_t stringRec(Node *n, CharList *out, int indent) {
       return 1;
     }
   } else {
-    for (int i = 0; n->data->data[i]; ++i) {
-      if (CharListAppend(out, n->data->data[i])) {
+    for (int i = 0; n->data[i]; ++i) {
+      if (CharListAppend(out, n->data[i])) {
         return 1;
       }
     }
@@ -391,8 +385,8 @@ char *nodeString(Node *n) {
       panic("Couldn't string node (append issue)");
     }
   } else {
-    for (int i = 0; n->data->data[i]; ++i) {
-      if (CharListAppend(&out, n->data->data[i])) {
+    for (int i = 0; n->data[i]; ++i) {
+      if (CharListAppend(&out, n->data[i])) {
         panic("Couldn't string node (append issue)");
       }
     }

@@ -1,11 +1,8 @@
+#include "Hoister.h"
 #include "Node.h"
 #include "Panic.h"
 #include "Parser.h"
 #include <stdio.h>
-
-typedef struct Hoister {
-  Node enums, structs, funcs;
-} Hoister;
 
 void throwHoisterError(Hoister *h, char *fileName, int line, char msg[]) {
   printf("Error in the Hoister!\n"

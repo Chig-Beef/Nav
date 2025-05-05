@@ -2,7 +2,6 @@
 
 #define ZERO_NODE (Node){N_ILLEGAL, ZERO_LIST, NULL, 0}
 
-#include "String.h"
 #include "list.h"
 
 typedef enum NodeCode {
@@ -118,7 +117,7 @@ NEW_LIST_TYPE_HEADER(Node, Node)
 struct Node {
   NodeCode kind;
   NodeList children;
-  String *data;
+  char *data;
   int line;
   char *sourceName;
 };
@@ -130,4 +129,4 @@ char *nodeCodeString(NodeCode tc);
 // Returns a string describing the token. The resulting string must be freed.
 char *nodeString(Node *t);
 
-Node newNode(NodeCode kind, String *data, int line, char *sourceName);
+Node newNode(NodeCode kind, char *data, int line, char *sourceName);

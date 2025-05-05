@@ -1,6 +1,8 @@
+#include "Lexer.h"
 #include "Panic.h"
-#include "String.h"
+#include "StringManager.h"
 #include "Token.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,14 +15,6 @@
 #define VALID_NUM_CHAR(VAL) (IS_DIGIT(VAL) || (VAL) == '.' || (VAL) == '_')
 #define STR_BUFF_SIZE 100
 
-typedef struct Lexer {
-  char *sourceName;
-  FILE *source;
-  char curChar, peekChar;
-  int line;
-  TokenList out;
-} Lexer;
-
 void nextChar(Lexer *l) {
   l->curChar = l->peekChar;
   l->peekChar = fgetc(l->source);
@@ -30,11 +24,12 @@ void nextChar(Lexer *l) {
   }
 }
 
-void lexerInit(Lexer *l, char sourceName[], FILE *source) {
+void lexerInit(Lexer *l, char sourceName[], FILE *source, StringManager *sm) {
   l->sourceName = sourceName;
   l->source = source;
   l->line = 1;
   l->peekChar = 0;
+  l->sm = sm;
 
   nextChar(l);
   nextChar(l);
@@ -271,18 +266,9 @@ void lex(Lexer *l) {
       strBuff[dynLen] = '\'';
       ++dynLen;
 
-      // Copy over to dynamic allocation, freeing up strBuff for next char,
-      // string, etc
-      text = malloc((dynLen + 1) * sizeof(char));
-      if (!text) {
-        panic("OOM\n");
-      }
-      if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
-        panic("Couldn't copy string\n");
-      }
-
+      // Register new string, adding to token
       // Save the token
-      token = (Token){strNew(text, true), T_CHAR, l->line};
+      token = (Token){getString(l->sm, strBuff), T_CHAR, l->line};
       break;
 
     // String
@@ -326,19 +312,8 @@ void lex(Lexer *l) {
       strBuff[dynLen] = l->curChar;
       ++dynLen;
 
-      // Copy over to dynamic allocation, freeing up strBuff for next char,
-      // string, etc
-      text = malloc((dynLen + 1) * sizeof(char));
-      if (!text) {
-        panic("OOM\n");
-      }
-      if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
-        panic("Couldn't copy string\n");
-      }
-      text[dynLen] = 0;
-
       // Save the token
-      token = (Token){strNew(text, true), T_STRING, l->line};
+      token = (Token){getString(l->sm, strBuff), T_STRING, l->line};
       break;
 
     default:
@@ -372,26 +347,15 @@ void lex(Lexer *l) {
           }
         }
 
-        // Copy over to dynamic allocation, freeing up strBuff for next char,
-        // string, etc
-        text = malloc((dynLen + 1) * sizeof(char));
-        if (!text) {
-          panic("OOM\n");
-        }
-        if (strcpy_s(text, (unsigned long long)(dynLen + 1), strBuff)) {
-          panic("Couldn't copy string\n");
-        }
-        text[dynLen] = 0;
-
-        if (text[dynLen - 1] == '.') {
+        if (strBuff[dynLen - 1] == '.') {
           throwLexerError(l, "Digits after decimal", '.');
         }
 
         // Save the token
         if (isFloat) {
-          token = (Token){strNew(text, true), T_FLOAT, l->line};
+          token = (Token){getString(l->sm, strBuff), T_FLOAT, l->line};
         } else {
-          token = (Token){strNew(text, true), T_INT, l->line};
+          token = (Token){getString(l->sm, strBuff), T_INT, l->line};
         }
       }
 
@@ -415,59 +379,48 @@ void lex(Lexer *l) {
         // Save the token
         // NOTE: All of these keywords are known ahead of time, therefore no
         // dynamic allocation is needed
-        if (!strcmp(strBuff, "break")) {
+        if (cmpStr(strBuff, "break")) {
           token = NEW_TOKEN(T_BREAK);
-        } else if (!strcmp(strBuff, "call")) {
+        } else if (cmpStr(strBuff, "call")) {
           token = NEW_TOKEN(T_CALL);
-        } else if (!strcmp(strBuff, "case")) {
+        } else if (cmpStr(strBuff, "case")) {
           token = NEW_TOKEN(T_CASE);
-        } else if (!strcmp(strBuff, "const")) {
+        } else if (cmpStr(strBuff, "const")) {
           token = NEW_TOKEN(T_CONST);
-        } else if (!strcmp(strBuff, "continue")) {
+        } else if (cmpStr(strBuff, "continue")) {
           token = NEW_TOKEN(T_CONTINUE);
-        } else if (!strcmp(strBuff, "default")) {
+        } else if (cmpStr(strBuff, "default")) {
           token = NEW_TOKEN(T_DEFAULT);
-        } else if (!strcmp(strBuff, "elif")) {
+        } else if (cmpStr(strBuff, "elif")) {
           token = NEW_TOKEN(T_ELIF);
-        } else if (!strcmp(strBuff, "else")) {
+        } else if (cmpStr(strBuff, "else")) {
           token = NEW_TOKEN(T_ELSE);
-        } else if (!strcmp(strBuff, "enum")) {
+        } else if (cmpStr(strBuff, "enum")) {
           token = NEW_TOKEN(T_ENUM);
-        } else if (!strcmp(strBuff, "for")) {
+        } else if (cmpStr(strBuff, "for")) {
           token = NEW_TOKEN(T_FOR);
-        } else if (!strcmp(strBuff, "fun")) {
+        } else if (cmpStr(strBuff, "fun")) {
           token = NEW_TOKEN(T_FUN);
-        } else if (!strcmp(strBuff, "if")) {
+        } else if (cmpStr(strBuff, "if")) {
           token = NEW_TOKEN(T_IF);
-        } else if (!strcmp(strBuff, "let")) {
+        } else if (cmpStr(strBuff, "let")) {
           token = NEW_TOKEN(T_LET);
-        } else if (!strcmp(strBuff, "make")) {
+        } else if (cmpStr(strBuff, "make")) {
           token = NEW_TOKEN(T_MAKE);
-        } else if (!strcmp(strBuff, "new")) {
+        } else if (cmpStr(strBuff, "new")) {
           token = NEW_TOKEN(T_NEW);
-        } else if (!strcmp(strBuff, "return")) {
+        } else if (cmpStr(strBuff, "return")) {
           token = NEW_TOKEN(T_RETURN);
-        } else if (!strcmp(strBuff, "struct")) {
+        } else if (cmpStr(strBuff, "struct")) {
           token = NEW_TOKEN(T_STRUCT);
-        } else if (!strcmp(strBuff, "switch")) {
+        } else if (cmpStr(strBuff, "switch")) {
           token = NEW_TOKEN(T_SWITCH);
-        } else if (!strcmp(strBuff, "true")) {
+        } else if (cmpStr(strBuff, "true")) {
           token = NEW_TOKEN(T_TRUE);
-        } else if (!strcmp(strBuff, "false")) {
+        } else if (cmpStr(strBuff, "false")) {
           token = NEW_TOKEN(T_FALSE);
         } else {
-          // Copy over to dynamic allocation, freeing up strBuff for next char,
-          // string, etc
-          text = malloc((dynLen + 1) * sizeof(char));
-          if (!text) {
-            panic("OOM\n");
-          }
-
-          if (strcpy_s(text, STR_BUFF_SIZE, strBuff)) {
-            panic("Couldn't copy string\n");
-          }
-
-          token = (Token){strNew(text, true), T_IDENTIFIER, l->line};
+          token = (Token){getString(l->sm, strBuff), T_IDENTIFIER, l->line};
         }
       }
 

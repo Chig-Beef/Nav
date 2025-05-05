@@ -1,11 +1,8 @@
 #include "Token.h"
 #include "Panic.h"
-#include "String.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-void tokenDestroy(Token *t) { strFree(t->data); }
 
 char *tokenCodeString(TokenCode tc) {
   switch (tc) {
@@ -158,10 +155,10 @@ char *tokenString(Token t) {
   char *out;
 
   if (t.data) {
-    out = malloc((strlen(kind) + strlen(t.data->data) + 4) * sizeof(char));
+    out = malloc((strlen(kind) + strlen(t.data) + 4) * sizeof(char));
 
     // Format
-    sprintf(out, "(%s %s)", t.data->data, kind);
+    sprintf(out, "(%s %s)", t.data, kind);
   } else {
     out = malloc((strlen(kind) + 4 + 4) * sizeof(char));
 

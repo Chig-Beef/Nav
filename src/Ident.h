@@ -2,7 +2,6 @@
 
 typedef struct Ident Ident;
 
-#include "String.h"
 #include "TypeModifier.h"
 #include "Types.h"
 
@@ -10,7 +9,7 @@ typedef struct Ident Ident;
   (Ident) { NULL, NULL, NULL }
 
 typedef struct Ident {
-  String *name;
+  char *name;
   Type *type;  // A type of NULL means that this is a type
   Ident *next; // Linked list structure (stack)
 } Ident;
@@ -23,6 +22,6 @@ typedef struct IdentStack {
 
 Ident identStackPop(IdentStack *s);
 
-void identStackPush(IdentStack *s, String *name, Type *type);
+void identStackPush(IdentStack *s, char *name, Type *type);
 
 void identStackClear(IdentStack *s);

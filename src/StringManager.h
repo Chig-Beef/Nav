@@ -1,6 +1,7 @@
 #pragma once
 
 #include <corecrt.h>
+#include <stdbool.h>
 
 typedef struct StringManager {
   // Keeps track of all string
@@ -21,3 +22,6 @@ void destroyStringManager(StringManager *sm);
 // Furthermore, the string manager will have the inability to
 // allocate a new string.
 char *getString(StringManager *sm, const char *match);
+
+// Returns true if the strings are the same
+bool cmpStr(const char *a, const char *b);

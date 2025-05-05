@@ -1,9 +1,8 @@
 #include "Ident.h"
 #include "Panic.h"
-#include "String.h"
 #include <stdlib.h>
 
-void identStackPush(IdentStack *s, String *name, Type *type) {
+void identStackPush(IdentStack *s, char *name, Type *type) {
   Ident *n = calloc(1, sizeof(Ident));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");

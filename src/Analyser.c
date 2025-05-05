@@ -1,36 +1,15 @@
+#include "Analyser.h"
 #include "Context.h"
 #include "Fun.h"
 #include "Ident.h"
 #include "Node.h"
-#include "String.h"
+#include "StringManager.h"
 #include "TypeModifier.h"
 #include "Types.h"
+
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef struct PreDefs {
-  // Primitive types
-  Type *INT, *BOOL, *CHAR, *FLOAT, *FUN, *VOIDPTR, *STRING;
-
-  // Functions
-  Fun *PRINT;
-
-  // Vars
-  Ident *NIL;
-} PreDefs;
-
-typedef struct Analyser {
-  // Source
-  Node inEnums, inStructs, inFuns;
-
-  // Defined variables, types, etc
-  IdentStack vars;
-  TypeStack types;
-  FunStack funs;
-
-  PreDefs preDefs;
-
-} Analyser;
 
 void throwAnalyserError(Analyser *a, char *fileName, int line, char func[],
                         char msg[]) {
@@ -40,24 +19,26 @@ void throwAnalyserError(Analyser *a, char *fileName, int line, char func[],
   exit(1);
 }
 
-void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
+void analyserInit(Analyser *a, Node enums, Node structs, Node funcs,
+                  StringManager *sm) {
   a->inEnums = enums;
   a->inStructs = structs;
   a->inFuns = funcs;
   a->vars = (IdentStack){NULL, 0};
   a->types = (TypeStack){NULL, 0};
   a->funs = (FunStack){NULL, 0};
+  a->sm = sm;
 
-  typeStackPush(&a->types, TK_ABS, strNew("int", false), TM_NONE, NULL);
+  typeStackPush(&a->types, TK_ABS, getString(sm, "int"), TM_NONE, NULL);
   a->preDefs.INT = a->types.tail;
 
-  typeStackPush(&a->types, TK_ABS, strNew("bool", false), TM_NONE, NULL);
+  typeStackPush(&a->types, TK_ABS, getString(sm, "bool"), TM_NONE, NULL);
   a->preDefs.BOOL = a->types.tail;
 
-  typeStackPush(&a->types, TK_ABS, strNew("char", false), TM_NONE, NULL);
+  typeStackPush(&a->types, TK_ABS, getString(sm, "char"), TM_NONE, NULL);
   a->preDefs.CHAR = a->types.tail;
 
-  typeStackPush(&a->types, TK_ABS, strNew("float", false), TM_NONE, NULL);
+  typeStackPush(&a->types, TK_ABS, getString(sm, "float"), TM_NONE, NULL);
   a->preDefs.FLOAT = a->types.tail;
 
   typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, NULL);
@@ -66,10 +47,10 @@ void analyserInit(Analyser *a, Node enums, Node structs, Node funcs) {
   typeStackPush(&a->types, TK_COMP, NULL, TM_POINTER, a->preDefs.CHAR);
   a->preDefs.STRING = a->types.tail;
 
-  funStackPush(&a->funs, strNew("print", false));
+  funStackPush(&a->funs, getString(sm, "print"));
   a->preDefs.PRINT = a->funs.tail;
 
-  identStackPush(&a->vars, strNew("nil", false), a->preDefs.VOIDPTR);
+  identStackPush(&a->vars, getString(sm, "nil"), a->preDefs.VOIDPTR);
   a->preDefs.NIL = a->vars.tail;
 }
 
@@ -99,14 +80,14 @@ void analyseDefaultBlock(Analyser *a, Context c, Node *n);
 void analyseBlock(Analyser *a, Context c, Node *n);
 void analyseOperator(Analyser *a, Context c, Node *n, Type *left, Type *right);
 
-Ident *varExists(Analyser *a, String *name) {
+Ident *varExists(Analyser *a, char *name) {
   // printf("Start\n");
 
   Ident *curIdent = a->vars.tail;
 
   while (curIdent != NULL) {
     // printf("%s\n", curIdent->name->data);
-    if (strEql(curIdent->name, name)) {
+    if (cmpStr(curIdent->name, name)) {
       return curIdent;
     }
 
@@ -117,11 +98,11 @@ Ident *varExists(Analyser *a, String *name) {
   return NULL;
 }
 
-Fun *funExists(Analyser *a, String *name) {
+Fun *funExists(Analyser *a, char *name) {
   Fun *curFun = a->funs.tail;
 
   while (curFun != NULL) {
-    if (strEql(curFun->name, name)) {
+    if (cmpStr(curFun->name, name)) {
       return curFun;
     }
 
@@ -132,11 +113,15 @@ Fun *funExists(Analyser *a, String *name) {
   return NULL;
 }
 
-Type *typeExists(Analyser *a, String *name) {
+Type *typeExists(Analyser *a, char *name) {
   Type *curType = a->types.tail;
 
+  // printf("Checking type exists: %s\n", name);
+
   while (curType != NULL) {
-    if (strEql(curType->name, name)) {
+    // printf("\tChecking against: %s\n", curType->name);
+
+    if (cmpStr(curType->name, name)) {
       return curType;
     }
 
@@ -152,13 +137,13 @@ void analyseEnums(Analyser *a) {
 
   Node *enumNode, *enumChildNode;
   Type *enumType;
-  String *enumName;
+  char *enumName;
 
   for (int i = 0; i < a->inEnums.children.len; ++i) {
     enumNode = a->inEnums.children.p + i;
-    enumName = strGet(enumNode->children.p[1].data);
+    enumName = enumNode->children.p[1].data;
 
-    printf("Analysing enum %s\n", enumName->data);
+    // printf("Analysing enum %s\n", enumName);
 
     if (typeExists(a, enumName)) {
       throwAnalyserError(a, enumNode->sourceName, enumNode->line, FUNC_NAME,
@@ -191,11 +176,11 @@ void analyseStructs(Analyser *a) {
   Node *structNode, *propTypeNode, *propNode;
   Type *structType;
   int numProps;
-  String *structName;
+  char *structName;
 
   for (int i = 0; i < a->inStructs.children.len; ++i) {
     structNode = a->inStructs.children.p + i;
-    structName = strGet(structNode->children.p[1].data);
+    structName = structNode->children.p[1].data;
 
     if (typeExists(a, structName)) {
       throwAnalyserError(a, structNode->sourceName, structNode->line, FUNC_NAME,
@@ -203,8 +188,8 @@ void analyseStructs(Analyser *a) {
     }
 
     // Add the struct as a type
-    typeStackPush(&a->types, TK_ABS, strGet(structNode->children.p[1].data),
-                  TM_NONE, NULL);
+    typeStackPush(&a->types, TK_ABS, structNode->children.p[1].data, TM_NONE,
+                  NULL);
     structType = a->types.tail;
 
     // Each property of this struct
@@ -241,14 +226,14 @@ void analyseFuncs(Analyser *a) {
   Node *funcNode, *paramTypeNode, *paramNode;
   Fun *funcDec;
   int numParams;
-  String *funcName;
+  char *funcName;
 
   for (int i = 0; i < a->inFuns.children.len; ++i) {
 
     funcNode = a->inFuns.children.p + i;
-    funcName = strGet(funcNode->children.p[1].data);
+    funcName = funcNode->children.p[1].data;
 
-    printf("Analysing function %s\n", funcName->data);
+    // printf("Analysing function %s\n", funcName);
 
     if (funExists(a, funcName)) {
       throwAnalyserError(a, funcNode->sourceName, funcNode->line, FUNC_NAME,
@@ -256,7 +241,7 @@ void analyseFuncs(Analyser *a) {
     }
 
     // Add the function
-    funStackPush(&a->funs, strGet(funcNode->children.p[1].data));
+    funStackPush(&a->funs, funcNode->children.p[1].data);
     funcDec = a->funs.tail;
 
     // Each param of this func
@@ -345,7 +330,7 @@ bool typeEqual(Type *t1, Type *t2) {
     return false;
   }
 
-  if (!strEql(t1->name, t2->name)) {
+  if (!cmpStr(t1->name, t2->name)) {
     return false;
   }
 
@@ -489,7 +474,7 @@ void analyseCrement(Analyser *a, Context c, Node *n) {
   if (n->children.p[1].kind == N_IDENTIFIER) {
     Ident *var = varExists(a, n->children.p[1].data);
     if (var == NULL) {
-      printf("\nVariable name: %s\n\n", n->children.p[1].data->data);
+      printf("\nVariable name: %s\n\n", n->children.p[1].data);
       throwAnalyserError(a, n->sourceName, n->children.p[1].line, FUNC_NAME,
                          "Variable doesn't exist");
     }
@@ -525,7 +510,7 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
   // printf("%s\n", out);
   // free(out);
 
-  String *varName = n->children.p[2].data;
+  char *varName = n->children.p[2].data;
 
   if (varExists(a, varName) != NULL) {
     throwAnalyserError(a, n->sourceName, n->children.p[2].line, FUNC_NAME,
@@ -548,7 +533,7 @@ void analyseNewAssignment(Analyser *a, Context c, Node *n) {
                        "Expression in assignment wasn't correct type");
   }
 
-  identStackPush(&a->vars, strGet(n->children.p[2].data), t);
+  identStackPush(&a->vars, n->children.p[2].data, t);
 
   // printf("End NewAssign %s\n", nodeCodeString(n->kind));
 }
@@ -566,7 +551,7 @@ void analyseAssignment(Analyser *a, Context c, Node *n) {
   Type *varType = NULL;
 
   if (n->children.p[0].kind == N_IDENTIFIER) {
-    String *varName = n->children.p[0].data;
+    char *varName = n->children.p[0].data;
     Ident *var = varExists(a, varName);
     if (var == NULL) {
       throwAnalyserError(a, n->sourceName, n->children.p[0].line, FUNC_NAME,
@@ -728,7 +713,7 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
   case N_IDENTIFIER:
     Ident *v = varExists(a, n->data);
     if (v == NULL) {
-      printf("%s\n", n->data->data);
+      printf("%s\n", n->data);
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "That variable doesn't exist");
     }
@@ -755,7 +740,7 @@ Type *analyseValue(Analyser *a, Context c, Node *n) {
 Type *analyseAccess(Analyser *a, Context c, Node *n) {
   char FUNC_NAME[] = "analyseAccess";
 
-  String *propName;
+  char *propName;
 
   Node *parentNode = n;
   Ident *parent = varExists(a, n->children.p[0].data);
@@ -775,7 +760,7 @@ Type *analyseAccess(Analyser *a, Context c, Node *n) {
 
     // Search through the properties of the parent for a match
     for (int i = 0; i < parentType->propsLen; ++i) {
-      if (strEql(parentType->props[i].name, propName)) {
+      if (cmpStr(parentType->props[i].name, propName)) {
         child = parentType->props + i;
       }
     }
@@ -808,7 +793,7 @@ Type *analyseAccess(Analyser *a, Context c, Node *n) {
 
   // Search through the properties of the parent for a match
   for (int i = 0; i < parentType->propsLen; ++i) {
-    if (strEql(parentType->props[i].name, propName)) {
+    if (cmpStr(parentType->props[i].name, propName)) {
       return parentType->props[i].type;
     }
   }
@@ -973,7 +958,7 @@ Type *analyseFuncCall(Analyser *a, Context c, Node *n) {
 
   Fun *fun = funExists(a, n->children.p[1].data);
   if (fun == NULL) {
-    printf("Function name %s\n", n->children.p[1].data->data);
+    printf("Function name %s\n", n->children.p[1].data);
     throwAnalyserError(a, n->sourceName, n->children.p[1].line, FUNC_NAME,
                        "Function doesn't exist");
   }
@@ -1490,7 +1475,7 @@ Type *analyseComplexType(Analyser *a, Context c, Node *n) {
   if (n->kind == N_IDENTIFIER) {
     Type *t = typeExists(a, n->data);
     if (t == NULL) {
-      printf("\nRecieved Type: %s\n\n", n->data->data);
+      printf("\nRecieved Type: %s\n\n", n->data);
       throwAnalyserError(a, n->sourceName, n->line, FUNC_NAME,
                          "Couldn't find type");
     }
@@ -1538,7 +1523,7 @@ void analyseBlock(Analyser *a, Context c, Node *n) {
   // printf("Block %s\n", nodeCodeString(n->kind));
 
   for (int i = 1; i < n->children.len - 1; ++i) {
-    // printf("Statement %s\n", nodeCodeString(n->children.p[i].kind));
+    printf("Statement %s\n", nodeCodeString(n->children.p[i].kind));
     switch (n->children.p[i].kind) {
     case N_LONE_CALL:
       analyseLoneCall(a, c, n->children.p + i);

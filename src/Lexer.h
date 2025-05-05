@@ -1,7 +1,9 @@
 #pragma once
 
+#include "StringManager.h"
 #include "Token.h"
 #include "list.h"
+
 #include <stdio.h>
 
 typedef struct Lexer {
@@ -11,9 +13,10 @@ typedef struct Lexer {
   char peekChar;
   int line;
   TokenList out;
+  StringManager *sm;
 } Lexer;
 
-void lexerInit(Lexer *l, char sourceName[], FILE *source);
+void lexerInit(Lexer *l, char sourceName[], FILE *source, StringManager *sm);
 
 // Returns the tokens of the source in the lexer, the resulting list must be
 // destroyed

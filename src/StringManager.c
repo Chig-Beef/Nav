@@ -1,6 +1,7 @@
 #include "StringManager.h"
 
 #include <corecrt.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +42,11 @@ void destroyStringManager(StringManager *sm) {
 // allocate a new string.
 char *getString(StringManager *sm, const char *match) {
   // Check current registry
+  int x = sm->regCount;
+  // printf("Checking for match %s\n", match);
+
   for (int i = 0; i < sm->regCount; ++i) {
+    printf("%s\n", sm->registry[i]);
     if (!strcmp(sm->registry[i], match)) {
       return sm->registry[i];
     }
@@ -66,5 +71,21 @@ char *getString(StringManager *sm, const char *match) {
     ++sm->regNext;
   }
 
+  // Add that line terminator!
+  *sm->regNext = 0;
+  sm->regNext++;
+
   return sm->registry[sm->regCount - 1];
+}
+
+bool cmpStr(const char *a, const char *b) {
+  if (a == b) {
+    return true;
+  }
+
+  if (a == NULL || b == NULL) {
+    return false;
+  }
+
+  return !strcmp(a, b);
 }

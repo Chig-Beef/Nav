@@ -1,19 +1,24 @@
 #include "Emitter.h"
 #include "Node.h"
 #include "Panic.h"
+#include "StringManager.h"
+
 #include <stdio.h>
 
 #define PUSH_CHAR(character)                                                   \
   if (CharListAppend(out, (character)))                                        \
     panic("Couldn't append to output");
 
-void emitterInit(Emitter *e, Node enums, Node structs, Node funs) {
+void emitterInit(Emitter *e, Node enums, Node structs, Node funs,
+                 StringManager *sm) {
   e->inEnums = enums;
   e->inStructs = structs;
   e->inFuns = funs;
   e->tabs = 0;
 
-  e->nil = strNew("nil", false);
+  e->nil = getString(sm, "nil");
+
+  e->sm = sm;
 }
 
 void emitTabs(Emitter *e, CharList *out) {
@@ -30,7 +35,7 @@ void emitFuncCall(Emitter *e, CharList *out, Node n);
 void emitSwitchState(Emitter *e, CharList *out, Node n);
 
 void emitEnum(Emitter *e, CharList *out, Node n) {
-  char *enumName = n.children.p[1].data->data;
+  char *enumName = n.children.p[1].data;
 
   // typedef
   PUSH_CHAR('t')
@@ -69,7 +74,7 @@ void emitEnum(Emitter *e, CharList *out, Node n) {
       PUSH_CHAR('\n')
       PUSH_CHAR('\t')
 
-      char *childName = node.data->data;
+      char *childName = node.data;
       int i = 0;
       while (childName[i]) {
         PUSH_CHAR(childName[i])
@@ -101,7 +106,7 @@ void emitEnums(Emitter *e, CharList *out) {
 }
 
 void emitIdentifier(Emitter *e, CharList *out, Node n) {
-  if (strEql(n.data, e->nil)) {
+  if (cmpStr(n.data, e->nil)) {
     PUSH_CHAR('N')
     PUSH_CHAR('U')
     PUSH_CHAR('L')
@@ -109,7 +114,7 @@ void emitIdentifier(Emitter *e, CharList *out, Node n) {
     return;
   }
 
-  char *name = n.data->data;
+  char *name = n.data;
   int i = 0;
   while (name[i]) {
     PUSH_CHAR(name[i])
@@ -372,7 +377,7 @@ void emitComplexType(Emitter *e, CharList *out, Node n) {
 }
 
 void emitStruct(Emitter *e, CharList *out, Node n) {
-  char *structName = n.children.p[1].data->data;
+  char *structName = n.children.p[1].data;
 
   // typedef
   PUSH_CHAR('t')
@@ -1021,12 +1026,19 @@ CharList emit(Emitter *e) {
   if (CharListInit(&out, 1)) {
     panic("Couldn't initialise output list");
   }
+  // printf("Initialised emitting list\n");
 
   emitHeaders(e, &out);
+  // printf("Emitted headers\n");
 
   emitEnums(e, &out);
+  // printf("Emitted enums\n");
+
   emitStructs(e, &out);
+  // printf("Emitted structs\n");
+
   emitFuns(e, &out);
+  // printf("Emitted functions\n");
 
   return out;
 }

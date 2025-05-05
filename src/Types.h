@@ -3,7 +3,7 @@
 typedef struct Type Type;
 
 #include "Ident.h"
-#include "String.h"
+
 #define ZERO_TYPE                                                              \
   (Type) { TK_ABS, NULL, NULL, 0, TM_NONE, NULL, NULL }
 
@@ -16,7 +16,7 @@ typedef struct Type {
   TypeKind kind;
 
   // Absolute type properties
-  String *name;
+  char *name;
   Ident *props; // An array of props, used for structs
   int propsLen;
 
@@ -34,7 +34,7 @@ typedef struct TypeStack {
   int len;
 } TypeStack;
 
-void typeStackPush(TypeStack *s, TypeKind kind, String *name, TypeModifier mod,
+void typeStackPush(TypeStack *s, TypeKind kind, char *name, TypeModifier mod,
                    Type *parent);
 
 // The reason we return the thing and not the pointer to the thing is because we

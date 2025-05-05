@@ -1,14 +1,13 @@
 #pragma once
 
 #include "Ident.h"
-#include "String.h"
 
 #define ZERO_FUN (Fun){NULL, NULL, NULL, NULL, 0}
 
 typedef struct Fun Fun;
 
 typedef struct Fun {
-  String *name;
+  char *name;
   Fun *next; // Linked list structure (stack)
 
   Type *ret;     // If this is of type fun, what this function returns
@@ -24,6 +23,6 @@ typedef struct FunStack {
 
 Fun funStackPop(FunStack *s);
 
-void funStackPush(FunStack *s, String *name);
+void funStackPush(FunStack *s, char *name);
 
 void funStackClear(FunStack *s);

@@ -1,19 +1,24 @@
 #include "Optimiser.h"
 #include "Node.h"
 #include "Panic.h"
-#include "String.h"
 #include "list.h"
+
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-void optimiserInit(Optimiser *o, Node funs) { o->src = funs; }
+void optimiserInit(Optimiser *o, Node funs, StringManager *sm) {
+  o->src = funs;
+  o->sm = sm;
+}
 
 // NOTE: All optimisation methods return whether they produced a change, if so,
 // then further optimisation could take place from earlier steps, and therefore
 // the optimiser should go back to the start and optimise again
 
 typedef struct Variable {
-  String *name;
+  char *name;
   bool used;
   Node *decBlock;
   int decIndex;
@@ -34,11 +39,10 @@ NEW_LIST_TYPE(Variable, Var)
     panic("Couldn't remove from nodelist\n");                                  \
   }
 
-void scrubVariable(Optimiser *o, String *name, Node *n, Node *parent,
-                   int index) {
+void scrubVariable(Optimiser *o, char *name, Node *n, Node *parent, int index) {
   Node *assignment;
   Node *ident;
-  String *other;
+  char *other;
 
   switch (n->kind) {
   case N_VAR_DEC:
@@ -56,7 +60,7 @@ void scrubVariable(Optimiser *o, String *name, Node *n, Node *parent,
         }
         other = ident->data;
 
-        if (strEql(name, other)) {
+        if (cmpStr(name, other)) {
           NODE_LIST_REMOVE(&parent->children, index)
         }
       } else {
@@ -69,7 +73,7 @@ void scrubVariable(Optimiser *o, String *name, Node *n, Node *parent,
         }
         other = ident->data;
 
-        if (strEql(name, other)) {
+        if (cmpStr(name, other)) {
           NODE_LIST_REMOVE(&parent->children, index)
         }
       }
@@ -139,7 +143,7 @@ void scrubVariable(Optimiser *o, String *name, Node *n, Node *parent,
 }
 
 void removeVariable(Optimiser *o, Variable v) {
-  printf("Removing variable %s\n", v.name->data);
+  printf("Removing variable %s\n", v.name);
   scrubVariable(o, v.name, v.decBlock, NULL, 0);
 
   // Remove the original declaration
@@ -186,12 +190,12 @@ void variableEliminationValue(Optimiser *o, Node *val, VarList *vars) {
     return;
 
   case N_IDENTIFIER:
-    String *name = val->data;
+    char *name = val->data;
 
     for (int i = 0; i < vars->len; ++i) {
       Variable *v = vars->p + i;
 
-      if (strEql(name, v->name)) {
+      if (cmpStr(name, v->name)) {
         v->used = true;
       }
     }
@@ -509,7 +513,7 @@ union ConstVal {
 typedef struct Const {
   NodeCode type;
   union ConstVal val;
-  String *data;
+  char *data;
 } Const;
 
 Const getConstFromValue(Optimiser *o, Node *val) {
@@ -524,11 +528,11 @@ Const getConstFromValue(Optimiser *o, Node *val) {
     break;
   case N_INT:
     out.type = N_INT;
-    out.val.i = atoi(val->data->data);
+    out.val.i = atoi(val->data);
     break;
   case N_STRING:
     out.type = N_STRING;
-    out.val.s = val->data->data;
+    out.val.s = val->data;
     break;
   case N_TRUE:
     out.type = N_TRUE;
@@ -785,7 +789,7 @@ bool expressionFold(Optimiser *o, Node *n) {
     }
 
     // Same name?
-    if (!strEql(n->children.p[0].data, n->children.p[2].data)) {
+    if (strcmp(n->children.p[0].data, n->children.p[2].data)) {
       return changed;
     }
 
@@ -799,7 +803,7 @@ bool expressionFold(Optimiser *o, Node *n) {
       break;
     case N_DIV: // Results in 1
       final.kind = N_INT;
-      final.data = strNew("1", false);
+      final.data = getString(o->sm, "1");
       break;
     case N_EQ: // Results in true
       final.kind = N_TRUE;
@@ -818,18 +822,18 @@ bool expressionFold(Optimiser *o, Node *n) {
       break;
     case N_MOD: // Results in 0
       final.kind = N_INT;
-      final.data = strNew("0", false);
+      final.data = getString(o->sm, "0");
       break;
     case N_NEQ: // Results in false
       final.kind = N_FALSE;
       break;
     case N_SUB: // Results in 0
       final.kind = N_INT;
-      final.data = strNew("0", false);
+      final.data = getString(o->sm, "0");
       break;
     case N_XOR: // Results in 0
       final.kind = N_INT;
-      final.data = strNew("0", false);
+      final.data = getString(o->sm, "0");
       break;
     default:
       return changed;
@@ -853,7 +857,7 @@ bool expressionFold(Optimiser *o, Node *n) {
   bool bv;
   int iv;
   char *v;
-  String *final;
+  char *final;
 
   switch (left.type) {
   case N_INT:
@@ -925,7 +929,10 @@ bool expressionFold(Optimiser *o, Node *n) {
     }
 
     // Convert into string
-    final = strNew(v, true);
+    final = getString(o->sm, v);
+
+    // Free v since it's on the string registry now
+    free(v);
 
     // Replace left with new node
     n->children.p[0].data = final;
@@ -984,7 +991,7 @@ typedef struct Stopper {
   Const c;
 } Stopper;
 
-Stopper constantPropogateRec(Optimiser *o, Node *n, String *name, Const c) {
+Stopper constantPropogateRec(Optimiser *o, Node *n, char *name, Const c) {
   // printf("Propogating to %s\n", nodeCodeString(n->kind));
 
   Node *assignment;
@@ -1000,7 +1007,7 @@ Stopper constantPropogateRec(Optimiser *o, Node *n, String *name, Const c) {
     if (assignment->children.p[0].kind == N_CREMENT) {
       assignment = assignment->children.p;
 
-      if (!strEql(name, assignment->children.p[1].data)) {
+      if (strcmp(name, assignment->children.p[1].data)) {
         break;
       }
 
@@ -1036,7 +1043,7 @@ Stopper constantPropogateRec(Optimiser *o, Node *n, String *name, Const c) {
       return (Stopper){false, true, false, c};
     }
 
-    if (!strEql(name, assignment->children.p[0].data)) {
+    if (strcmp(name, assignment->children.p[0].data)) {
       break;
     }
     c = getConstFromExpr(o,
@@ -1047,7 +1054,7 @@ Stopper constantPropogateRec(Optimiser *o, Node *n, String *name, Const c) {
     return (Stopper){false, true, false, c};
 
   case N_IDENTIFIER:
-    if (strEql(name, n->data)) {
+    if (cmpStr(name, n->data)) {
       n->data = c.data;
       n->kind = c.type;
       return (Stopper){true, false, false};
@@ -1111,7 +1118,7 @@ bool constantPropogation(Optimiser *o, Node *n, Node *parent, int i) {
   bool changed = false;
 
   // Keep a reference to the name of the variable
-  String *name = assignment->children.p[2].data;
+  char *name = assignment->children.p[2].data;
 
   Stopper s;
 

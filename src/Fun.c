@@ -1,9 +1,8 @@
 #include "Fun.h"
 #include "Panic.h"
-#include "String.h"
 #include <stdlib.h>
 
-void funStackPush(FunStack *s, String *name) {
+void funStackPush(FunStack *s, char *name) {
   Fun *n = calloc(1, sizeof(Fun));
   if (n == NULL) {
     panic("Couldn't allocated node for stack");

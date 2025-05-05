@@ -2,6 +2,7 @@
 
 #include "CharList.h"
 #include "Node.h"
+#include "StringManager.h"
 
 typedef struct Emitter {
   // Source
@@ -11,9 +12,12 @@ typedef struct Emitter {
   int tabs;
 
   // NULL string
-  String *nil;
+  char *nil;
+
+  StringManager *sm;
 } Emitter;
 
-void emitterInit(Emitter *e, Node enums, Node structs, Node funs);
+void emitterInit(Emitter *e, Node enums, Node structs, Node funs,
+                 StringManager *sm);
 
 CharList emit(Emitter *e);
