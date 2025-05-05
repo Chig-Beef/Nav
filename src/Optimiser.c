@@ -44,6 +44,8 @@ void scrubVariable(Optimiser *o, String *name, Node *n, Node *parent,
   case N_VAR_DEC:
     assignment = n->children.p;
 
+    printf("Found var dec %i\n", assignment->line);
+
     // Don't even look at new assignment
     if (assignment->kind == N_ASSIGNMENT) {
       if (assignment->children.p[0].kind == N_CREMENT) {
@@ -58,6 +60,9 @@ void scrubVariable(Optimiser *o, String *name, Node *n, Node *parent,
           NODE_LIST_REMOVE(&parent->children, index)
         }
       } else {
+
+        printf("Assignmnent %i\n", assignment->line);
+
         ident = assignment->children.p;
         if (ident->kind == N_ACCESS) {
           ident = ident->children.p;
@@ -975,43 +980,108 @@ bool expressionFoldingRec(Optimiser *o, Node *n) {
 typedef struct Stopper {
   bool changed;
   bool stop;
+  bool stopAtLevel; // Stop later, but for this block, keep going
+  Const c;
 } Stopper;
 
 Stopper constantPropogateRec(Optimiser *o, Node *n, String *name, Const c) {
   // printf("Propogating to %s\n", nodeCodeString(n->kind));
 
+  Node *assignment;
+
   switch (n->kind) {
-  case N_CREMENT:
-    if (strEql(name, n->children.p[1].data)) {
-      return (Stopper){false, true};
+  case N_VAR_DEC:
+    assignment = n->children.p;
+
+    if (assignment->kind != N_ASSIGNMENT) {
+      break;
     }
-    break;
-  case N_ASSIGNMENT:
-    if (strEql(name, n->children.p[0].data)) {
-      return (Stopper){false, true};
+
+    if (assignment->children.p[0].kind == N_CREMENT) {
+      assignment = assignment->children.p;
+
+      if (!strEql(name, assignment->children.p[1].data)) {
+        break;
+      }
+
+      if (assignment->children.p[0].kind == N_INC) {
+        switch (c.type) {
+        case N_CHAR:
+          c.val.c++;
+          break;
+        case N_FLOAT:
+          c.val.f++;
+          break;
+        case N_INT:
+          c.val.i++;
+          break;
+        default:
+          break;
+        }
+      } else {
+        switch (c.type) {
+        case N_CHAR:
+          c.val.c--;
+          break;
+        case N_FLOAT:
+          c.val.f--;
+          break;
+        case N_INT:
+          c.val.i--;
+          break;
+        default:
+          break;
+        }
+      }
+      return (Stopper){false, true, false, c};
     }
-    break;
+
+    if (!strEql(name, assignment->children.p[0].data)) {
+      break;
+    }
+    c = getConstFromExpr(o,
+                         assignment->children.p + assignment->children.len - 1);
+    if (c.type == N_ILLEGAL) {
+      return (Stopper){false, true, true};
+    }
+    return (Stopper){false, true, false, c};
+
   case N_IDENTIFIER:
     if (strEql(name, n->data)) {
       n->data = c.data;
       n->kind = c.type;
+      return (Stopper){true, false, false};
     }
-    return (Stopper){true, false};
+    break;
+
+    // case N_FOR_LOOP:
+    //   return (Stopper){false, false, false};
+
   default:
     break;
   }
 
-  Stopper changed = {false, false};
   Stopper s;
+  Stopper changed = {false, false, false, c};
 
   // Recurse
   for (int i = 0; i < n->children.len; ++i) {
     s = constantPropogateRec(o, n->children.p + i, name, c);
     changed.changed |= s.changed;
+
     if (s.stop) {
       changed.stop = true;
-      return changed;
+      if (s.stopAtLevel) {
+        return changed;
+      } else {
+        // Get the new value
+        c = s.c;
+      }
     }
+  }
+
+  if (changed.stop) {
+    changed.stopAtLevel = true;
   }
 
   return changed;
@@ -1019,6 +1089,7 @@ Stopper constantPropogateRec(Optimiser *o, Node *n, String *name, Const c) {
 
 bool constantPropogation(Optimiser *o, Node *n, Node *parent, int i) {
   // printf("Propogating variable dec %s\n", nodeCodeString(n->kind));
+  // printf("With parent %s\n", nodeCodeString(parent->kind));
 
   Node *assignment = n->children.p;
 
@@ -1042,16 +1113,20 @@ bool constantPropogation(Optimiser *o, Node *n, Node *parent, int i) {
   // Keep a reference to the name of the variable
   String *name = assignment->children.p[2].data;
 
+  Stopper s;
+
+  // printf("%i\n", i);
+  // char *out = nodeString(parent);
+  // printf("%s\n", out);
+  // free(out);
+
   for (int j = i + 1; j < parent->children.len; ++j) {
-    if (constantPropogateRec(o, parent->children.p + j, name, c).stop) {
+    s = constantPropogateRec(o, parent->children.p + j, name, c);
+    changed |= s.changed;
+    if (s.stopAtLevel) {
       break;
     }
   }
-
-  // TODO: Recursively go through everything, replacing all references until a
-  // new assignment is reached
-
-  // TODO: If the new assignment is constant, continue with new value
 
   return changed;
 }
